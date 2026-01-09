@@ -51,3 +51,4 @@ prayer_times_app/
   README.md
 ```
 >>>>>>> e382671 (Stable build before adding Firebase Messaging)
+Test push after clean setup
