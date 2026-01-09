@@ -1,0 +1,73 @@
+name: ialfm_prayer_times
+description: IALFM Prayer Times (Central Time) using Flutter with annual schedule and notifications
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI/time utilities
+  google_fonts: ^7.0.0
+  # Use canonical package instead of a fork
+  flutter_native_timezone_latest: ^1.0.0
+  intl: ^0.20.2
+  timezone: ^0.11.0
+  hijri: ^3.0.0
+  url_launcher: ^6.3.2
+  http: ^1.2.1
+
+  # ----- Firebase (aligned with latest FlutterFire 2025/26) -----
+  # firebase_core 4.3.x -> Firebase iOS SDK ~12.6.x; matches current Flutter stable toolchain
+  firebase_core: ^4.3.0
+  # Cloud Messaging 16.x (iOS scene delegate support; Android 34 SDK compat)
+  firebase_messaging: ^16.1.0
+  # Cloud Storage 13.x
+  firebase_storage: ^13.0.5
+
+  # Local caching + file paths for annual JSON fallback
+  path_provider: ^2.1.3
+  shared_preferences: ^2.2.2
+
+  # Splash screen
+  flutter_native_splash: ^2.4.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # Icon generator
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    # Shipped assets (seed/offline fallback)
+    - assets/data/prayer_times_2026.json
+    - assets/announcements.json
+
+# ----------------------------
+# Flutter Launcher Icons config
+# ----------------------------
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: assets/branding/ialfm_logo.png
+  adaptive_icon_background: "#0A1733"
+  adaptive_icon_foreground: assets/branding/ialfm_logo.png
+  min_sdk_android: 21
+
+# ----------------------------
+# Flutter Native Splash config
+# ----------------------------
+flutter_native_splash:
+  color: "#0A1733"
+  image: assets/branding/ialfm_logo.png
+  color_dark: "#0A1733"
+  image_dark: assets/branding/ialfm_logo.png
+  android_12:
+    image: assets/branding/ialfm_logo.png
+    icon_background_color: "#0A1733"

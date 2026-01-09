@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "432087736774",
+    "project_id": "ialfm-prayer-times",
+    "storage_bucket": "ialfm-prayer-times.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432087736774:android:4b5e7082ce4cd7891992c7",
+        "android_client_info": {
+          "package_name": "org.ialfm.prayertimes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpE4D4Ss3XjloyECb6rFrmHwfbXTjSBek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
