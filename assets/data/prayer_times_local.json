@@ -1,0 +1,10222 @@
+[
+  {
+    "date": "2026-01-01",
+    "serial": 1,
+    "sunrise": "07:31",
+    "sunset": "17:33",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:32",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:15",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:33",
+        "iqamah": "17:38"
+      },
+      "isha": {
+        "begin": "18:46",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-02",
+    "serial": 2,
+    "sunrise": "07:31",
+    "sunset": "17:34",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:33",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:15",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:34",
+        "iqamah": "17:39"
+      },
+      "isha": {
+        "begin": "18:47",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-03",
+    "serial": 3,
+    "sunrise": "07:31",
+    "sunset": "17:35",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:33",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:16",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:35",
+        "iqamah": "17:40"
+      },
+      "isha": {
+        "begin": "18:48",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-04",
+    "serial": 4,
+    "sunrise": "07:31",
+    "sunset": "17:36",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:34",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:17",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:36",
+        "iqamah": "17:41"
+      },
+      "isha": {
+        "begin": "18:48",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-05",
+    "serial": 5,
+    "sunrise": "07:31",
+    "sunset": "17:36",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:34",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:17",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:36",
+        "iqamah": "17:41"
+      },
+      "isha": {
+        "begin": "18:49",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-06",
+    "serial": 6,
+    "sunrise": "07:32",
+    "sunset": "17:37",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:35",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:18",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:37",
+        "iqamah": "17:42"
+      },
+      "isha": {
+        "begin": "18:50",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-07",
+    "serial": 7,
+    "sunrise": "07:32",
+    "sunset": "17:38",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:35",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:19",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:38",
+        "iqamah": "17:43"
+      },
+      "isha": {
+        "begin": "18:51",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-08",
+    "serial": 8,
+    "sunrise": "07:32",
+    "sunset": "17:39",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:36",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:20",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:39",
+        "iqamah": "17:44"
+      },
+      "isha": {
+        "begin": "18:51",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-09",
+    "serial": 9,
+    "sunrise": "07:32",
+    "sunset": "17:40",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:36",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:21",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:40",
+        "iqamah": "17:45"
+      },
+      "isha": {
+        "begin": "18:52",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-10",
+    "serial": 10,
+    "sunrise": "07:32",
+    "sunset": "17:41",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:36",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:21",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:41",
+        "iqamah": "17:46"
+      },
+      "isha": {
+        "begin": "18:53",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-11",
+    "serial": 11,
+    "sunrise": "07:31",
+    "sunset": "17:41",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:37",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:22",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:41",
+        "iqamah": "17:46"
+      },
+      "isha": {
+        "begin": "18:54",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-12",
+    "serial": 12,
+    "sunrise": "07:31",
+    "sunset": "17:42",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:37",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:23",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:42",
+        "iqamah": "17:47"
+      },
+      "isha": {
+        "begin": "18:55",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-13",
+    "serial": 13,
+    "sunrise": "07:31",
+    "sunset": "17:43",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:38",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:24",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:43",
+        "iqamah": "17:48"
+      },
+      "isha": {
+        "begin": "18:55",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-14",
+    "serial": 14,
+    "sunrise": "07:31",
+    "sunset": "17:44",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:38",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:25",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:44",
+        "iqamah": "17:49"
+      },
+      "isha": {
+        "begin": "18:56",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-15",
+    "serial": 15,
+    "sunrise": "07:31",
+    "sunset": "17:45",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:38",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:25",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:45",
+        "iqamah": "17:50"
+      },
+      "isha": {
+        "begin": "18:57",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-16",
+    "serial": 16,
+    "sunrise": "07:31",
+    "sunset": "17:46",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:39",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:26",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:46",
+        "iqamah": "17:51"
+      },
+      "isha": {
+        "begin": "18:58",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-17",
+    "serial": 17,
+    "sunrise": "07:30",
+    "sunset": "17:47",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:39",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:27",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:47",
+        "iqamah": "17:52"
+      },
+      "isha": {
+        "begin": "18:59",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-18",
+    "serial": 18,
+    "sunrise": "07:30",
+    "sunset": "17:48",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:39",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:28",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:48",
+        "iqamah": "17:53"
+      },
+      "isha": {
+        "begin": "19:00",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-19",
+    "serial": 19,
+    "sunrise": "07:30",
+    "sunset": "17:48",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:29",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:48",
+        "iqamah": "17:53"
+      },
+      "isha": {
+        "begin": "19:00",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-20",
+    "serial": 20,
+    "sunrise": "07:29",
+    "sunset": "17:50",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:30",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:50",
+        "iqamah": "17:55"
+      },
+      "isha": {
+        "begin": "19:01",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-21",
+    "serial": 21,
+    "sunrise": "07:29",
+    "sunset": "17:51",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:30",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:51",
+        "iqamah": "17:56"
+      },
+      "isha": {
+        "begin": "19:02",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-22",
+    "serial": 22,
+    "sunrise": "07:29",
+    "sunset": "17:52",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:31",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:52",
+        "iqamah": "17:57"
+      },
+      "isha": {
+        "begin": "19:03",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-23",
+    "serial": 23,
+    "sunrise": "07:28",
+    "sunset": "17:53",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:32",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:53",
+        "iqamah": "17:58"
+      },
+      "isha": {
+        "begin": "19:04",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-24",
+    "serial": 24,
+    "sunrise": "07:28",
+    "sunset": "17:54",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:33",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:54",
+        "iqamah": "17:59"
+      },
+      "isha": {
+        "begin": "19:05",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-25",
+    "serial": 25,
+    "sunrise": "07:27",
+    "sunset": "17:54",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:34",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:54",
+        "iqamah": "17:59"
+      },
+      "isha": {
+        "begin": "19:05",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-26",
+    "serial": 26,
+    "sunrise": "07:27",
+    "sunset": "17:55",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:35",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:55",
+        "iqamah": "18:00"
+      },
+      "isha": {
+        "begin": "19:06",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-27",
+    "serial": 27,
+    "sunrise": "07:26",
+    "sunset": "17:56",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:35",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:56",
+        "iqamah": "18:01"
+      },
+      "isha": {
+        "begin": "19:07",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-28",
+    "serial": 28,
+    "sunrise": "07:26",
+    "sunset": "17:57",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:36",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:57",
+        "iqamah": "18:02"
+      },
+      "isha": {
+        "begin": "19:08",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-29",
+    "serial": 29,
+    "sunrise": "07:25",
+    "sunset": "17:58",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:37",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:58",
+        "iqamah": "18:03"
+      },
+      "isha": {
+        "begin": "19:09",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-30",
+    "serial": 30,
+    "sunrise": "07:24",
+    "sunset": "17:59",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:38",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:59",
+        "iqamah": "18:04"
+      },
+      "isha": {
+        "begin": "19:10",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-01-31",
+    "serial": 31,
+    "sunrise": "07:24",
+    "sunset": "18:00",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:39",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:00",
+        "iqamah": "18:05"
+      },
+      "isha": {
+        "begin": "19:11",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-01",
+    "serial": 32,
+    "sunrise": "07:23",
+    "sunset": "18:01",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:40",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:01",
+        "iqamah": "18:06"
+      },
+      "isha": {
+        "begin": "19:11",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-02",
+    "serial": 33,
+    "sunrise": "07:23",
+    "sunset": "18:02",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:41",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:02",
+        "iqamah": "18:07"
+      },
+      "isha": {
+        "begin": "19:12",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-03",
+    "serial": 34,
+    "sunrise": "07:22",
+    "sunset": "18:03",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:41",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:03",
+        "iqamah": "18:08"
+      },
+      "isha": {
+        "begin": "19:13",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-04",
+    "serial": 35,
+    "sunrise": "07:21",
+    "sunset": "18:04",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:42",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:04",
+        "iqamah": "18:09"
+      },
+      "isha": {
+        "begin": "19:14",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-05",
+    "serial": 36,
+    "sunrise": "07:20",
+    "sunset": "18:05",
+    "prayers": {
+      "fajr": {
+        "begin": "06:11",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:43",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:05",
+        "iqamah": "18:10"
+      },
+      "isha": {
+        "begin": "19:15",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-06",
+    "serial": 37,
+    "sunrise": "07:20",
+    "sunset": "18:06",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:44",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:06",
+        "iqamah": "18:11"
+      },
+      "isha": {
+        "begin": "19:16",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-07",
+    "serial": 38,
+    "sunrise": "07:19",
+    "sunset": "18:07",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:44",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:07",
+        "iqamah": "18:12"
+      },
+      "isha": {
+        "begin": "19:16",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-08",
+    "serial": 39,
+    "sunrise": "07:18",
+    "sunset": "18:08",
+    "prayers": {
+      "fajr": {
+        "begin": "06:09",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:45",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:08",
+        "iqamah": "18:13"
+      },
+      "isha": {
+        "begin": "19:17",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-09",
+    "serial": 40,
+    "sunrise": "07:17",
+    "sunset": "18:09",
+    "prayers": {
+      "fajr": {
+        "begin": "06:08",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:46",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:09",
+        "iqamah": "18:14"
+      },
+      "isha": {
+        "begin": "19:18",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-10",
+    "serial": 41,
+    "sunrise": "07:16",
+    "sunset": "18:10",
+    "prayers": {
+      "fajr": {
+        "begin": "06:07",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:46",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:10",
+        "iqamah": "18:15"
+      },
+      "isha": {
+        "begin": "19:19",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-11",
+    "serial": 42,
+    "sunrise": "07:15",
+    "sunset": "18:10",
+    "prayers": {
+      "fajr": {
+        "begin": "06:07",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:47",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:10",
+        "iqamah": "18:15"
+      },
+      "isha": {
+        "begin": "19:20",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-12",
+    "serial": 43,
+    "sunrise": "07:14",
+    "sunset": "18:11",
+    "prayers": {
+      "fajr": {
+        "begin": "06:06",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:48",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:11",
+        "iqamah": "18:16"
+      },
+      "isha": {
+        "begin": "19:20",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-13",
+    "serial": 44,
+    "sunrise": "07:14",
+    "sunset": "18:12",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:49",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:12",
+        "iqamah": "18:17"
+      },
+      "isha": {
+        "begin": "19:21",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-14",
+    "serial": 45,
+    "sunrise": "07:13",
+    "sunset": "18:13",
+    "prayers": {
+      "fajr": {
+        "begin": "06:04",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:49",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:13",
+        "iqamah": "18:18"
+      },
+      "isha": {
+        "begin": "19:22",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-15",
+    "serial": 46,
+    "sunrise": "07:12",
+    "sunset": "18:14",
+    "prayers": {
+      "fajr": {
+        "begin": "06:03",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:50",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:14",
+        "iqamah": "18:19"
+      },
+      "isha": {
+        "begin": "19:23",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-16",
+    "serial": 47,
+    "sunrise": "07:11",
+    "sunset": "18:15",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:50",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:15",
+        "iqamah": "18:20"
+      },
+      "isha": {
+        "begin": "19:24",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-17",
+    "serial": 48,
+    "sunrise": "07:10",
+    "sunset": "18:15",
+    "prayers": {
+      "fajr": {
+        "begin": "06:01",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:50",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:15",
+        "iqamah": "18:20"
+      },
+      "isha": {
+        "begin": "19:24",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-18",
+    "serial": 49,
+    "sunrise": "07:09",
+    "sunset": "18:16",
+    "prayers": {
+      "fajr": {
+        "begin": "06:00",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:51",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:16",
+        "iqamah": "18:21"
+      },
+      "isha": {
+        "begin": "19:25",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-19",
+    "serial": 50,
+    "sunrise": "07:08",
+    "sunset": "18:18",
+    "prayers": {
+      "fajr": {
+        "begin": "05:59",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:52",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:18",
+        "iqamah": "18:23"
+      },
+      "isha": {
+        "begin": "19:26",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-20",
+    "serial": 51,
+    "sunrise": "07:06",
+    "sunset": "18:18",
+    "prayers": {
+      "fajr": {
+        "begin": "05:58",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:43",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:53",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:18",
+        "iqamah": "18:23"
+      },
+      "isha": {
+        "begin": "19:27",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-21",
+    "serial": 52,
+    "sunrise": "07:05",
+    "sunset": "18:19",
+    "prayers": {
+      "fajr": {
+        "begin": "05:57",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:53",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:19",
+        "iqamah": "18:24"
+      },
+      "isha": {
+        "begin": "19:28",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-22",
+    "serial": 53,
+    "sunrise": "07:04",
+    "sunset": "18:20",
+    "prayers": {
+      "fajr": {
+        "begin": "05:56",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:54",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:20",
+        "iqamah": "18:25"
+      },
+      "isha": {
+        "begin": "19:29",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-23",
+    "serial": 54,
+    "sunrise": "07:03",
+    "sunset": "18:21",
+    "prayers": {
+      "fajr": {
+        "begin": "05:55",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:54",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:21",
+        "iqamah": "18:26"
+      },
+      "isha": {
+        "begin": "19:29",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-24",
+    "serial": 55,
+    "sunrise": "07:02",
+    "sunset": "18:22",
+    "prayers": {
+      "fajr": {
+        "begin": "05:54",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:55",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:22",
+        "iqamah": "18:27"
+      },
+      "isha": {
+        "begin": "19:30",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-25",
+    "serial": 56,
+    "sunrise": "07:01",
+    "sunset": "18:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:53",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:56",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:23",
+        "iqamah": "18:28"
+      },
+      "isha": {
+        "begin": "19:31",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-26",
+    "serial": 57,
+    "sunrise": "07:00",
+    "sunset": "18:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:52",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:42",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:56",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:24",
+        "iqamah": "18:29"
+      },
+      "isha": {
+        "begin": "19:32",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-27",
+    "serial": 58,
+    "sunrise": "06:59",
+    "sunset": "18:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:51",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:57",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:24",
+        "iqamah": "18:29"
+      },
+      "isha": {
+        "begin": "19:32",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-02-28",
+    "serial": 59,
+    "sunrise": "06:57",
+    "sunset": "18:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:49",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:57",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:25",
+        "iqamah": "18:30"
+      },
+      "isha": {
+        "begin": "19:33",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-01",
+    "serial": 60,
+    "sunrise": "06:56",
+    "sunset": "18:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:48",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:57",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:26",
+        "iqamah": "18:31"
+      },
+      "isha": {
+        "begin": "19:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-02",
+    "serial": 61,
+    "sunrise": "06:54",
+    "sunset": "18:27",
+    "prayers": {
+      "fajr": {
+        "begin": "05:47",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:58",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:27",
+        "iqamah": "18:32"
+      },
+      "isha": {
+        "begin": "19:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-03",
+    "serial": 62,
+    "sunrise": "06:53",
+    "sunset": "18:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:46",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:41",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:58",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:28",
+        "iqamah": "18:33"
+      },
+      "isha": {
+        "begin": "19:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-04",
+    "serial": 63,
+    "sunrise": "06:52",
+    "sunset": "18:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:44",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:59",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:28",
+        "iqamah": "18:33"
+      },
+      "isha": {
+        "begin": "19:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-05",
+    "serial": 64,
+    "sunrise": "06:51",
+    "sunset": "18:29",
+    "prayers": {
+      "fajr": {
+        "begin": "05:43",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:59",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:29",
+        "iqamah": "18:34"
+      },
+      "isha": {
+        "begin": "19:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-06",
+    "serial": 65,
+    "sunrise": "06:49",
+    "sunset": "18:30",
+    "prayers": {
+      "fajr": {
+        "begin": "05:42",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "16:00",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:30",
+        "iqamah": "18:35"
+      },
+      "isha": {
+        "begin": "19:38",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-07",
+    "serial": 66,
+    "sunrise": "06:48",
+    "sunset": "18:31",
+    "prayers": {
+      "fajr": {
+        "begin": "05:41",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:40",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "16:00",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "18:31",
+        "iqamah": "18:36"
+      },
+      "isha": {
+        "begin": "19:39",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-08",
+    "serial": 67,
+    "sunrise": "07:47",
+    "sunset": "19:31",
+    "prayers": {
+      "fajr": {
+        "begin": "06:40",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:39",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:00",
+        "iqamah": "17:15"
+      },
+      "maghrib": {
+        "begin": "19:31",
+        "iqamah": "19:36"
+      },
+      "isha": {
+        "begin": "20:39",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-09",
+    "serial": 68,
+    "sunrise": "07:46",
+    "sunset": "19:32",
+    "prayers": {
+      "fajr": {
+        "begin": "06:38",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:39",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:01",
+        "iqamah": "17:15"
+      },
+      "maghrib": {
+        "begin": "19:32",
+        "iqamah": "19:37"
+      },
+      "isha": {
+        "begin": "20:40",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-10",
+    "serial": 69,
+    "sunrise": "07:44",
+    "sunset": "19:33",
+    "prayers": {
+      "fajr": {
+        "begin": "06:37",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:39",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:01",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:33",
+        "iqamah": "19:38"
+      },
+      "isha": {
+        "begin": "20:41",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-11",
+    "serial": 70,
+    "sunrise": "07:43",
+    "sunset": "19:34",
+    "prayers": {
+      "fajr": {
+        "begin": "06:36",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:39",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:01",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:34",
+        "iqamah": "19:39"
+      },
+      "isha": {
+        "begin": "20:42",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-12",
+    "serial": 71,
+    "sunrise": "07:42",
+    "sunset": "19:35",
+    "prayers": {
+      "fajr": {
+        "begin": "06:34",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:38",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:02",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:35",
+        "iqamah": "19:40"
+      },
+      "isha": {
+        "begin": "20:42",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-13",
+    "serial": 72,
+    "sunrise": "07:41",
+    "sunset": "19:35",
+    "prayers": {
+      "fajr": {
+        "begin": "06:33",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:38",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:02",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:35",
+        "iqamah": "19:40"
+      },
+      "isha": {
+        "begin": "20:43",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-14",
+    "serial": 73,
+    "sunrise": "07:39",
+    "sunset": "19:36",
+    "prayers": {
+      "fajr": {
+        "begin": "06:32",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:38",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:02",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:36",
+        "iqamah": "19:41"
+      },
+      "isha": {
+        "begin": "20:44",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-15",
+    "serial": 74,
+    "sunrise": "07:38",
+    "sunset": "19:37",
+    "prayers": {
+      "fajr": {
+        "begin": "06:30",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:38",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:02",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:37",
+        "iqamah": "19:42"
+      },
+      "isha": {
+        "begin": "20:45",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-16",
+    "serial": 75,
+    "sunrise": "07:37",
+    "sunset": "19:38",
+    "prayers": {
+      "fajr": {
+        "begin": "06:29",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:37",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:38",
+        "iqamah": "19:43"
+      },
+      "isha": {
+        "begin": "20:46",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-17",
+    "serial": 76,
+    "sunrise": "07:35",
+    "sunset": "19:38",
+    "prayers": {
+      "fajr": {
+        "begin": "06:28",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:37",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:38",
+        "iqamah": "19:43"
+      },
+      "isha": {
+        "begin": "20:46",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-18",
+    "serial": 77,
+    "sunrise": "07:34",
+    "sunset": "19:39",
+    "prayers": {
+      "fajr": {
+        "begin": "06:26",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:37",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:39",
+        "iqamah": "19:44"
+      },
+      "isha": {
+        "begin": "20:47",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-19",
+    "serial": 78,
+    "sunrise": "07:33",
+    "sunset": "19:40",
+    "prayers": {
+      "fajr": {
+        "begin": "06:25",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:36",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:40",
+        "iqamah": "19:45"
+      },
+      "isha": {
+        "begin": "20:48",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-20",
+    "serial": 79,
+    "sunrise": "07:31",
+    "sunset": "19:40",
+    "prayers": {
+      "fajr": {
+        "begin": "06:24",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:36",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:04",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:40",
+        "iqamah": "19:45"
+      },
+      "isha": {
+        "begin": "20:49",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-21",
+    "serial": 80,
+    "sunrise": "07:30",
+    "sunset": "19:41",
+    "prayers": {
+      "fajr": {
+        "begin": "06:22",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:36",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:04",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:41",
+        "iqamah": "19:46"
+      },
+      "isha": {
+        "begin": "20:50",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-22",
+    "serial": 81,
+    "sunrise": "07:29",
+    "sunset": "19:42",
+    "prayers": {
+      "fajr": {
+        "begin": "06:21",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:36",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:04",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:42",
+        "iqamah": "19:47"
+      },
+      "isha": {
+        "begin": "20:50",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-23",
+    "serial": 82,
+    "sunrise": "07:27",
+    "sunset": "19:43",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:04",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:43",
+        "iqamah": "19:48"
+      },
+      "isha": {
+        "begin": "20:51",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-24",
+    "serial": 83,
+    "sunrise": "07:26",
+    "sunset": "19:43",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:43",
+        "iqamah": "19:48"
+      },
+      "isha": {
+        "begin": "20:52",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-25",
+    "serial": 84,
+    "sunrise": "07:25",
+    "sunset": "19:44",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:44",
+        "iqamah": "19:49"
+      },
+      "isha": {
+        "begin": "20:53",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-26",
+    "serial": 85,
+    "sunrise": "07:23",
+    "sunset": "19:45",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:45",
+        "iqamah": "19:50"
+      },
+      "isha": {
+        "begin": "20:53",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-27",
+    "serial": 86,
+    "sunrise": "07:22",
+    "sunset": "19:46",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:46",
+        "iqamah": "19:51"
+      },
+      "isha": {
+        "begin": "20:54",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-28",
+    "serial": 87,
+    "sunrise": "07:21",
+    "sunset": "19:46",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:46",
+        "iqamah": "19:51"
+      },
+      "isha": {
+        "begin": "20:55",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-29",
+    "serial": 88,
+    "sunrise": "07:19",
+    "sunset": "19:47",
+    "prayers": {
+      "fajr": {
+        "begin": "06:11",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:47",
+        "iqamah": "19:52"
+      },
+      "isha": {
+        "begin": "20:56",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-30",
+    "serial": 89,
+    "sunrise": "07:18",
+    "sunset": "19:48",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:48",
+        "iqamah": "19:53"
+      },
+      "isha": {
+        "begin": "20:57",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-03-31",
+    "serial": 90,
+    "sunrise": "07:17",
+    "sunset": "19:48",
+    "prayers": {
+      "fajr": {
+        "begin": "06:08",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:48",
+        "iqamah": "19:53"
+      },
+      "isha": {
+        "begin": "20:58",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-04-01",
+    "serial": 91,
+    "sunrise": "07:15",
+    "sunset": "19:49",
+    "prayers": {
+      "fajr": {
+        "begin": "06:07",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:49",
+        "iqamah": "19:54"
+      },
+      "isha": {
+        "begin": "20:58",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-02",
+    "serial": 92,
+    "sunrise": "07:14",
+    "sunset": "19:50",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:50",
+        "iqamah": "19:55"
+      },
+      "isha": {
+        "begin": "20:59",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-03",
+    "serial": 93,
+    "sunrise": "07:13",
+    "sunset": "19:51",
+    "prayers": {
+      "fajr": {
+        "begin": "06:04",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:51",
+        "iqamah": "19:56"
+      },
+      "isha": {
+        "begin": "21:00",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-04",
+    "serial": 94,
+    "sunrise": "07:12",
+    "sunset": "19:51",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:51",
+        "iqamah": "19:56"
+      },
+      "isha": {
+        "begin": "21:01",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-05",
+    "serial": 95,
+    "sunrise": "07:10",
+    "sunset": "19:52",
+    "prayers": {
+      "fajr": {
+        "begin": "06:01",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:52",
+        "iqamah": "19:57"
+      },
+      "isha": {
+        "begin": "21:02",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-06",
+    "serial": 96,
+    "sunrise": "07:09",
+    "sunset": "19:53",
+    "prayers": {
+      "fajr": {
+        "begin": "06:00",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:53",
+        "iqamah": "19:58"
+      },
+      "isha": {
+        "begin": "21:03",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-07",
+    "serial": 97,
+    "sunrise": "07:08",
+    "sunset": "19:53",
+    "prayers": {
+      "fajr": {
+        "begin": "05:58",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:53",
+        "iqamah": "19:58"
+      },
+      "isha": {
+        "begin": "21:03",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-08",
+    "serial": 98,
+    "sunrise": "07:06",
+    "sunset": "19:54",
+    "prayers": {
+      "fajr": {
+        "begin": "05:57",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:54",
+        "iqamah": "19:59"
+      },
+      "isha": {
+        "begin": "21:04",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-09",
+    "serial": 99,
+    "sunrise": "07:05",
+    "sunset": "19:55",
+    "prayers": {
+      "fajr": {
+        "begin": "05:55",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:55",
+        "iqamah": "20:00"
+      },
+      "isha": {
+        "begin": "21:05",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-10",
+    "serial": 100,
+    "sunrise": "07:04",
+    "sunset": "19:56",
+    "prayers": {
+      "fajr": {
+        "begin": "05:54",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:56",
+        "iqamah": "20:01"
+      },
+      "isha": {
+        "begin": "21:06",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-11",
+    "serial": 101,
+    "sunrise": "07:03",
+    "sunset": "19:56",
+    "prayers": {
+      "fajr": {
+        "begin": "05:53",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:56",
+        "iqamah": "20:01"
+      },
+      "isha": {
+        "begin": "21:07",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-12",
+    "serial": 102,
+    "sunrise": "07:01",
+    "sunset": "19:57",
+    "prayers": {
+      "fajr": {
+        "begin": "05:51",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:57",
+        "iqamah": "20:02"
+      },
+      "isha": {
+        "begin": "21:08",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-13",
+    "serial": 103,
+    "sunrise": "07:00",
+    "sunset": "19:58",
+    "prayers": {
+      "fajr": {
+        "begin": "05:50",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:58",
+        "iqamah": "20:03"
+      },
+      "isha": {
+        "begin": "21:09",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-14",
+    "serial": 104,
+    "sunrise": "06:59",
+    "sunset": "19:59",
+    "prayers": {
+      "fajr": {
+        "begin": "05:48",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:59",
+        "iqamah": "20:04"
+      },
+      "isha": {
+        "begin": "21:10",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-15",
+    "serial": 105,
+    "sunrise": "06:58",
+    "sunset": "19:59",
+    "prayers": {
+      "fajr": {
+        "begin": "05:47",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:59",
+        "iqamah": "20:04"
+      },
+      "isha": {
+        "begin": "21:11",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-04-16",
+    "serial": 106,
+    "sunrise": "06:57",
+    "sunset": "20:00",
+    "prayers": {
+      "fajr": {
+        "begin": "05:46",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:00",
+        "iqamah": "20:05"
+      },
+      "isha": {
+        "begin": "21:11",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-17",
+    "serial": 107,
+    "sunrise": "06:55",
+    "sunset": "20:01",
+    "prayers": {
+      "fajr": {
+        "begin": "05:44",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:01",
+        "iqamah": "20:06"
+      },
+      "isha": {
+        "begin": "21:12",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-18",
+    "serial": 108,
+    "sunrise": "06:54",
+    "sunset": "20:01",
+    "prayers": {
+      "fajr": {
+        "begin": "05:43",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:01",
+        "iqamah": "20:06"
+      },
+      "isha": {
+        "begin": "21:13",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-19",
+    "serial": 109,
+    "sunrise": "06:53",
+    "sunset": "20:02",
+    "prayers": {
+      "fajr": {
+        "begin": "05:41",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:02",
+        "iqamah": "20:07"
+      },
+      "isha": {
+        "begin": "21:14",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-20",
+    "serial": 110,
+    "sunrise": "06:52",
+    "sunset": "20:03",
+    "prayers": {
+      "fajr": {
+        "begin": "05:40",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:03",
+        "iqamah": "20:08"
+      },
+      "isha": {
+        "begin": "21:15",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-21",
+    "serial": 111,
+    "sunrise": "06:51",
+    "sunset": "20:04",
+    "prayers": {
+      "fajr": {
+        "begin": "05:39",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:04",
+        "iqamah": "20:09"
+      },
+      "isha": {
+        "begin": "21:16",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-22",
+    "serial": 112,
+    "sunrise": "06:50",
+    "sunset": "20:04",
+    "prayers": {
+      "fajr": {
+        "begin": "05:37",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:04",
+        "iqamah": "20:09"
+      },
+      "isha": {
+        "begin": "21:17",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-23",
+    "serial": 113,
+    "sunrise": "06:48",
+    "sunset": "20:05",
+    "prayers": {
+      "fajr": {
+        "begin": "05:36",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:05",
+        "iqamah": "20:10"
+      },
+      "isha": {
+        "begin": "21:18",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-24",
+    "serial": 114,
+    "sunrise": "06:47",
+    "sunset": "20:06",
+    "prayers": {
+      "fajr": {
+        "begin": "05:35",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:06",
+        "iqamah": "20:11"
+      },
+      "isha": {
+        "begin": "21:19",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-25",
+    "serial": 115,
+    "sunrise": "06:46",
+    "sunset": "20:07",
+    "prayers": {
+      "fajr": {
+        "begin": "05:34",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:07",
+        "iqamah": "20:12"
+      },
+      "isha": {
+        "begin": "21:20",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-26",
+    "serial": 116,
+    "sunrise": "06:45",
+    "sunset": "20:07",
+    "prayers": {
+      "fajr": {
+        "begin": "05:32",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:07",
+        "iqamah": "20:12"
+      },
+      "isha": {
+        "begin": "21:21",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-27",
+    "serial": 117,
+    "sunrise": "06:44",
+    "sunset": "20:08",
+    "prayers": {
+      "fajr": {
+        "begin": "05:31",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:08",
+        "iqamah": "20:13"
+      },
+      "isha": {
+        "begin": "21:22",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-28",
+    "serial": 118,
+    "sunrise": "06:43",
+    "sunset": "20:09",
+    "prayers": {
+      "fajr": {
+        "begin": "05:30",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:09",
+        "iqamah": "20:14"
+      },
+      "isha": {
+        "begin": "21:23",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-29",
+    "serial": 119,
+    "sunrise": "06:42",
+    "sunset": "20:10",
+    "prayers": {
+      "fajr": {
+        "begin": "05:29",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:10",
+        "iqamah": "20:15"
+      },
+      "isha": {
+        "begin": "21:24",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-04-30",
+    "serial": 120,
+    "sunrise": "06:41",
+    "sunset": "20:10",
+    "prayers": {
+      "fajr": {
+        "begin": "05:27",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:10",
+        "iqamah": "20:15"
+      },
+      "isha": {
+        "begin": "21:25",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-05-01",
+    "serial": 121,
+    "sunrise": "06:40",
+    "sunset": "20:11",
+    "prayers": {
+      "fajr": {
+        "begin": "05:26",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:11",
+        "iqamah": "20:16"
+      },
+      "isha": {
+        "begin": "21:26",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-02",
+    "serial": 122,
+    "sunrise": "06:39",
+    "sunset": "20:12",
+    "prayers": {
+      "fajr": {
+        "begin": "05:25",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:12",
+        "iqamah": "20:17"
+      },
+      "isha": {
+        "begin": "21:27",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-03",
+    "serial": 123,
+    "sunrise": "06:38",
+    "sunset": "20:13",
+    "prayers": {
+      "fajr": {
+        "begin": "05:24",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:13",
+        "iqamah": "20:18"
+      },
+      "isha": {
+        "begin": "21:28",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-04",
+    "serial": 124,
+    "sunrise": "06:37",
+    "sunset": "20:13",
+    "prayers": {
+      "fajr": {
+        "begin": "05:23",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:13",
+        "iqamah": "20:18"
+      },
+      "isha": {
+        "begin": "21:28",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-05",
+    "serial": 125,
+    "sunrise": "06:36",
+    "sunset": "20:14",
+    "prayers": {
+      "fajr": {
+        "begin": "05:21",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:14",
+        "iqamah": "20:19"
+      },
+      "isha": {
+        "begin": "21:29",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-06",
+    "serial": 126,
+    "sunrise": "06:35",
+    "sunset": "20:15",
+    "prayers": {
+      "fajr": {
+        "begin": "05:20",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:15",
+        "iqamah": "20:20"
+      },
+      "isha": {
+        "begin": "21:30",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-07",
+    "serial": 127,
+    "sunrise": "06:35",
+    "sunset": "20:16",
+    "prayers": {
+      "fajr": {
+        "begin": "05:19",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:16",
+        "iqamah": "20:21"
+      },
+      "isha": {
+        "begin": "21:31",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-08",
+    "serial": 128,
+    "sunrise": "06:34",
+    "sunset": "20:16",
+    "prayers": {
+      "fajr": {
+        "begin": "05:18",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:16",
+        "iqamah": "20:21"
+      },
+      "isha": {
+        "begin": "21:32",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-09",
+    "serial": 129,
+    "sunrise": "06:33",
+    "sunset": "20:17",
+    "prayers": {
+      "fajr": {
+        "begin": "05:17",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:17",
+        "iqamah": "20:22"
+      },
+      "isha": {
+        "begin": "21:33",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-10",
+    "serial": 130,
+    "sunrise": "06:32",
+    "sunset": "20:18",
+    "prayers": {
+      "fajr": {
+        "begin": "05:16",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:18",
+        "iqamah": "20:23"
+      },
+      "isha": {
+        "begin": "21:34",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-11",
+    "serial": 131,
+    "sunrise": "06:31",
+    "sunset": "20:18",
+    "prayers": {
+      "fajr": {
+        "begin": "05:15",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:18",
+        "iqamah": "20:23"
+      },
+      "isha": {
+        "begin": "21:35",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-12",
+    "serial": 132,
+    "sunrise": "06:30",
+    "sunset": "20:19",
+    "prayers": {
+      "fajr": {
+        "begin": "05:14",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:19",
+        "iqamah": "20:24"
+      },
+      "isha": {
+        "begin": "21:36",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-13",
+    "serial": 133,
+    "sunrise": "06:30",
+    "sunset": "20:20",
+    "prayers": {
+      "fajr": {
+        "begin": "05:13",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:20",
+        "iqamah": "20:25"
+      },
+      "isha": {
+        "begin": "21:37",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-14",
+    "serial": 134,
+    "sunrise": "06:29",
+    "sunset": "20:21",
+    "prayers": {
+      "fajr": {
+        "begin": "05:12",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:21",
+        "iqamah": "20:26"
+      },
+      "isha": {
+        "begin": "21:38",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-15",
+    "serial": 135,
+    "sunrise": "06:28",
+    "sunset": "20:21",
+    "prayers": {
+      "fajr": {
+        "begin": "05:11",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:21",
+        "iqamah": "20:26"
+      },
+      "isha": {
+        "begin": "21:39",
+        "iqamah": "21:45"
+      }
+    }
+  },
+  {
+    "date": "2026-05-16",
+    "serial": 136,
+    "sunrise": "06:28",
+    "sunset": "20:22",
+    "prayers": {
+      "fajr": {
+        "begin": "05:10",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:22",
+        "iqamah": "20:27"
+      },
+      "isha": {
+        "begin": "21:40",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-17",
+    "serial": 137,
+    "sunrise": "06:27",
+    "sunset": "20:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:09",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:23",
+        "iqamah": "20:28"
+      },
+      "isha": {
+        "begin": "21:41",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-18",
+    "serial": 138,
+    "sunrise": "06:26",
+    "sunset": "20:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:09",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:24",
+        "iqamah": "20:29"
+      },
+      "isha": {
+        "begin": "21:42",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-19",
+    "serial": 139,
+    "sunrise": "06:26",
+    "sunset": "20:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:08",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:24",
+        "iqamah": "20:29"
+      },
+      "isha": {
+        "begin": "21:43",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-20",
+    "serial": 140,
+    "sunrise": "06:25",
+    "sunset": "20:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:07",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:25",
+        "iqamah": "20:30"
+      },
+      "isha": {
+        "begin": "21:44",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-21",
+    "serial": 141,
+    "sunrise": "06:25",
+    "sunset": "20:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:06",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:26",
+        "iqamah": "20:31"
+      },
+      "isha": {
+        "begin": "21:45",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-22",
+    "serial": 142,
+    "sunrise": "06:24",
+    "sunset": "20:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:05",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:26",
+        "iqamah": "20:31"
+      },
+      "isha": {
+        "begin": "21:46",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-23",
+    "serial": 143,
+    "sunrise": "06:23",
+    "sunset": "20:27",
+    "prayers": {
+      "fajr": {
+        "begin": "05:05",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:27",
+        "iqamah": "20:32"
+      },
+      "isha": {
+        "begin": "21:46",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-24",
+    "serial": 144,
+    "sunrise": "06:23",
+    "sunset": "20:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:04",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:28",
+        "iqamah": "20:33"
+      },
+      "isha": {
+        "begin": "21:47",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-25",
+    "serial": 145,
+    "sunrise": "06:23",
+    "sunset": "20:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:03",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:28",
+        "iqamah": "20:33"
+      },
+      "isha": {
+        "begin": "21:48",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-26",
+    "serial": 146,
+    "sunrise": "06:22",
+    "sunset": "20:29",
+    "prayers": {
+      "fajr": {
+        "begin": "05:03",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:29",
+        "iqamah": "20:34"
+      },
+      "isha": {
+        "begin": "21:49",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-27",
+    "serial": 147,
+    "sunrise": "06:22",
+    "sunset": "20:30",
+    "prayers": {
+      "fajr": {
+        "begin": "05:02",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:30",
+        "iqamah": "20:35"
+      },
+      "isha": {
+        "begin": "21:50",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-28",
+    "serial": 148,
+    "sunrise": "06:21",
+    "sunset": "20:30",
+    "prayers": {
+      "fajr": {
+        "begin": "05:02",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:30",
+        "iqamah": "20:35"
+      },
+      "isha": {
+        "begin": "21:51",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-29",
+    "serial": 149,
+    "sunrise": "06:21",
+    "sunset": "20:31",
+    "prayers": {
+      "fajr": {
+        "begin": "05:01",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:31",
+        "iqamah": "20:36"
+      },
+      "isha": {
+        "begin": "21:51",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-30",
+    "serial": 150,
+    "sunrise": "06:21",
+    "sunset": "20:31",
+    "prayers": {
+      "fajr": {
+        "begin": "05:01",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:31",
+        "iqamah": "20:36"
+      },
+      "isha": {
+        "begin": "21:52",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-05-31",
+    "serial": 151,
+    "sunrise": "06:20",
+    "sunset": "20:32",
+    "prayers": {
+      "fajr": {
+        "begin": "05:00",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:32",
+        "iqamah": "20:37"
+      },
+      "isha": {
+        "begin": "21:53",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-06-01",
+    "serial": 152,
+    "sunrise": "06:20",
+    "sunset": "20:33",
+    "prayers": {
+      "fajr": {
+        "begin": "05:00",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:33",
+        "iqamah": "20:38"
+      },
+      "isha": {
+        "begin": "21:54",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-02",
+    "serial": 153,
+    "sunrise": "06:20",
+    "sunset": "20:33",
+    "prayers": {
+      "fajr": {
+        "begin": "04:59",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:33",
+        "iqamah": "20:38"
+      },
+      "isha": {
+        "begin": "21:54",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-03",
+    "serial": 154,
+    "sunrise": "06:19",
+    "sunset": "20:34",
+    "prayers": {
+      "fajr": {
+        "begin": "04:59",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:34",
+        "iqamah": "20:39"
+      },
+      "isha": {
+        "begin": "21:55",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-04",
+    "serial": 155,
+    "sunrise": "06:19",
+    "sunset": "20:34",
+    "prayers": {
+      "fajr": {
+        "begin": "04:59",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:34",
+        "iqamah": "20:39"
+      },
+      "isha": {
+        "begin": "21:56",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-05",
+    "serial": 156,
+    "sunrise": "06:19",
+    "sunset": "20:35",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:35",
+        "iqamah": "20:40"
+      },
+      "isha": {
+        "begin": "21:56",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-06",
+    "serial": 157,
+    "sunrise": "06:19",
+    "sunset": "20:35",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:35",
+        "iqamah": "20:40"
+      },
+      "isha": {
+        "begin": "21:57",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-07",
+    "serial": 158,
+    "sunrise": "06:19",
+    "sunset": "20:36",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:36",
+        "iqamah": "20:41"
+      },
+      "isha": {
+        "begin": "21:58",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-08",
+    "serial": 159,
+    "sunrise": "06:19",
+    "sunset": "20:36",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:36",
+        "iqamah": "20:41"
+      },
+      "isha": {
+        "begin": "21:58",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-09",
+    "serial": 160,
+    "sunrise": "06:19",
+    "sunset": "20:37",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:37",
+        "iqamah": "20:42"
+      },
+      "isha": {
+        "begin": "21:59",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-10",
+    "serial": 161,
+    "sunrise": "06:19",
+    "sunset": "20:37",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:37",
+        "iqamah": "20:42"
+      },
+      "isha": {
+        "begin": "21:59",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-11",
+    "serial": 162,
+    "sunrise": "06:19",
+    "sunset": "20:38",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:38",
+        "iqamah": "20:43"
+      },
+      "isha": {
+        "begin": "22:00",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-12",
+    "serial": 163,
+    "sunrise": "06:19",
+    "sunset": "20:38",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:38",
+        "iqamah": "20:43"
+      },
+      "isha": {
+        "begin": "22:00",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-13",
+    "serial": 164,
+    "sunrise": "06:19",
+    "sunset": "20:38",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:38",
+        "iqamah": "20:43"
+      },
+      "isha": {
+        "begin": "22:01",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-14",
+    "serial": 165,
+    "sunrise": "06:19",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "22:01",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-15",
+    "serial": 166,
+    "sunrise": "06:19",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-16",
+    "serial": 167,
+    "sunrise": "06:19",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-17",
+    "serial": 168,
+    "sunrise": "06:19",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-18",
+    "serial": 169,
+    "sunrise": "06:19",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-19",
+    "serial": 170,
+    "sunrise": "06:19",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "04:57",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-20",
+    "serial": 171,
+    "sunrise": "06:19",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-21",
+    "serial": 172,
+    "sunrise": "06:20",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-22",
+    "serial": 173,
+    "sunrise": "06:20",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-23",
+    "serial": 174,
+    "sunrise": "06:20",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:58",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-24",
+    "serial": 175,
+    "sunrise": "06:20",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:59",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-25",
+    "serial": 176,
+    "sunrise": "06:21",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "04:59",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-26",
+    "serial": 177,
+    "sunrise": "06:21",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:00",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-27",
+    "serial": 178,
+    "sunrise": "06:21",
+    "sunset": "20:42",
+    "prayers": {
+      "fajr": {
+        "begin": "05:00",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:42",
+        "iqamah": "20:47"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-28",
+    "serial": 179,
+    "sunrise": "06:22",
+    "sunset": "20:42",
+    "prayers": {
+      "fajr": {
+        "begin": "05:00",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:42",
+        "iqamah": "20:47"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-29",
+    "serial": 180,
+    "sunrise": "06:22",
+    "sunset": "20:42",
+    "prayers": {
+      "fajr": {
+        "begin": "05:01",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:42",
+        "iqamah": "20:47"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-06-30",
+    "serial": 181,
+    "sunrise": "06:22",
+    "sunset": "20:42",
+    "prayers": {
+      "fajr": {
+        "begin": "05:01",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:42",
+        "iqamah": "20:47"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-01",
+    "serial": 182,
+    "sunrise": "06:23",
+    "sunset": "20:42",
+    "prayers": {
+      "fajr": {
+        "begin": "05:02",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:42",
+        "iqamah": "20:47"
+      },
+      "isha": {
+        "begin": "22:04",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-02",
+    "serial": 183,
+    "sunrise": "06:23",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:02",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-03",
+    "serial": 184,
+    "sunrise": "06:24",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:03",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-04",
+    "serial": 185,
+    "sunrise": "06:24",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:04",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-05",
+    "serial": 186,
+    "sunrise": "06:25",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:04",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:03",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-06",
+    "serial": 187,
+    "sunrise": "06:25",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:05",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-07",
+    "serial": 188,
+    "sunrise": "06:26",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:05",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-08",
+    "serial": 189,
+    "sunrise": "06:26",
+    "sunset": "20:41",
+    "prayers": {
+      "fajr": {
+        "begin": "05:06",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:41",
+        "iqamah": "20:46"
+      },
+      "isha": {
+        "begin": "22:02",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-09",
+    "serial": 190,
+    "sunrise": "06:27",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "05:07",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:01",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-10",
+    "serial": 191,
+    "sunrise": "06:27",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "05:08",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:01",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-11",
+    "serial": 192,
+    "sunrise": "06:28",
+    "sunset": "20:40",
+    "prayers": {
+      "fajr": {
+        "begin": "05:08",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:40",
+        "iqamah": "20:45"
+      },
+      "isha": {
+        "begin": "22:00",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-12",
+    "serial": 193,
+    "sunrise": "06:28",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "05:09",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "22:00",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-13",
+    "serial": 194,
+    "sunrise": "06:29",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "05:10",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "21:59",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-14",
+    "serial": 195,
+    "sunrise": "06:30",
+    "sunset": "20:39",
+    "prayers": {
+      "fajr": {
+        "begin": "05:11",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:39",
+        "iqamah": "20:44"
+      },
+      "isha": {
+        "begin": "21:59",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-15",
+    "serial": 196,
+    "sunrise": "06:30",
+    "sunset": "20:38",
+    "prayers": {
+      "fajr": {
+        "begin": "05:11",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:38",
+        "iqamah": "20:43"
+      },
+      "isha": {
+        "begin": "21:58",
+        "iqamah": "22:15"
+      }
+    }
+  },
+  {
+    "date": "2026-07-16",
+    "serial": 197,
+    "sunrise": "06:31",
+    "sunset": "20:38",
+    "prayers": {
+      "fajr": {
+        "begin": "05:12",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:38",
+        "iqamah": "20:43"
+      },
+      "isha": {
+        "begin": "21:58",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-17",
+    "serial": 198,
+    "sunrise": "06:31",
+    "sunset": "20:37",
+    "prayers": {
+      "fajr": {
+        "begin": "05:13",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:37",
+        "iqamah": "20:42"
+      },
+      "isha": {
+        "begin": "21:57",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-18",
+    "serial": 199,
+    "sunrise": "06:32",
+    "sunset": "20:37",
+    "prayers": {
+      "fajr": {
+        "begin": "05:14",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:37",
+        "iqamah": "20:42"
+      },
+      "isha": {
+        "begin": "21:56",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-19",
+    "serial": 200,
+    "sunrise": "06:33",
+    "sunset": "20:36",
+    "prayers": {
+      "fajr": {
+        "begin": "05:15",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:36",
+        "iqamah": "20:41"
+      },
+      "isha": {
+        "begin": "21:56",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-20",
+    "serial": 201,
+    "sunrise": "06:33",
+    "sunset": "20:36",
+    "prayers": {
+      "fajr": {
+        "begin": "05:16",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:36",
+        "iqamah": "20:41"
+      },
+      "isha": {
+        "begin": "21:55",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-21",
+    "serial": 202,
+    "sunrise": "06:34",
+    "sunset": "20:35",
+    "prayers": {
+      "fajr": {
+        "begin": "05:17",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:35",
+        "iqamah": "20:40"
+      },
+      "isha": {
+        "begin": "21:54",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-22",
+    "serial": 203,
+    "sunrise": "06:35",
+    "sunset": "20:35",
+    "prayers": {
+      "fajr": {
+        "begin": "05:17",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:35",
+        "iqamah": "20:40"
+      },
+      "isha": {
+        "begin": "21:53",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-23",
+    "serial": 204,
+    "sunrise": "06:35",
+    "sunset": "20:34",
+    "prayers": {
+      "fajr": {
+        "begin": "05:18",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:34",
+        "iqamah": "20:39"
+      },
+      "isha": {
+        "begin": "21:52",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-24",
+    "serial": 205,
+    "sunrise": "06:36",
+    "sunset": "20:33",
+    "prayers": {
+      "fajr": {
+        "begin": "05:19",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:33",
+        "iqamah": "20:38"
+      },
+      "isha": {
+        "begin": "21:52",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-25",
+    "serial": 206,
+    "sunrise": "06:37",
+    "sunset": "20:33",
+    "prayers": {
+      "fajr": {
+        "begin": "05:20",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:33",
+        "iqamah": "20:38"
+      },
+      "isha": {
+        "begin": "21:51",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-26",
+    "serial": 207,
+    "sunrise": "06:37",
+    "sunset": "20:32",
+    "prayers": {
+      "fajr": {
+        "begin": "05:21",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:32",
+        "iqamah": "20:37"
+      },
+      "isha": {
+        "begin": "21:50",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-27",
+    "serial": 208,
+    "sunrise": "06:38",
+    "sunset": "20:31",
+    "prayers": {
+      "fajr": {
+        "begin": "05:22",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:31",
+        "iqamah": "20:36"
+      },
+      "isha": {
+        "begin": "21:49",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-28",
+    "serial": 209,
+    "sunrise": "06:39",
+    "sunset": "20:31",
+    "prayers": {
+      "fajr": {
+        "begin": "05:23",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:31",
+        "iqamah": "20:36"
+      },
+      "isha": {
+        "begin": "21:48",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-29",
+    "serial": 210,
+    "sunrise": "06:39",
+    "sunset": "20:30",
+    "prayers": {
+      "fajr": {
+        "begin": "05:24",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:30",
+        "iqamah": "20:35"
+      },
+      "isha": {
+        "begin": "21:47",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-30",
+    "serial": 211,
+    "sunrise": "06:40",
+    "sunset": "20:29",
+    "prayers": {
+      "fajr": {
+        "begin": "05:25",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:29",
+        "iqamah": "20:34"
+      },
+      "isha": {
+        "begin": "21:46",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-07-31",
+    "serial": 212,
+    "sunrise": "06:41",
+    "sunset": "20:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:26",
+        "iqamah": "05:45"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:28",
+        "iqamah": "20:33"
+      },
+      "isha": {
+        "begin": "21:45",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-01",
+    "serial": 213,
+    "sunrise": "06:41",
+    "sunset": "20:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:26",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:28",
+        "iqamah": "20:33"
+      },
+      "isha": {
+        "begin": "21:44",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-02",
+    "serial": 214,
+    "sunrise": "06:42",
+    "sunset": "20:27",
+    "prayers": {
+      "fajr": {
+        "begin": "05:27",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:27",
+        "iqamah": "20:32"
+      },
+      "isha": {
+        "begin": "21:43",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-03",
+    "serial": 215,
+    "sunrise": "06:43",
+    "sunset": "20:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:28",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:26",
+        "iqamah": "20:31"
+      },
+      "isha": {
+        "begin": "21:42",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-04",
+    "serial": 216,
+    "sunrise": "06:43",
+    "sunset": "20:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:29",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:25",
+        "iqamah": "20:30"
+      },
+      "isha": {
+        "begin": "21:40",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-05",
+    "serial": 217,
+    "sunrise": "06:44",
+    "sunset": "20:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:30",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:24",
+        "iqamah": "20:29"
+      },
+      "isha": {
+        "begin": "21:39",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-06",
+    "serial": 218,
+    "sunrise": "06:45",
+    "sunset": "20:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:31",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:23",
+        "iqamah": "20:28"
+      },
+      "isha": {
+        "begin": "21:38",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-07",
+    "serial": 219,
+    "sunrise": "06:45",
+    "sunset": "20:22",
+    "prayers": {
+      "fajr": {
+        "begin": "05:32",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:35",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:22",
+        "iqamah": "20:27"
+      },
+      "isha": {
+        "begin": "21:37",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-08",
+    "serial": 220,
+    "sunrise": "06:46",
+    "sunset": "20:21",
+    "prayers": {
+      "fajr": {
+        "begin": "05:33",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:21",
+        "iqamah": "20:26"
+      },
+      "isha": {
+        "begin": "21:36",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-09",
+    "serial": 221,
+    "sunrise": "06:47",
+    "sunset": "20:20",
+    "prayers": {
+      "fajr": {
+        "begin": "05:34",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:20",
+        "iqamah": "20:25"
+      },
+      "isha": {
+        "begin": "21:35",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-10",
+    "serial": 222,
+    "sunrise": "06:48",
+    "sunset": "20:19",
+    "prayers": {
+      "fajr": {
+        "begin": "05:35",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:19",
+        "iqamah": "20:24"
+      },
+      "isha": {
+        "begin": "21:33",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-11",
+    "serial": 223,
+    "sunrise": "06:48",
+    "sunset": "20:18",
+    "prayers": {
+      "fajr": {
+        "begin": "05:36",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:18",
+        "iqamah": "20:23"
+      },
+      "isha": {
+        "begin": "21:32",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-12",
+    "serial": 224,
+    "sunrise": "06:49",
+    "sunset": "20:17",
+    "prayers": {
+      "fajr": {
+        "begin": "05:37",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:17",
+        "iqamah": "20:22"
+      },
+      "isha": {
+        "begin": "21:31",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-13",
+    "serial": 225,
+    "sunrise": "06:50",
+    "sunset": "20:16",
+    "prayers": {
+      "fajr": {
+        "begin": "05:38",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:34",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:16",
+        "iqamah": "20:21"
+      },
+      "isha": {
+        "begin": "21:30",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-14",
+    "serial": 226,
+    "sunrise": "06:50",
+    "sunset": "20:15",
+    "prayers": {
+      "fajr": {
+        "begin": "05:38",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:15",
+        "iqamah": "20:20"
+      },
+      "isha": {
+        "begin": "21:28",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-15",
+    "serial": 227,
+    "sunrise": "06:51",
+    "sunset": "20:14",
+    "prayers": {
+      "fajr": {
+        "begin": "05:39",
+        "iqamah": "06:00"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:14",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:14",
+        "iqamah": "20:19"
+      },
+      "isha": {
+        "begin": "21:27",
+        "iqamah": "22:00"
+      }
+    }
+  },
+  {
+    "date": "2026-08-16",
+    "serial": 228,
+    "sunrise": "06:52",
+    "sunset": "20:13",
+    "prayers": {
+      "fajr": {
+        "begin": "05:40",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:13",
+        "iqamah": "20:18"
+      },
+      "isha": {
+        "begin": "21:26",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-17",
+    "serial": 229,
+    "sunrise": "06:52",
+    "sunset": "20:12",
+    "prayers": {
+      "fajr": {
+        "begin": "05:41",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:13",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:12",
+        "iqamah": "20:17"
+      },
+      "isha": {
+        "begin": "21:24",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-18",
+    "serial": 230,
+    "sunrise": "06:53",
+    "sunset": "20:11",
+    "prayers": {
+      "fajr": {
+        "begin": "05:42",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:33",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:11",
+        "iqamah": "20:16"
+      },
+      "isha": {
+        "begin": "21:23",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-19",
+    "serial": 231,
+    "sunrise": "06:54",
+    "sunset": "20:10",
+    "prayers": {
+      "fajr": {
+        "begin": "05:43",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:10",
+        "iqamah": "20:15"
+      },
+      "isha": {
+        "begin": "21:22",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-20",
+    "serial": 232,
+    "sunrise": "06:54",
+    "sunset": "20:08",
+    "prayers": {
+      "fajr": {
+        "begin": "05:44",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:12",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:08",
+        "iqamah": "20:13"
+      },
+      "isha": {
+        "begin": "21:20",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-21",
+    "serial": 233,
+    "sunrise": "06:55",
+    "sunset": "20:07",
+    "prayers": {
+      "fajr": {
+        "begin": "05:45",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:07",
+        "iqamah": "20:12"
+      },
+      "isha": {
+        "begin": "21:19",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-22",
+    "serial": 234,
+    "sunrise": "06:56",
+    "sunset": "20:06",
+    "prayers": {
+      "fajr": {
+        "begin": "05:46",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:32",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:11",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:06",
+        "iqamah": "20:11"
+      },
+      "isha": {
+        "begin": "21:18",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-23",
+    "serial": 235,
+    "sunrise": "06:56",
+    "sunset": "20:05",
+    "prayers": {
+      "fajr": {
+        "begin": "05:46",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:05",
+        "iqamah": "20:10"
+      },
+      "isha": {
+        "begin": "21:16",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-24",
+    "serial": 236,
+    "sunrise": "06:57",
+    "sunset": "20:04",
+    "prayers": {
+      "fajr": {
+        "begin": "05:47",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:10",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:04",
+        "iqamah": "20:09"
+      },
+      "isha": {
+        "begin": "21:15",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-25",
+    "serial": 237,
+    "sunrise": "06:58",
+    "sunset": "20:02",
+    "prayers": {
+      "fajr": {
+        "begin": "05:48",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:09",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:02",
+        "iqamah": "20:07"
+      },
+      "isha": {
+        "begin": "21:14",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-26",
+    "serial": 238,
+    "sunrise": "06:58",
+    "sunset": "20:01",
+    "prayers": {
+      "fajr": {
+        "begin": "05:49",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:31",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:01",
+        "iqamah": "20:06"
+      },
+      "isha": {
+        "begin": "21:12",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-27",
+    "serial": 239,
+    "sunrise": "06:59",
+    "sunset": "20:00",
+    "prayers": {
+      "fajr": {
+        "begin": "05:50",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:08",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "20:00",
+        "iqamah": "20:05"
+      },
+      "isha": {
+        "begin": "21:11",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-28",
+    "serial": 240,
+    "sunrise": "07:00",
+    "sunset": "19:59",
+    "prayers": {
+      "fajr": {
+        "begin": "05:51",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:59",
+        "iqamah": "20:04"
+      },
+      "isha": {
+        "begin": "21:09",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-29",
+    "serial": 241,
+    "sunrise": "07:00",
+    "sunset": "19:57",
+    "prayers": {
+      "fajr": {
+        "begin": "05:51",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:30",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:07",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:57",
+        "iqamah": "20:02"
+      },
+      "isha": {
+        "begin": "21:08",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-30",
+    "serial": 242,
+    "sunrise": "07:01",
+    "sunset": "19:56",
+    "prayers": {
+      "fajr": {
+        "begin": "05:52",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:06",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:56",
+        "iqamah": "20:01"
+      },
+      "isha": {
+        "begin": "21:06",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-08-31",
+    "serial": 243,
+    "sunrise": "07:02",
+    "sunset": "19:55",
+    "prayers": {
+      "fajr": {
+        "begin": "05:53",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:55",
+        "iqamah": "20:00"
+      },
+      "isha": {
+        "begin": "21:05",
+        "iqamah": "21:30"
+      }
+    }
+  },
+  {
+    "date": "2026-09-01",
+    "serial": 244,
+    "sunrise": "07:02",
+    "sunset": "19:54",
+    "prayers": {
+      "fajr": {
+        "begin": "05:54",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:29",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:05",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:54",
+        "iqamah": "19:59"
+      },
+      "isha": {
+        "begin": "21:04",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-02",
+    "serial": 245,
+    "sunrise": "07:03",
+    "sunset": "19:52",
+    "prayers": {
+      "fajr": {
+        "begin": "05:55",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:04",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:52",
+        "iqamah": "19:57"
+      },
+      "isha": {
+        "begin": "21:02",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-03",
+    "serial": 246,
+    "sunrise": "07:04",
+    "sunset": "19:51",
+    "prayers": {
+      "fajr": {
+        "begin": "05:56",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:51",
+        "iqamah": "19:56"
+      },
+      "isha": {
+        "begin": "21:01",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-04",
+    "serial": 247,
+    "sunrise": "07:04",
+    "sunset": "19:50",
+    "prayers": {
+      "fajr": {
+        "begin": "05:56",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:28",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:03",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:50",
+        "iqamah": "19:55"
+      },
+      "isha": {
+        "begin": "20:59",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-05",
+    "serial": 248,
+    "sunrise": "07:05",
+    "sunset": "19:48",
+    "prayers": {
+      "fajr": {
+        "begin": "05:57",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:02",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:48",
+        "iqamah": "19:53"
+      },
+      "isha": {
+        "begin": "20:58",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-06",
+    "serial": 249,
+    "sunrise": "07:06",
+    "sunset": "19:47",
+    "prayers": {
+      "fajr": {
+        "begin": "05:58",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:01",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:47",
+        "iqamah": "19:52"
+      },
+      "isha": {
+        "begin": "20:56",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-07",
+    "serial": 250,
+    "sunrise": "07:06",
+    "sunset": "19:46",
+    "prayers": {
+      "fajr": {
+        "begin": "05:59",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:27",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:01",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:46",
+        "iqamah": "19:51"
+      },
+      "isha": {
+        "begin": "20:55",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "serial": 251,
+    "sunrise": "07:07",
+    "sunset": "19:44",
+    "prayers": {
+      "fajr": {
+        "begin": "05:59",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "17:00",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:44",
+        "iqamah": "19:49"
+      },
+      "isha": {
+        "begin": "20:53",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-09",
+    "serial": 252,
+    "sunrise": "07:08",
+    "sunset": "19:43",
+    "prayers": {
+      "fajr": {
+        "begin": "06:00",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:59",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:43",
+        "iqamah": "19:48"
+      },
+      "isha": {
+        "begin": "20:52",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-10",
+    "serial": 253,
+    "sunrise": "07:08",
+    "sunset": "19:42",
+    "prayers": {
+      "fajr": {
+        "begin": "06:01",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:26",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:58",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:42",
+        "iqamah": "19:47"
+      },
+      "isha": {
+        "begin": "20:50",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-11",
+    "serial": 254,
+    "sunrise": "07:09",
+    "sunset": "19:40",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:58",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:40",
+        "iqamah": "19:45"
+      },
+      "isha": {
+        "begin": "20:49",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-12",
+    "serial": 255,
+    "sunrise": "07:10",
+    "sunset": "19:39",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:57",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:39",
+        "iqamah": "19:44"
+      },
+      "isha": {
+        "begin": "20:48",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-13",
+    "serial": 256,
+    "sunrise": "07:10",
+    "sunset": "19:38",
+    "prayers": {
+      "fajr": {
+        "begin": "06:03",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:25",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:56",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:38",
+        "iqamah": "19:43"
+      },
+      "isha": {
+        "begin": "20:46",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-14",
+    "serial": 257,
+    "sunrise": "07:11",
+    "sunset": "19:36",
+    "prayers": {
+      "fajr": {
+        "begin": "06:04",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:24",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:55",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:36",
+        "iqamah": "19:41"
+      },
+      "isha": {
+        "begin": "20:45",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-15",
+    "serial": 258,
+    "sunrise": "07:11",
+    "sunset": "19:35",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:24",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:54",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:35",
+        "iqamah": "19:40"
+      },
+      "isha": {
+        "begin": "20:43",
+        "iqamah": "21:15"
+      }
+    }
+  },
+  {
+    "date": "2026-09-16",
+    "serial": 259,
+    "sunrise": "07:12",
+    "sunset": "19:33",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:24",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:54",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:33",
+        "iqamah": "19:38"
+      },
+      "isha": {
+        "begin": "20:42",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-17",
+    "serial": 260,
+    "sunrise": "07:13",
+    "sunset": "19:32",
+    "prayers": {
+      "fajr": {
+        "begin": "06:06",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:23",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:53",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:32",
+        "iqamah": "19:37"
+      },
+      "isha": {
+        "begin": "20:40",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-18",
+    "serial": 261,
+    "sunrise": "07:13",
+    "sunset": "19:31",
+    "prayers": {
+      "fajr": {
+        "begin": "06:07",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:23",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:52",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:31",
+        "iqamah": "19:36"
+      },
+      "isha": {
+        "begin": "20:39",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-19",
+    "serial": 262,
+    "sunrise": "07:14",
+    "sunset": "19:29",
+    "prayers": {
+      "fajr": {
+        "begin": "06:08",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:22",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:51",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:29",
+        "iqamah": "19:34"
+      },
+      "isha": {
+        "begin": "20:37",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-20",
+    "serial": 263,
+    "sunrise": "07:15",
+    "sunset": "19:28",
+    "prayers": {
+      "fajr": {
+        "begin": "06:08",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:22",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:50",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:28",
+        "iqamah": "19:33"
+      },
+      "isha": {
+        "begin": "20:36",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-21",
+    "serial": 264,
+    "sunrise": "07:15",
+    "sunset": "19:27",
+    "prayers": {
+      "fajr": {
+        "begin": "06:09",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:22",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:49",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:27",
+        "iqamah": "19:32"
+      },
+      "isha": {
+        "begin": "20:35",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-22",
+    "serial": 265,
+    "sunrise": "07:16",
+    "sunset": "19:25",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:21",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:49",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:25",
+        "iqamah": "19:30"
+      },
+      "isha": {
+        "begin": "20:33",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-23",
+    "serial": 266,
+    "sunrise": "07:17",
+    "sunset": "19:24",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:21",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:48",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:24",
+        "iqamah": "19:29"
+      },
+      "isha": {
+        "begin": "20:32",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-24",
+    "serial": 267,
+    "sunrise": "07:17",
+    "sunset": "19:23",
+    "prayers": {
+      "fajr": {
+        "begin": "06:11",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:21",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:47",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:23",
+        "iqamah": "19:28"
+      },
+      "isha": {
+        "begin": "20:30",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-25",
+    "serial": 268,
+    "sunrise": "07:18",
+    "sunset": "19:21",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:20",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:46",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:21",
+        "iqamah": "19:26"
+      },
+      "isha": {
+        "begin": "20:29",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-26",
+    "serial": 269,
+    "sunrise": "07:19",
+    "sunset": "19:20",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:20",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:45",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:20",
+        "iqamah": "19:25"
+      },
+      "isha": {
+        "begin": "20:28",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-27",
+    "serial": 270,
+    "sunrise": "07:19",
+    "sunset": "19:19",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:20",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:44",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:19",
+        "iqamah": "19:24"
+      },
+      "isha": {
+        "begin": "20:26",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-28",
+    "serial": 271,
+    "sunrise": "07:20",
+    "sunset": "19:17",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:19",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:43",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:17",
+        "iqamah": "19:22"
+      },
+      "isha": {
+        "begin": "20:25",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-29",
+    "serial": 272,
+    "sunrise": "07:21",
+    "sunset": "19:16",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:19",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:42",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:16",
+        "iqamah": "19:21"
+      },
+      "isha": {
+        "begin": "20:23",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-09-30",
+    "serial": 273,
+    "sunrise": "07:21",
+    "sunset": "19:14",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "13:19",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:41",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:14",
+        "iqamah": "19:19"
+      },
+      "isha": {
+        "begin": "20:22",
+        "iqamah": "21:00"
+      }
+    }
+  },
+  {
+    "date": "2026-10-01",
+    "serial": 274,
+    "sunrise": "07:22",
+    "sunset": "19:13",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:18",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:41",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:13",
+        "iqamah": "19:18"
+      },
+      "isha": {
+        "begin": "20:21",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-02",
+    "serial": 275,
+    "sunrise": "07:23",
+    "sunset": "19:12",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:18",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:40",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:12",
+        "iqamah": "19:17"
+      },
+      "isha": {
+        "begin": "20:19",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-03",
+    "serial": 276,
+    "sunrise": "07:23",
+    "sunset": "19:10",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:18",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:39",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:10",
+        "iqamah": "19:15"
+      },
+      "isha": {
+        "begin": "20:18",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-04",
+    "serial": 277,
+    "sunrise": "07:24",
+    "sunset": "19:09",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:17",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:38",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:09",
+        "iqamah": "19:14"
+      },
+      "isha": {
+        "begin": "20:17",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-05",
+    "serial": 278,
+    "sunrise": "07:25",
+    "sunset": "19:08",
+    "prayers": {
+      "fajr": {
+        "begin": "06:19",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:17",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:37",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:08",
+        "iqamah": "19:13"
+      },
+      "isha": {
+        "begin": "20:15",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-06",
+    "serial": 279,
+    "sunrise": "07:26",
+    "sunset": "19:07",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:17",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:36",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:07",
+        "iqamah": "19:12"
+      },
+      "isha": {
+        "begin": "20:14",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-07",
+    "serial": 280,
+    "sunrise": "07:26",
+    "sunset": "19:05",
+    "prayers": {
+      "fajr": {
+        "begin": "06:20",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:17",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:35",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:05",
+        "iqamah": "19:10"
+      },
+      "isha": {
+        "begin": "20:13",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-08",
+    "serial": 281,
+    "sunrise": "07:27",
+    "sunset": "19:04",
+    "prayers": {
+      "fajr": {
+        "begin": "06:21",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:16",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:34",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:04",
+        "iqamah": "19:09"
+      },
+      "isha": {
+        "begin": "20:12",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-09",
+    "serial": 282,
+    "sunrise": "07:28",
+    "sunset": "19:03",
+    "prayers": {
+      "fajr": {
+        "begin": "06:22",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:16",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:33",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:03",
+        "iqamah": "19:08"
+      },
+      "isha": {
+        "begin": "20:10",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-10",
+    "serial": 283,
+    "sunrise": "07:28",
+    "sunset": "19:01",
+    "prayers": {
+      "fajr": {
+        "begin": "06:22",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:16",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:32",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:01",
+        "iqamah": "19:06"
+      },
+      "isha": {
+        "begin": "20:09",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-11",
+    "serial": 284,
+    "sunrise": "07:29",
+    "sunset": "19:00",
+    "prayers": {
+      "fajr": {
+        "begin": "06:23",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:15",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:32",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "19:00",
+        "iqamah": "19:05"
+      },
+      "isha": {
+        "begin": "20:08",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-12",
+    "serial": 285,
+    "sunrise": "07:30",
+    "sunset": "18:59",
+    "prayers": {
+      "fajr": {
+        "begin": "06:24",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:15",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:31",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:59",
+        "iqamah": "19:04"
+      },
+      "isha": {
+        "begin": "20:07",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-13",
+    "serial": 286,
+    "sunrise": "07:31",
+    "sunset": "18:58",
+    "prayers": {
+      "fajr": {
+        "begin": "06:24",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:15",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:30",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:58",
+        "iqamah": "19:03"
+      },
+      "isha": {
+        "begin": "20:06",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-14",
+    "serial": 287,
+    "sunrise": "07:31",
+    "sunset": "18:57",
+    "prayers": {
+      "fajr": {
+        "begin": "06:25",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:15",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:29",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:57",
+        "iqamah": "19:02"
+      },
+      "isha": {
+        "begin": "20:04",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-15",
+    "serial": 288,
+    "sunrise": "07:32",
+    "sunset": "18:55",
+    "prayers": {
+      "fajr": {
+        "begin": "06:26",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:15",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:28",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:55",
+        "iqamah": "19:00"
+      },
+      "isha": {
+        "begin": "20:03",
+        "iqamah": "20:30"
+      }
+    }
+  },
+  {
+    "date": "2026-10-16",
+    "serial": 289,
+    "sunrise": "07:33",
+    "sunset": "18:54",
+    "prayers": {
+      "fajr": {
+        "begin": "06:27",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:14",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:27",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:54",
+        "iqamah": "18:59"
+      },
+      "isha": {
+        "begin": "20:02",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "serial": 290,
+    "sunrise": "07:34",
+    "sunset": "18:53",
+    "prayers": {
+      "fajr": {
+        "begin": "06:27",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:14",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:26",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:53",
+        "iqamah": "18:58"
+      },
+      "isha": {
+        "begin": "20:01",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-18",
+    "serial": 291,
+    "sunrise": "07:35",
+    "sunset": "18:52",
+    "prayers": {
+      "fajr": {
+        "begin": "06:28",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:14",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:25",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:52",
+        "iqamah": "18:57"
+      },
+      "isha": {
+        "begin": "20:00",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-19",
+    "serial": 292,
+    "sunrise": "07:35",
+    "sunset": "18:51",
+    "prayers": {
+      "fajr": {
+        "begin": "06:29",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:14",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:24",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:51",
+        "iqamah": "18:56"
+      },
+      "isha": {
+        "begin": "19:59",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-20",
+    "serial": 293,
+    "sunrise": "07:36",
+    "sunset": "18:50",
+    "prayers": {
+      "fajr": {
+        "begin": "06:29",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:14",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:24",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:50",
+        "iqamah": "18:55"
+      },
+      "isha": {
+        "begin": "19:58",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-21",
+    "serial": 294,
+    "sunrise": "07:37",
+    "sunset": "18:48",
+    "prayers": {
+      "fajr": {
+        "begin": "06:30",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:23",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:48",
+        "iqamah": "18:53"
+      },
+      "isha": {
+        "begin": "19:57",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-22",
+    "serial": 295,
+    "sunrise": "07:38",
+    "sunset": "18:47",
+    "prayers": {
+      "fajr": {
+        "begin": "06:31",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:22",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:47",
+        "iqamah": "18:52"
+      },
+      "isha": {
+        "begin": "19:56",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-23",
+    "serial": 296,
+    "sunrise": "07:38",
+    "sunset": "18:46",
+    "prayers": {
+      "fajr": {
+        "begin": "06:32",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:21",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:46",
+        "iqamah": "18:51"
+      },
+      "isha": {
+        "begin": "19:55",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-24",
+    "serial": 297,
+    "sunrise": "07:39",
+    "sunset": "18:45",
+    "prayers": {
+      "fajr": {
+        "begin": "06:32",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:20",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:45",
+        "iqamah": "18:50"
+      },
+      "isha": {
+        "begin": "19:54",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-25",
+    "serial": 298,
+    "sunrise": "07:40",
+    "sunset": "18:44",
+    "prayers": {
+      "fajr": {
+        "begin": "06:33",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:20",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:44",
+        "iqamah": "18:49"
+      },
+      "isha": {
+        "begin": "19:53",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-26",
+    "serial": 299,
+    "sunrise": "07:41",
+    "sunset": "18:43",
+    "prayers": {
+      "fajr": {
+        "begin": "06:34",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:19",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:43",
+        "iqamah": "18:48"
+      },
+      "isha": {
+        "begin": "19:52",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-27",
+    "serial": 300,
+    "sunrise": "07:42",
+    "sunset": "18:42",
+    "prayers": {
+      "fajr": {
+        "begin": "06:35",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:18",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:42",
+        "iqamah": "18:47"
+      },
+      "isha": {
+        "begin": "19:51",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-28",
+    "serial": 301,
+    "sunrise": "07:43",
+    "sunset": "18:41",
+    "prayers": {
+      "fajr": {
+        "begin": "06:35",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:13",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:17",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:41",
+        "iqamah": "18:46"
+      },
+      "isha": {
+        "begin": "19:50",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-29",
+    "serial": 302,
+    "sunrise": "07:43",
+    "sunset": "18:40",
+    "prayers": {
+      "fajr": {
+        "begin": "06:36",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:12",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:40",
+        "iqamah": "18:45"
+      },
+      "isha": {
+        "begin": "19:49",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-30",
+    "serial": 303,
+    "sunrise": "07:44",
+    "sunset": "18:39",
+    "prayers": {
+      "fajr": {
+        "begin": "06:37",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:12",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:16",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:39",
+        "iqamah": "18:44"
+      },
+      "isha": {
+        "begin": "19:48",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-10-31",
+    "serial": 304,
+    "sunrise": "07:45",
+    "sunset": "18:38",
+    "prayers": {
+      "fajr": {
+        "begin": "06:38",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "13:12",
+        "iqamah": "14:00"
+      },
+      "asr": {
+        "begin": "16:15",
+        "iqamah": "17:30"
+      },
+      "maghrib": {
+        "begin": "18:38",
+        "iqamah": "18:43"
+      },
+      "isha": {
+        "begin": "19:47",
+        "iqamah": "20:15"
+      }
+    }
+  },
+  {
+    "date": "2026-11-01",
+    "serial": 305,
+    "sunrise": "06:46",
+    "sunset": "17:37",
+    "prayers": {
+      "fajr": {
+        "begin": "05:38",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:14",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:37",
+        "iqamah": "17:42"
+      },
+      "isha": {
+        "begin": "18:46",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-02",
+    "serial": 306,
+    "sunrise": "06:47",
+    "sunset": "17:36",
+    "prayers": {
+      "fajr": {
+        "begin": "05:39",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:14",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:36",
+        "iqamah": "17:41"
+      },
+      "isha": {
+        "begin": "18:46",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-03",
+    "serial": 307,
+    "sunrise": "06:48",
+    "sunset": "17:36",
+    "prayers": {
+      "fajr": {
+        "begin": "05:40",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:13",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:36",
+        "iqamah": "17:41"
+      },
+      "isha": {
+        "begin": "18:45",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-04",
+    "serial": 308,
+    "sunrise": "06:49",
+    "sunset": "17:35",
+    "prayers": {
+      "fajr": {
+        "begin": "05:41",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:12",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:35",
+        "iqamah": "17:40"
+      },
+      "isha": {
+        "begin": "18:44",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-05",
+    "serial": 309,
+    "sunrise": "06:50",
+    "sunset": "17:34",
+    "prayers": {
+      "fajr": {
+        "begin": "05:41",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:12",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:34",
+        "iqamah": "17:39"
+      },
+      "isha": {
+        "begin": "18:43",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-06",
+    "serial": 310,
+    "sunrise": "06:50",
+    "sunset": "17:33",
+    "prayers": {
+      "fajr": {
+        "begin": "05:42",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:11",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:33",
+        "iqamah": "17:38"
+      },
+      "isha": {
+        "begin": "18:43",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-07",
+    "serial": 311,
+    "sunrise": "06:51",
+    "sunset": "17:32",
+    "prayers": {
+      "fajr": {
+        "begin": "05:43",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:12",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:10",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:32",
+        "iqamah": "17:37"
+      },
+      "isha": {
+        "begin": "18:42",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-08",
+    "serial": 312,
+    "sunrise": "06:52",
+    "sunset": "17:32",
+    "prayers": {
+      "fajr": {
+        "begin": "05:44",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:10",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:32",
+        "iqamah": "17:37"
+      },
+      "isha": {
+        "begin": "18:41",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-09",
+    "serial": 313,
+    "sunrise": "06:52",
+    "sunset": "17:32",
+    "prayers": {
+      "fajr": {
+        "begin": "05:44",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:10",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:32",
+        "iqamah": "17:37"
+      },
+      "isha": {
+        "begin": "18:41",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-10",
+    "serial": 314,
+    "sunrise": "06:54",
+    "sunset": "17:30",
+    "prayers": {
+      "fajr": {
+        "begin": "05:45",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:09",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:30",
+        "iqamah": "17:35"
+      },
+      "isha": {
+        "begin": "18:40",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-11",
+    "serial": 315,
+    "sunrise": "06:55",
+    "sunset": "17:29",
+    "prayers": {
+      "fajr": {
+        "begin": "05:46",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:08",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:29",
+        "iqamah": "17:34"
+      },
+      "isha": {
+        "begin": "18:40",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-12",
+    "serial": 316,
+    "sunrise": "06:56",
+    "sunset": "17:29",
+    "prayers": {
+      "fajr": {
+        "begin": "05:47",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:08",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:29",
+        "iqamah": "17:34"
+      },
+      "isha": {
+        "begin": "18:39",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-13",
+    "serial": 317,
+    "sunrise": "06:57",
+    "sunset": "17:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:48",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:07",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:28",
+        "iqamah": "17:33"
+      },
+      "isha": {
+        "begin": "18:39",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-14",
+    "serial": 318,
+    "sunrise": "06:58",
+    "sunset": "17:28",
+    "prayers": {
+      "fajr": {
+        "begin": "05:48",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:07",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:28",
+        "iqamah": "17:33"
+      },
+      "isha": {
+        "begin": "18:38",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-15",
+    "serial": 319,
+    "sunrise": "06:59",
+    "sunset": "17:27",
+    "prayers": {
+      "fajr": {
+        "begin": "05:49",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:13",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:06",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:27",
+        "iqamah": "17:32"
+      },
+      "isha": {
+        "begin": "18:38",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-16",
+    "serial": 320,
+    "sunrise": "06:59",
+    "sunset": "17:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:50",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:14",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:06",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:26",
+        "iqamah": "17:31"
+      },
+      "isha": {
+        "begin": "18:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-17",
+    "serial": 321,
+    "sunrise": "07:00",
+    "sunset": "17:26",
+    "prayers": {
+      "fajr": {
+        "begin": "05:51",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:14",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:06",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:26",
+        "iqamah": "17:31"
+      },
+      "isha": {
+        "begin": "18:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-18",
+    "serial": 322,
+    "sunrise": "07:01",
+    "sunset": "17:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:52",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:14",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:25",
+        "iqamah": "17:30"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-19",
+    "serial": 323,
+    "sunrise": "07:02",
+    "sunset": "17:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:52",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:14",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:25",
+        "iqamah": "17:30"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-20",
+    "serial": 324,
+    "sunrise": "07:03",
+    "sunset": "17:25",
+    "prayers": {
+      "fajr": {
+        "begin": "05:53",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:14",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:25",
+        "iqamah": "17:30"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-21",
+    "serial": 325,
+    "sunrise": "07:04",
+    "sunset": "17:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:54",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:15",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:24",
+        "iqamah": "17:29"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-22",
+    "serial": 326,
+    "sunrise": "07:05",
+    "sunset": "17:24",
+    "prayers": {
+      "fajr": {
+        "begin": "05:55",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:15",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:24",
+        "iqamah": "17:29"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-23",
+    "serial": 327,
+    "sunrise": "07:06",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:56",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:15",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-24",
+    "serial": 328,
+    "sunrise": "07:07",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:56",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:16",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-25",
+    "serial": 329,
+    "sunrise": "07:08",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:57",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:16",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-26",
+    "serial": 330,
+    "sunrise": "07:09",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "05:58",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:16",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-27",
+    "serial": 331,
+    "sunrise": "07:09",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "05:59",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:16",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-28",
+    "serial": 332,
+    "sunrise": "07:10",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "05:59",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:17",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-29",
+    "serial": 333,
+    "sunrise": "07:11",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:00",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:17",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-11-30",
+    "serial": 334,
+    "sunrise": "07:12",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:01",
+        "iqamah": "06:15"
+      },
+      "dhuhr": {
+        "begin": "12:18",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-01",
+    "serial": 335,
+    "sunrise": "07:13",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:18",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-02",
+    "serial": 336,
+    "sunrise": "07:14",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:02",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:18",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-03",
+    "serial": 337,
+    "sunrise": "07:15",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:03",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:19",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-04",
+    "serial": 338,
+    "sunrise": "07:15",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:04",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:19",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-05",
+    "serial": 339,
+    "sunrise": "07:16",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:19",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:34",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-06",
+    "serial": 340,
+    "sunrise": "07:17",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:05",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:20",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-07",
+    "serial": 341,
+    "sunrise": "07:18",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:06",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:20",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-08",
+    "serial": 342,
+    "sunrise": "07:18",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:06",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:20",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-09",
+    "serial": 343,
+    "sunrise": "07:19",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:07",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:21",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:03",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-10",
+    "serial": 344,
+    "sunrise": "07:20",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:08",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:22",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:35",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-11",
+    "serial": 345,
+    "sunrise": "07:21",
+    "sunset": "17:22",
+    "prayers": {
+      "fajr": {
+        "begin": "06:09",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:22",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:22",
+        "iqamah": "17:27"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-12",
+    "serial": 346,
+    "sunrise": "07:21",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "06:09",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:23",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:04",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-13",
+    "serial": 347,
+    "sunrise": "07:22",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "06:10",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:23",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:36",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-14",
+    "serial": 348,
+    "sunrise": "07:23",
+    "sunset": "17:23",
+    "prayers": {
+      "fajr": {
+        "begin": "06:11",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:24",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:23",
+        "iqamah": "17:28"
+      },
+      "isha": {
+        "begin": "18:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-15",
+    "serial": 349,
+    "sunrise": "07:23",
+    "sunset": "17:24",
+    "prayers": {
+      "fajr": {
+        "begin": "06:11",
+        "iqamah": "06:30"
+      },
+      "dhuhr": {
+        "begin": "12:24",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:05",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:24",
+        "iqamah": "17:29"
+      },
+      "isha": {
+        "begin": "18:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-16",
+    "serial": 350,
+    "sunrise": "07:24",
+    "sunset": "17:24",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:25",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:06",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:24",
+        "iqamah": "17:29"
+      },
+      "isha": {
+        "begin": "18:37",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-17",
+    "serial": 351,
+    "sunrise": "07:25",
+    "sunset": "17:24",
+    "prayers": {
+      "fajr": {
+        "begin": "06:12",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:25",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:06",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:24",
+        "iqamah": "17:29"
+      },
+      "isha": {
+        "begin": "18:38",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-18",
+    "serial": 352,
+    "sunrise": "07:25",
+    "sunset": "17:25",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:26",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:07",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:25",
+        "iqamah": "17:30"
+      },
+      "isha": {
+        "begin": "18:38",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-19",
+    "serial": 353,
+    "sunrise": "07:26",
+    "sunset": "17:25",
+    "prayers": {
+      "fajr": {
+        "begin": "06:13",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:26",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:07",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:25",
+        "iqamah": "17:30"
+      },
+      "isha": {
+        "begin": "18:39",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-20",
+    "serial": 354,
+    "sunrise": "07:26",
+    "sunset": "17:26",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:26",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:08",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:26",
+        "iqamah": "17:31"
+      },
+      "isha": {
+        "begin": "18:39",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-21",
+    "serial": 355,
+    "sunrise": "07:27",
+    "sunset": "17:26",
+    "prayers": {
+      "fajr": {
+        "begin": "06:14",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:27",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:08",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:26",
+        "iqamah": "17:31"
+      },
+      "isha": {
+        "begin": "18:40",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-22",
+    "serial": 356,
+    "sunrise": "07:27",
+    "sunset": "17:27",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:27",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:09",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:27",
+        "iqamah": "17:32"
+      },
+      "isha": {
+        "begin": "18:40",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-23",
+    "serial": 357,
+    "sunrise": "07:28",
+    "sunset": "17:27",
+    "prayers": {
+      "fajr": {
+        "begin": "06:15",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:28",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:09",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:27",
+        "iqamah": "17:32"
+      },
+      "isha": {
+        "begin": "18:41",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-24",
+    "serial": 358,
+    "sunrise": "07:28",
+    "sunset": "17:28",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:28",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:10",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:28",
+        "iqamah": "17:33"
+      },
+      "isha": {
+        "begin": "18:41",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-25",
+    "serial": 359,
+    "sunrise": "07:29",
+    "sunset": "17:28",
+    "prayers": {
+      "fajr": {
+        "begin": "06:16",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:29",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:10",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:28",
+        "iqamah": "17:33"
+      },
+      "isha": {
+        "begin": "18:42",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-26",
+    "serial": 360,
+    "sunrise": "07:29",
+    "sunset": "17:29",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:29",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:11",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:29",
+        "iqamah": "17:34"
+      },
+      "isha": {
+        "begin": "18:42",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-27",
+    "serial": 361,
+    "sunrise": "07:29",
+    "sunset": "17:30",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:30",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:11",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:30",
+        "iqamah": "17:35"
+      },
+      "isha": {
+        "begin": "18:43",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-28",
+    "serial": 362,
+    "sunrise": "07:30",
+    "sunset": "17:30",
+    "prayers": {
+      "fajr": {
+        "begin": "06:17",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:30",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:12",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:30",
+        "iqamah": "17:35"
+      },
+      "isha": {
+        "begin": "18:44",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-29",
+    "serial": 363,
+    "sunrise": "07:30",
+    "sunset": "17:31",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:31",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:13",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:31",
+        "iqamah": "17:36"
+      },
+      "isha": {
+        "begin": "18:44",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-30",
+    "serial": 364,
+    "sunrise": "07:30",
+    "sunset": "17:32",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:31",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:13",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:32",
+        "iqamah": "17:37"
+      },
+      "isha": {
+        "begin": "18:45",
+        "iqamah": "20:00"
+      }
+    }
+  },
+  {
+    "date": "2026-12-31",
+    "serial": 365,
+    "sunrise": "07:31",
+    "sunset": "17:32",
+    "prayers": {
+      "fajr": {
+        "begin": "06:18",
+        "iqamah": "06:45"
+      },
+      "dhuhr": {
+        "begin": "12:32",
+        "iqamah": "13:00"
+      },
+      "asr": {
+        "begin": "15:14",
+        "iqamah": "16:15"
+      },
+      "maghrib": {
+        "begin": "17:32",
+        "iqamah": "17:37"
+      },
+      "isha": {
+        "begin": "18:45",
+        "iqamah": "20:00"
+      }
+    }
+  }
+]

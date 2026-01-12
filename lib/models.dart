@@ -1,13 +1,14 @@
 
+// lib/models.dart
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
+import 'prayer_times_firebase.dart';
 
 class PrayerTime {
-  final String begin;   // 'HH:mm' 24h
-  final String iqamah;  // 'HH:mm' 24h
+  final String begin;  // 'HH:mm'
+  final String iqamah; // 'HH:mm'
   PrayerTime({required this.begin, required this.iqamah});
   factory PrayerTime.fromJson(Map<String, dynamic> j)
-    => PrayerTime(begin: j['begin'], iqamah: j['iqamah']);
+  => PrayerTime(begin: j['begin'], iqamah: j['iqamah']);
 }
 
 class PrayerDay {
@@ -16,8 +17,13 @@ class PrayerDay {
   final String? sunrise;
   final String? sunset;
   final int serial;
-
-  PrayerDay({required this.date, required this.prayers, this.sunrise, this.sunset, required this.serial});
+  PrayerDay({
+    required this.date,
+    required this.prayers,
+    this.sunrise,
+    this.sunset,
+    required this.serial,
+  });
 
   factory PrayerDay.fromJson(Map<String, dynamic> j) {
     final date = DateTime.parse(j['date'] as String);
@@ -35,8 +41,13 @@ class PrayerDay {
   }
 }
 
+/// Canonical loader: reads local file; on first run falls back to bundled asset
+/// and persists it. No network dependency.
 Future<List<PrayerDay>> loadPrayerDays() async {
-  final txt = await rootBundle.loadString('assets/data/prayer_times_2026.json');
+  final repo = PrayerTimesRepository();
+  final txt = await repo.loadLocalJsonOrAsset();
   final List<dynamic> arr = jsonDecode(txt);
-  return arr.map((e) => PrayerDay.fromJson(e as Map<String, dynamic>)).toList();
+  return arr
+      .map((e) => PrayerDay.fromJson(e as Map<String, dynamic>))
+      .toList();
 }
