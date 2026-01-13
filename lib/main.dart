@@ -81,7 +81,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         final year = (yearStr != null) ? int.tryParse(yearStr) : null;
         final ok = await _repo.refreshFromFirebase(year: year);
         if (ok && mounted) {
-          setState(() => _initFuture = _initializeAll());
+          setState(() { _initFuture = _initializeAll(); });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Prayer times updated')),
           );
