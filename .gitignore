@@ -43,3 +43,6 @@ tools/fcm/serviceAccount*.json
 serviceAccount*.json
 tools/fcm/node_modules/
 tools/fcm/package-lock.json
+
+.flutter-plugins-dependencies
+local.json
