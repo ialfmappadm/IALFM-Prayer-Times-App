@@ -12,6 +12,14 @@ class PrayerTime {
   PrayerTime({required this.begin, required this.iqamah});
   factory PrayerTime.fromJson(Map<String, dynamic> j)
   => PrayerTime(begin: j['begin'] as String, iqamah: j['iqamah'] as String);
+import 'prayer_times_firebase.dart';
+
+class PrayerTime {
+  final String begin;  // 'HH:mm'
+  final String iqamah; // 'HH:mm'
+  PrayerTime({required this.begin, required this.iqamah});
+  factory PrayerTime.fromJson(Map<String, dynamic> j)
+  => PrayerTime(begin: j['begin'], iqamah: j['iqamah']);
 }
 
 class PrayerDay {
@@ -20,7 +28,6 @@ class PrayerDay {
   final String? sunrise;
   final String? sunset;
   final int serial;
-
   PrayerDay({
     required this.date,
     required this.prayers,
@@ -49,48 +56,13 @@ class PrayerDay {
   }
 }
 
-/// Loads prayer days from local storage if available; otherwise falls back to asset.
-/// Pass `year` so the asset fallback matches the current year.
-Future<List<PrayerDay>> loadPrayerDays({int? year}) async {
-  // 1) Try local override first: /data/data/<pkg>/app_flutter/prayer_times_local.json
-  try {
-    final dir = await getApplicationDocumentsDirectory();
-    final localFile = File('${dir.path}/prayer_times_local.json');
-    if (await localFile.exists()) {
-      final txt = await localFile.readAsString();
-      final decoded = jsonDecode(txt);
-      final List<dynamic> arr = _coerceToList(decoded);
-      final result = arr
-          .map((e) => PrayerDay.fromJson(e as Map<String, dynamic>))
-          .toList();
-      if (result.isNotEmpty) {
-        debugPrint('loadPrayerDays(): using LOCAL file ${localFile.path} (count=${result.length})');
-        return result;
-      }
-    }
-  } catch (e, st) {
-    debugPrint('loadPrayerDays(): local read failed: $e\n$st');
-  }
-
-  // 2) Fallback to asset
-  final y = year ?? DateTime.now().year;
-  final assetPath = 'assets/data/prayer_times_$y.json';
-  final txt = await rootBundle.loadString(assetPath);
-  final decoded = jsonDecode(txt);
-  final List<dynamic> arr = _coerceToList(decoded);
-  debugPrint('loadPrayerDays(): using ASSET $assetPath (count=${arr.length})');
+/// Canonical loader: reads local file; on first run falls back to bundled asset
+/// and persists it. No network dependency.
+Future<List<PrayerDay>> loadPrayerDays() async {
+  final repo = PrayerTimesRepository();
+  final txt = await repo.loadLocalJsonOrAsset();
+  final List<dynamic> arr = jsonDecode(txt);
   return arr
       .map((e) => PrayerDay.fromJson(e as Map<String, dynamic>))
       .toList();
-}
-
-/// Helper: accept either a List of day objects, or a Map keyed by date,
-/// and also { "days": [ ... ] }.
-List<dynamic> _coerceToList(dynamic decoded) {
-  if (decoded is List) return decoded;
-  if (decoded is Map<String, dynamic>) {
-    if (decoded['days'] is List) return decoded['days'] as List<dynamic>;
-    return decoded.values.toList(); // map keyed by date -> take values
-  }
-  throw FormatException('Unsupported JSON structure for prayer times');
 }

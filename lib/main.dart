@@ -7,11 +7,11 @@ import 'package:flutter/foundation.dart'; // kDebugMode
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 import 'models.dart'; // loadPrayerDays(), PrayerDay, PrayerTime
 import 'pages/prayer_page.dart';
@@ -21,13 +21,24 @@ import 'prayer_times_firebase.dart';
 
 // GLOBAL: ScaffoldMessenger key for app-wide SnackBars
 final GlobalKey<ScaffoldMessengerState> messengerKey =
-GlobalKey<ScaffoldMessengerState>();
+    GlobalKey<ScaffoldMessengerState>();
 
+/// Background FCM: init Firebase, App Check, then refresh local file if instructed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
+
+  // App Check in the background isolate (avoid placeholder token)
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
+    );
+  } catch (_) {}
+
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -41,10 +52,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Register once, before runApp (moved out of _initializeAll)
+  // Register background handler ONCE at startup
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // ✅ App Check activation with debug provider for dev builds
+  // App Check activation (foreground)
   await FirebaseAppCheck.instance.activate(
     androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
     appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
@@ -102,6 +113,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     super.initState();
     _initFuture = _initializeAll();
 
+    // Foreground FCM -> refresh Storage -> rebuild UI
     FirebaseMessaging.onMessage.listen((m) async {
       if (m.data['updatePrayerTimes'] == 'true') {
         final yearStr = m.data['year'];
@@ -110,7 +122,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         if (!mounted) return;
         if (ok) {
           setState(() {
-            _initFuture = _initializeAll(); // re-read from disk → rebuild UI
+            _initFuture = _initializeAll(); // re-read from disk -> rebuild UI
           });
           messengerKey.currentState?.showSnackBar(
             const SnackBar(content: Text('Prayer times updated')),
@@ -138,7 +150,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         if (snap.hasError) {
           return _SplashScaffold(
             title: 'Starting up…',
-            subtitle: 'Something went wrong:\n${snap.error}',
+            subtitle: 'Error:\n${snap.error}',
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
@@ -170,16 +182,19 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
-    // Make sure latest (remote) file is downloaded if needed
+    // Best-effort refresh from Firebase at startup (fallback to local if missing)
     try {
-      await _repo.ensureLatestForCurrentYear();
-    } catch (_) {}
+      final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
+      debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+    } catch (e, st) {
+      debugPrint('Startup refresh error: $e\n$st');
+    }
 
-    // Determine current year then read local file (with asset fallback)
+    // Load local canonical file (asset fallback) for current year
     final nowLocal = DateTime.now();
     List<PrayerDay> days;
     try {
-      days = await loadPrayerDays(year: nowLocal.year); // <-- changed
+      days = await loadPrayerDays(year: nowLocal.year);
     } catch (e, st) {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
@@ -238,6 +253,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       serial: 0,
     );
   }
+}
+
+class _InitResult {
+  final tz.Location location;
+  final DateTime nowLocal;
+  final PrayerDay today;
+  final PrayerDay? tomorrow;
+  final double? temperatureF;
+  _InitResult({
+    required this.location,
+    required this.nowLocal,
+    required this.today,
+    required this.tomorrow,
+    required this.temperatureF,
+  });
 }
 
 class _SplashScaffold extends StatelessWidget {
@@ -325,21 +355,6 @@ class _HomeTabsState extends State<HomeTabs> {
       ),
     );
   }
-}
-
-class _InitResult {
-  final tz.Location location;
-  final DateTime nowLocal;
-  final PrayerDay today;
-  final PrayerDay? tomorrow;
-  final double? temperatureF;
-  _InitResult({
-    required this.location,
-    required this.nowLocal,
-    required this.today,
-    required this.tomorrow,
-    required this.temperatureF,
-  });
 }
 
 class LatLon {

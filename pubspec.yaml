@@ -48,7 +48,8 @@ flutter:
   uses-material-design: true
   assets:
     # Shipped assets (seed/offline fallback)
-    - assets/data/prayer_times_2026.json
+    #- assets/data/prayer_times_2026.json
+    - assets/data/prayer_times_local.json
     - assets/announcements.json
 
 # ----------------------------
