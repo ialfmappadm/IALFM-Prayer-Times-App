@@ -2,8 +2,8 @@
 // lib/main.dart
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // kDebugMode
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
@@ -11,6 +11,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'models.dart'; // loadPrayerDays(), PrayerDay, PrayerTime
 import 'pages/prayer_page.dart';
@@ -18,22 +19,59 @@ import 'utils/time_utils.dart';
 import 'widgets/announcements_tab.dart';
 import 'prayer_times_firebase.dart';
 
-/// Background FCM: init Firebase, refresh local file if instructed.
+// GLOBAL: ScaffoldMessenger key for app-wide SnackBars
+final GlobalKey<ScaffoldMessengerState> messengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+/// Background FCM: init Firebase, App Check, then refresh local file if instructed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
-  final repo = PrayerTimesRepository(); // LAZY -> safe
+
+  // App Check in the background isolate (avoid placeholder token)
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
+    );
+  } catch (_) {}
+
+  final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
   final year = (yearStr != null) ? int.tryParse(yearStr) : null;
-  if (shouldRefresh) { await repo.refreshFromFirebase(year: year); }
+  if (shouldRefresh) {
+    await repo.refreshFromFirebase(year: year);
+  }
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BootstrapApp());
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Register background handler ONCE at startup
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // App Check activation (foreground)
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
+  );
+
+  // Optional error hook
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+  };
+
+  runZonedGuarded(() {
+    runApp(const BootstrapApp());
+  }, (Object error, StackTrace stack) {
+    debugPrint('Uncaught async error: $error\n$stack');
+  });
 }
 
 class BootstrapApp extends StatelessWidget {
@@ -54,6 +92,7 @@ class BootstrapApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Prayer Times',
       theme: base.copyWith(textTheme: textTheme),
+      scaffoldMessengerKey: messengerKey,
       home: const _BootstrapScreen(),
     );
   }
@@ -67,22 +106,25 @@ class _BootstrapScreen extends StatefulWidget {
 
 class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
-  final PrayerTimesRepository _repo = PrayerTimesRepository(); // LAZY
+  final PrayerTimesRepository _repo = PrayerTimesRepository();
 
   @override
   void initState() {
     super.initState();
     _initFuture = _initializeAll();
 
-    // Foreground FCM -> refresh Storage -> rebuild
+    // Foreground FCM -> refresh Storage -> rebuild UI
     FirebaseMessaging.onMessage.listen((m) async {
       if (m.data['updatePrayerTimes'] == 'true') {
         final yearStr = m.data['year'];
         final year = (yearStr != null) ? int.tryParse(yearStr) : null;
         final ok = await _repo.refreshFromFirebase(year: year);
-        if (ok && mounted) {
-          setState(() { _initFuture = _initializeAll(); });
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        if (ok) {
+          setState(() {
+            _initFuture = _initializeAll(); // re-read from disk -> rebuild UI
+          });
+          messengerKey.currentState?.showSnackBar(
             const SnackBar(content: Text('Prayer times updated')),
           );
         }
@@ -97,7 +139,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
-          return PrayerTimesApp(
+          return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
             today: r.today,
@@ -121,17 +163,18 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 
   Future<_InitResult> _initializeAll() async {
-    // 1) Firebase
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // FCM permissions / topic subscription
+    try {
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true, badge: true, sound: true, provisional: false,
+      );
+      debugPrint('FCM permission: ${settings.authorizationStatus}');
+      await FirebaseMessaging.instance.subscribeToTopic('allUsers');
+    } catch (e, st) {
+      debugPrint('FCM setup error: $e\n$st');
+    }
 
-    // 2) FCM (background handler + permissions + topic)
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true, badge: true, sound: true, provisional: false,
-    );
-    await FirebaseMessaging.instance.subscribeToTopic('allUsers');
-
-    // 3) Timezone
+    // Timezone
     tz.Location location;
     try {
       location = await initCentralTime();
@@ -139,37 +182,52 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
-    // 4) Ensure latest-year file (graceful if Storage doesn’t have it yet)
-    try { await _repo.ensureLatestForCurrentYear(); } catch (_) {}
+    // Best-effort refresh from Firebase at startup (fallback to local if missing)
+    try {
+      final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
+      debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+    } catch (e, st) {
+      debugPrint('Startup refresh error: $e\n$st');
+    }
 
-    // 5) Load local canonical file (asset fallback on first run)
+    // Load local canonical file (asset fallback) for current year
+    final nowLocal = DateTime.now();
     List<PrayerDay> days;
     try {
-      days = await loadPrayerDays();
-    } catch (_) {
+      days = await loadPrayerDays(year: nowLocal.year);
+    } catch (e, st) {
+      debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
 
-    final nowLocal = DateTime.now();
+    // Pick today / tomorrow from the list
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
-    // Optional weather fetch (kept from your version)
+    // Weather
     final coords = _coordsForLocation(location);
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
     ).timeout(const Duration(seconds: 5), onTimeout: () => null);
 
-    return _InitResult(location: location, nowLocal: nowLocal, today: today, tomorrow: tomorrow, temperatureF: currentTempF);
+    return _InitResult(
+      location: location,
+      nowLocal: nowLocal,
+      today: today,
+      tomorrow: tomorrow,
+      temperatureF: currentTempF,
+    );
   }
 
   PrayerDay? _findByDate(List<PrayerDay> days, DateTime target) {
     for (final d in days) {
-      if (d.date.year == target.year && d.date.month == target.month && d.date.day == target.day) {
+      if (d.date.year == target.year &&
+          d.date.month == target.month &&
+          d.date.day == target.day) {
         return d;
       }
     }
@@ -217,7 +275,6 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -253,47 +310,6 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-class PrayerTimesApp extends StatelessWidget {
-  final tz.Location location;
-  final DateTime nowLocal;
-  final PrayerDay today;
-  final PrayerDay? tomorrow;
-  final double? temperatureF;
-  const PrayerTimesApp({
-    super.key,
-    required this.location,
-    required this.nowLocal,
-    required this.today,
-    required this.tomorrow,
-    required this.temperatureF,
-  });
-  @override
-  Widget build(BuildContext context) {
-    final base = ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
-      useMaterial3: true,
-    );
-    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).copyWith(
-      titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-      titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-      bodyMedium: GoogleFonts.manrope(),
-      bodyLarge: GoogleFonts.manrope(),
-    );
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Prayer Times',
-      theme: base.copyWith(textTheme: textTheme),
-      home: HomeTabs(
-        location: location,
-        nowLocal: nowLocal,
-        today: today,
-        tomorrow: tomorrow,
-        temperatureF: temperatureF,
-      ),
-    );
-  }
-}
-
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -324,7 +340,7 @@ class _HomeTabsState extends State<HomeTabs> {
         tomorrow: widget.tomorrow,
         temperatureF: widget.temperatureF,
       ),
-      const AnnouncementsTab(), // Remote Config is used inside the tab—no import needed here
+      const AnnouncementsTab(),
     ];
     return Scaffold(
       appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
