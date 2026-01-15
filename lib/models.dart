@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 /// Represents a single prayer's times.
 class PrayerTime {
-  final String begin;  // 'HH:mm' 24h
+  final String begin; // 'HH:mm' 24h
   final String iqamah; // 'HH:mm' 24h
 
   PrayerTime({required this.begin, required this.iqamah});
@@ -18,8 +18,8 @@ class PrayerTime {
 
 /// Represents one calendar day of prayer times.
 class PrayerDay {
-  final DateTime date;                      // ISO local date (e.g., '2026-01-14')
-  final Map<String, PrayerTime> prayers;    // fajr, dhuhr, asr, maghrib, isha
+  final DateTime date; // ISO local date (e.g., '2026-01-14')
+  final Map<String, PrayerTime> prayers; // fajr, dhuhr, asr, maghrib, isha
   final String? sunrise;
   final String? sunset;
   final int serial;
@@ -37,7 +37,7 @@ class PrayerDay {
 
     final Map<String, dynamic> raw = j['prayers'] as Map<String, dynamic>;
     final prayers = raw.map(
-          (k, v) => MapEntry(k, PrayerTime.fromJson(v as Map<String, dynamic>)),
+      (k, v) => MapEntry(k, PrayerTime.fromJson(v as Map<String, dynamic>)),
     );
 
     final serial = (j['serial'] is int)
@@ -66,8 +66,9 @@ Future<List<PrayerDay>> loadPrayerDays({int? year}) async {
       final txt = await localFile.readAsString();
       final decoded = jsonDecode(txt);
       final List<dynamic> arr = _coerceToList(decoded);
-      final result =
-      arr.map((e) => PrayerDay.fromJson(e as Map<String, dynamic>)).toList();
+      final result = arr
+          .map((e) => PrayerDay.fromJson(e as Map<String, dynamic>))
+          .toList();
       if (result.isNotEmpty) {
         debugPrint(
             'loadPrayerDays(): using LOCAL file ${localFile.path} (count=${result.length})');
@@ -85,9 +86,7 @@ Future<List<PrayerDay>> loadPrayerDays({int? year}) async {
   final decoded = jsonDecode(txt);
   final List<dynamic> arr = _coerceToList(decoded);
   debugPrint('loadPrayerDays(): using ASSET $assetPath (count=${arr.length})');
-  return arr
-      .map((e) => PrayerDay.fromJson(e as Map<String, dynamic>))
-      .toList();
+  return arr.map((e) => PrayerDay.fromJson(e as Map<String, dynamic>)).toList();
 }
 
 /// Accepts either:
