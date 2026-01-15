@@ -2,9 +2,12 @@
 // lib/widgets/announcements_tab.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class AnnouncementsTab extends StatefulWidget {
-  const AnnouncementsTab({super.key});
+  final tz.Location location; // <-- pass America/Chicago from parent
+
+  const AnnouncementsTab({super.key, required this.location});
 
   @override
   State<AnnouncementsTab> createState() => _AnnouncementsTabState();
@@ -14,7 +17,10 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
   String _title = 'Announcement';
   String _text = '';
   bool _active = false;
-  DateTime? _publishedAt;
+
+  /// Always keep UTC internally.
+  DateTime? _publishedAtUtc;
+
   bool _loading = true;
 
   @override
@@ -38,70 +44,73 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
   }
 
   // ---- Remote Config helpers ----
+
   void _readAndLogRemoteConfig(FirebaseRemoteConfig rc) {
     final active = rc.getBool('announcement_active');
     final titleRaw = rc.getString('announcement_title').trim();
-    final textRaw  = rc.getString('announcement_text').trim();
+    final textRaw = rc.getString('announcement_text').trim();
     final publishedRaw = rc.getString('announcement_published_at').trim();
 
-    final parsedWhen = _parsePublishedAt(publishedRaw);
+    final parsedUtc = _parsePublishedAtToUtc(publishedRaw);
 
-    debugPrint('RC values -> active=$active, '
-        'title="$titleRaw", text="$textRaw", published_at="$publishedRaw"');
+    debugPrint(
+      'RC values -> active=$active, '
+          'title="$titleRaw", text="$textRaw", published_at="$publishedRaw" '
+          '(parsedUtc=${parsedUtc?.toIso8601String()})',
+    );
 
     setState(() {
       _active = active;
       _title = titleRaw.isEmpty ? 'Announcement' : titleRaw;
       _text = textRaw;
-      _publishedAt = parsedWhen;
+      _publishedAtUtc = parsedUtc;
     });
   }
 
-  DateTime? _parsePublishedAt(String raw) {
+  /// Accepts ISO-8601 (with or without 'Z' or offset) or numeric epoch (s/ms).
+  /// Always returns UTC.
+  DateTime? _parsePublishedAtToUtc(String raw) {
     if (raw.isEmpty) return null;
 
-    // 1) Try ISO-8601 (e.g., 2026-03-10T18:30:00-06:00)
+    // 1) ISO-8601
     final iso = DateTime.tryParse(raw);
-    if (iso != null) return iso;
+    if (iso != null) return iso.toUtc();
 
-    // 2) Try numeric epoch (seconds or milliseconds)
+    // 2) Numeric epoch (10 or 13 digits)
     final digits = RegExp(r'^\d{10,13}$');
     if (digits.hasMatch(raw)) {
       try {
         final n = int.parse(raw);
-        // 13 digits -> ms, 10 digits -> sec
-        if (raw.length == 13) {
-          return DateTime.fromMillisecondsSinceEpoch(n);
-        } else if (raw.length == 10) {
-          return DateTime.fromMillisecondsSinceEpoch(n * 1000);
-        }
+        final isMs = raw.length == 13;
+        return DateTime.fromMillisecondsSinceEpoch(isMs ? n : n * 1000, isUtc: true);
       } catch (_) {}
     }
     return null;
   }
 
-  String _formatTimestamp(DateTime d) {
-    // Simple, locale-agnostic formatter to avoid extra dependencies.
+  String _formatTimestampCentral(DateTime utc) {
+    // Convert UTC -> Central
+    final central = tz.TZDateTime.from(utc, widget.location);
+
+    // Simple, locale-agnostic formatter (same as your original style)
     const w = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    final wd = w[d.weekday - 1];
-    final mo = m[d.month - 1];
-    int h = d.hour % 12; if (h == 0) h = 12;
-    final ap = d.hour >= 12 ? 'PM' : 'AM';
-    final mm = d.minute.toString().padLeft(2, '0');
-    return '$wd, $mo ${d.day} ${d.year}  $h:$mm $ap';
+    final wd = w[central.weekday - 1];
+    final mo = m[central.month - 1];
+    int h = central.hour % 12; if (h == 0) h = 12;
+    final ap = central.hour >= 12 ? 'PM' : 'AM';
+    final mm = central.minute.toString().padLeft(2, '0');
+    return '$wd, $mo ${central.day} ${central.year} $h:$mm $ap';
   }
 
   Future<void> _initRemoteConfig() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
-
-      // Dev settings: force fetch every time while testing.
+      // Dev settings: force fetch each time while testing.
       await rc.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(seconds: 10),
         minimumFetchInterval: Duration.zero, // change to hours in production
       ));
-
       // In-app defaults
       await rc.setDefaults({
         'announcement_active': true,
@@ -109,10 +118,8 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
         'announcement_text': 'Assalam Alaikum',
         'announcement_published_at': '', // empty -> no timestamp shown
       });
-
       final updated = await rc.fetchAndActivate();
       debugPrint('RemoteConfig fetchAndActivate -> updated=$updated');
-
       _readAndLogRemoteConfig(rc);
     } catch (e, st) {
       debugPrint('Remote Config init error: $e\n$st');
@@ -139,13 +146,12 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
   }
 
   // ---- UI ----
+
   @override
   Widget build(BuildContext context) {
-    // Do NOT return a Scaffold here; HomeTabs provides the outer Scaffold + AppBar.
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -155,7 +161,10 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
             _AnnouncementCard(
               title: _title,
               body: _text.trim(),
-              when: _publishedAt, // may be null
+              // Convert to Central only for display
+              whenLabel: _publishedAtUtc == null
+                  ? null
+                  : _formatTimestampCentral(_publishedAtUtc!),
             ),
             const SizedBox(height: 12),
             Align(
@@ -172,7 +181,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
             const _AnnouncementCard(
               title: 'No active announcement',
               body: 'Please check back later.',
-              when: null,
+              whenLabel: null,
             ),
             const SizedBox(height: 12),
             Align(
@@ -192,24 +201,13 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
 class _AnnouncementCard extends StatelessWidget {
   final String title;
   final String body;
-  final DateTime? when;
+  final String? whenLabel;
 
   const _AnnouncementCard({
     required this.title,
     required this.body,
-    required this.when,
+    required this.whenLabel,
   });
-
-  String _format(DateTime d) {
-    const w = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    final wd = w[d.weekday - 1];
-    final mo = m[d.month - 1];
-    int h = d.hour % 12; if (h == 0) h = 12;
-    final ap = d.hour >= 12 ? 'PM' : 'AM';
-    final mm = d.minute.toString().padLeft(2, '0');
-    return '$wd, $mo ${d.day} ${d.year}  $h:$mm $ap';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,14 +220,14 @@ class _AnnouncementCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title (bold, larger) — force black
+            // Title — force black
             Text(
               title,
               style: (Theme.of(context).textTheme.titleMedium ??
                   const TextStyle(fontSize: 18))
                   .copyWith(
                 fontWeight: FontWeight.w800,
-                color: Colors.black, // force black
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
@@ -240,15 +238,15 @@ class _AnnouncementCard extends StatelessWidget {
                   const TextStyle(fontSize: 16))
                   .copyWith(
                 height: 1.35,
-                color: Colors.black, // force black
+                color: Colors.black,
               ),
             ),
-            if (when != null) ...[
+            if (whenLabel != null) ...[
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  _format(when!),
+                  whenLabel!,
                   style: (Theme.of(context).textTheme.bodySmall ??
                       const TextStyle(fontSize: 12))
                       .copyWith(

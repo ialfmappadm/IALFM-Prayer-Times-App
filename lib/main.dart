@@ -340,7 +340,7 @@ class _HomeTabsState extends State<HomeTabs> {
         tomorrow: widget.tomorrow,
         temperatureF: widget.temperatureF,
       ),
-      const AnnouncementsTab(),
+      AnnouncementsTab(location: widget.location), //passing location for timezone-ct-update
     ];
     return Scaffold(
       appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
