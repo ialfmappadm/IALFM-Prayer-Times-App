@@ -17,17 +17,22 @@ import 'utils/time_utils.dart';
 import 'widgets/announcements_tab.dart';
 import 'prayer_times_firebase.dart';
 
+// ---- TWEAK THESE SIZES ----
+const double kNavIconSize = 30.0; // Icon size (selected icon adds +3)
+const double kNavBarHeight = 72.0; // Bottom NavigationBar height
+
 // GLOBAL: ScaffoldMessenger key for app-wide SnackBars
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
-/// Background FCM handler
+/// Background FCM: init Firebase, App Check, then refresh local file if instructed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
+  // App Check in the background isolate (avoid placeholder token)
   try {
     await FirebaseAppCheck.instance.activate(
       androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
@@ -46,11 +51,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Register background handler ONCE at startup
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // App Check activation (foreground)
   await FirebaseAppCheck.instance.activate(
     androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
     appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
   );
+  // Optional error hook
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
@@ -79,7 +87,14 @@ class BootstrapApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Prayer Times',
-      theme: base.copyWith(textTheme: textTheme),
+      theme: base.copyWith(
+        textTheme: textTheme,
+        navigationBarTheme: const NavigationBarThemeData(
+          // Remove the pill by making indicator transparent
+          indicatorColor: Colors.transparent,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        ),
+      ),
       scaffoldMessengerKey: messengerKey,
       home: const _BootstrapScreen(),
     );
@@ -100,8 +115,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   void initState() {
     super.initState();
     _initFuture = _initializeAll();
-
-    // Foreground FCM listener
+    // Foreground FCM -> refresh Storage -> rebuild UI
     FirebaseMessaging.onMessage.listen((m) async {
       if (m.data['updatePrayerTimes'] == 'true') {
         final yearStr = m.data['year'];
@@ -110,7 +124,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         if (!mounted) return;
         if (ok) {
           setState(() {
-            _initFuture = _initializeAll();
+            _initFuture = _initializeAll(); // re-read from disk -> rebuild UI
           });
           messengerKey.currentState?.showSnackBar(
             const SnackBar(content: Text('Prayer times updated')),
@@ -151,6 +165,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 
   Future<_InitResult> _initializeAll() async {
+    // FCM permissions / topic subscription
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true, badge: true, sound: true, provisional: false,
@@ -161,6 +176,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('FCM setup error: $e\n$st');
     }
 
+    // Timezone
     tz.Location location;
     try {
       location = await initCentralTime();
@@ -168,6 +184,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
+    // Best-effort refresh from Firebase at startup (fallback to local if missing)
     try {
       final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
       debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
@@ -175,6 +192,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('Startup refresh error: $e\n$st');
     }
 
+    // Load local canonical file (asset fallback) for current year
     final nowLocal = DateTime.now();
     List<PrayerDay> days;
     try {
@@ -184,12 +202,14 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       days = <PrayerDay>[];
     }
 
+    // Pick today / tomorrow from the list
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
+    // Weather
     final coords = _coordsForLocation(location);
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
@@ -217,7 +237,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 
   PrayerDay _dummyDay(DateTime date) {
-    String fmt(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    String fmt(DateTime d) =>
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     final begin = fmt(date);
     final Map<String, PrayerTime> prayers = {
       'fajr': PrayerTime(begin: begin, iqamah: ''),
@@ -291,6 +312,8 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
+// ------------------------- NAVIGATION BAR (No pill, underline highlight) -------------------------
+
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -316,11 +339,11 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   void initState() {
     super.initState();
-    // Listen for FCM messages to show badge
+    // Show badge only for announcement pings
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      setState(() {
-        hasNewNotification = true;
-      });
+      if (message.data['newAnnouncement'] == 'true') {
+        setState(() => hasNewNotification = true);
+      }
     });
   }
 
@@ -338,45 +361,137 @@ class _HomeTabsState extends State<HomeTabs> {
     ];
 
     return Scaffold(
+      // Only show header on Notifications tab
       appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
+
       body: pages[_index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) {
+
+      // Material 3 NavigationBar (indicator/pill removed via theme)
+      bottomNavigationBar: NavigationBar(
+        height: kNavBarHeight,
+        selectedIndex: _index,
+        onDestinationSelected: (i) {
           setState(() {
             _index = i;
-            if (i == 1) hasNewNotification = false; // Clear badge when opening notifications
+            if (i == 1) hasNewNotification = false; // clear badge when opening Alerts
           });
         },
-        items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.access_time), label: ''),
-          BottomNavigationBarItem(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications),
-                if (hasNewNotification)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: [
+          NavigationDestination(
+            label: 'Prayer',
+            icon: _NavUnderlineIcon(
+              icon: Icons.access_time, active: false, size: kNavIconSize,
             ),
-            label: '',
+            selectedIcon: _NavUnderlineIcon(
+              icon: Icons.access_time, active: true, size: kNavIconSize + 3,
+            ),
+          ),
+          NavigationDestination(
+            label: 'Alerts',
+            icon: _NavUnderlineBellIcon(
+              active: false, showBadge: hasNewNotification, size: kNavIconSize,
+            ),
+            selectedIcon: _NavUnderlineBellIcon(
+              active: true, showBadge: hasNewNotification, size: kNavIconSize + 3,
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+// ---- Helpers: underline highlight (no pill) ----
+
+class _NavUnderlineIcon extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final double size;
+  const _NavUnderlineIcon({
+    required this.icon,
+    required this.active,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color lineColor =
+        IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: size),
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 3,              // underline thickness (try 4 for bolder)
+          width: active ? 22 : 0, // underline length (try 26 for wider)
+          decoration: BoxDecoration(
+            color: lineColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NavUnderlineBellIcon extends StatelessWidget {
+  final bool active;
+  final bool showBadge;
+  final double size;
+  const _NavUnderlineBellIcon({
+    required this.active,
+    required this.showBadge,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color lineColor =
+        IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(Icons.notifications, size: size),
+            if (showBadge)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 3,              // underline thickness
+          width: active ? 22 : 0, // underline length
+          decoration: BoxDecoration(
+            color: lineColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ------------------------- HELPERS -------------------------
 
 class LatLon {
   final double lat;
