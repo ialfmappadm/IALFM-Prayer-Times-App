@@ -11,6 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+
 import 'models.dart'; // loadPrayerDays(), PrayerDay, PrayerTime
 import 'pages/prayer_page.dart';
 import 'utils/time_utils.dart';
@@ -35,8 +36,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // App Check in the background isolate (avoid placeholder token)
   try {
     await FirebaseAppCheck.instance.activate(
-      androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
+      androidProvider:
+      kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider:
+      kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
     );
   } catch (_) {}
   final repo = PrayerTimesRepository();
@@ -51,18 +54,24 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Register background handler ONCE at startup
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   // App Check activation (foreground)
   await FirebaseAppCheck.instance.activate(
-    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
+    androidProvider:
+    kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider:
+    kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
   );
+
   // Optional error hook
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
   };
+
   runZonedGuarded(() {
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
@@ -72,6 +81,7 @@ Future<void> main() async {
 
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     final base = ThemeData(
@@ -103,6 +113,7 @@ class BootstrapApp extends StatelessWidget {
 
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
+
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -111,10 +122,15 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
   final PrayerTimesRepository _repo = PrayerTimesRepository();
 
+  // NEW: schedule a daily refresh at local midnight so today/tomorrow stay current.
+  Timer? _midnightTimer; // NEW
+
   @override
   void initState() {
     super.initState();
     _initFuture = _initializeAll();
+    _scheduleMidnightRefresh(); // NEW
+
     // Foreground FCM -> refresh Storage -> rebuild UI
     FirebaseMessaging.onMessage.listen((m) async {
       if (m.data['updatePrayerTimes'] == 'true') {
@@ -132,6 +148,29 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         }
       }
     });
+  }
+
+  // NEW: compute delay to next local midnight and refresh then.
+  void _scheduleMidnightRefresh() { // NEW
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now);
+
+    _midnightTimer?.cancel();
+    _midnightTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {
+        _initFuture = _initializeAll(); // pick new today/tomorrow
+      });
+      // schedule again for the next day
+      _scheduleMidnightRefresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel(); // NEW
+    super.dispose();
   }
 
   @override
@@ -277,6 +316,7 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -312,8 +352,8 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ------------------------- NAVIGATION BAR (No pill, underline highlight) -------------------------
-
+// --------------------------- NAVIGATION BAR ---------------------------
+// (No pill, underline highlight)
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -328,6 +368,7 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
+
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -339,10 +380,31 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   void initState() {
     super.initState();
-    // Show badge only for announcement pings
+
+    // Foreground: show badge only for announcement pings
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
         setState(() => hasNewNotification = true);
+      }
+    });
+
+    // NEW: Background tap -> open Alerts (index 1)
+    FirebaseMessaging.onMessageOpenedApp.listen((m) { // NEW
+      if (m.data['newAnnouncement'] == 'true') {
+        setState(() {
+          _index = 1;
+          hasNewNotification = false; // clear badge
+        });
+      }
+    });
+
+    // NEW: Cold start via tap -> open Alerts (index 1)
+    FirebaseMessaging.instance.getInitialMessage().then((m) { // NEW
+      if (m?.data['newAnnouncement'] == 'true') {
+        setState(() {
+          _index = 1;
+          hasNewNotification = false; // clear badge
+        });
       }
     });
   }
@@ -363,7 +425,6 @@ class _HomeTabsState extends State<HomeTabs> {
     return Scaffold(
       // Only show header on Notifications tab
       appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
-
       body: pages[_index],
 
       // Material 3 NavigationBar (indicator/pill removed via theme)
@@ -402,8 +463,7 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// ---- Helpers: underline highlight (no pill) ----
-
+// ---- Helpers: underline highlight (no pill)
 class _NavUnderlineIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
@@ -426,7 +486,7 @@ class _NavUnderlineIcon extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 3,              // underline thickness (try 4 for bolder)
+          height: 3, // underline thickness (try 4 for bolder)
           width: active ? 22 : 0, // underline length (try 26 for wider)
           decoration: BoxDecoration(
             color: lineColor,
@@ -479,7 +539,7 @@ class _NavUnderlineBellIcon extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 3,              // underline thickness
+          height: 3, // underline thickness
           width: active ? 22 : 0, // underline length
           decoration: BoxDecoration(
             color: lineColor,
@@ -491,8 +551,7 @@ class _NavUnderlineBellIcon extends StatelessWidget {
   }
 }
 
-// ------------------------- HELPERS -------------------------
-
+// --------------------------- HELPERS ---------------------------
 class LatLon {
   final double lat;
   final double lon;

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-/// One announcement item as used by the UI.
+/// Lightweight UI model for each announcement item.
 class _AnnItem {
   final String id;
   final String title;
   final String text;
-  /// Canonical UTC timestamp for safe conversions
+  /// Canonical UTC timestamp (nullable if the server omits it).
   final DateTime? publishedAtUtc;
 
   _AnnItem({
@@ -22,14 +22,15 @@ class _AnnItem {
 }
 
 class AnnouncementsTab extends StatefulWidget {
-  final tz.Location location; // America/Chicago passed from parent
+  final tz.Location location; // passed from HomeTabs (America/Chicago)
   const AnnouncementsTab({super.key, required this.location});
 
   @override
   State<AnnouncementsTab> createState() => _AnnouncementsTabState();
 }
 
-class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBindingObserver {
+class _AnnouncementsTabState extends State<AnnouncementsTab>
+    with WidgetsBindingObserver {
   bool _loading = true;
   List<_AnnItem> _items = const [];
 
@@ -37,7 +38,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initRemoteConfig();
+    _initRemoteConfig(); // RC is the only source
   }
 
   @override
@@ -46,6 +47,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     super.dispose();
   }
 
+  /// Auto-refresh when app returns to foreground.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -53,35 +55,50 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     }
   }
 
-  // ---------------- Remote Config ----------------
+  // ---------------------- Remote Config ----------------------
 
+  /// Initialize RC and load announcements immediately.
   Future<void> _initRemoteConfig() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
+
+      // NOTE: RemoteConfigSettings is NOT const — do not prefix with `const`.
       await rc.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: Duration.zero,
+        minimumFetchInterval: Duration.zero, // update whenever asked
       ));
-      // Keep legacy defaults (single) so older builds render something
-      await rc.setDefaults({
+
+      // Legacy single-item keys for backward compatibility.
+      await rc.setDefaults(const {
         'announcement_active': true,
         'announcement_title': 'Announcement',
-        'announcement_text': 'Assalam Alaikum',
+        'announcement_text': 'Assalamu Alaikum', // spelling tweak (optional)
         'announcement_published_at': '',
-        // New keys (array + version). Defaults to empty list.
+        // New shape: array JSON and optional version
         'announcements_json': '[]',
         'announcements_version': '',
       });
+
       final updated = await rc.fetchAndActivate();
       debugPrint('RemoteConfig fetchAndActivate -> updated=$updated');
+
       _readAnnouncements(rc);
     } catch (e, st) {
       debugPrint('Remote Config init error: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _items = const [];
+          _loading = false;
+        });
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
+  /// Manual refresh for pull-to-refresh and lifecycle resume.
   Future<void> _refresh() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
@@ -97,17 +114,18 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     }
   }
 
+  /// Parse announcements from RC, supporting both array JSON and legacy single keys.
   void _readAnnouncements(FirebaseRemoteConfig rc) {
-    // Preferred: array
+    // Preferred: array field
     final jsonStr = rc.getString('announcements_json').trim();
     List<_AnnItem> parsed = _parseArray(jsonStr);
 
-    // Fallback: legacy single keys -> single-item list
+    // Fallback: legacy single item
     if (parsed.isEmpty) {
       final active = rc.getBool('announcement_active');
       final title = rc.getString('announcement_title').trim();
-      final text  = rc.getString('announcement_text').trim();
-      final when  = rc.getString('announcement_published_at').trim();
+      final text = rc.getString('announcement_text').trim();
+      final when = rc.getString('announcement_published_at').trim();
       if (active && (title.isNotEmpty || text.isNotEmpty)) {
         parsed = <_AnnItem>[
           _AnnItem(
@@ -127,16 +145,17 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
       return tb.compareTo(ta);
     });
 
-    setState(() => _items = parsed);
+    if (mounted) {
+      setState(() => _items = parsed);
+    }
   }
 
-  // --------------- Parsing helpers ----------------
+  // ---------------------- Parsing helpers ----------------------
 
-  /// Try ISO-8601; fix offsets like "-0600" -> "-06:00"; accept epoch (sec/ms).
+  /// Accepts ISO-8601 with or without colon in TZ offset, or epoch sec/ms.
   DateTime? _parseToUtc(String raw) {
     if (raw.isEmpty) return null;
 
-    // Attempt ISO first
     DateTime? tryIso(String s) {
       final dt = DateTime.tryParse(s);
       return dt?.toUtc();
@@ -146,15 +165,16 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     final iso = tryIso(raw);
     if (iso != null) return iso;
 
-    // 2) Fix timezone offset without colon, e.g. 2026-01-15T14:35:59-0600 -> -06:00
-    final m = RegExp(r'(.*[T ]\d{2}:\d{2}:\d{2})([+-]\d{2})(\d{2})$').firstMatch(raw);
+    // 2) Fix offsets like "-0600" -> "-06:00"
+    final m = RegExp(r'^(.*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$')
+        .firstMatch(raw);
     if (m != null) {
       final fixed = '${m.group(1)}${m.group(2)}:${m.group(3)}';
       final fixedDt = tryIso(fixed);
       if (fixedDt != null) return fixedDt;
     }
 
-    // 3) Epoch seconds/milliseconds
+    // 3) Epoch seconds or milliseconds
     final digits = RegExp(r'^\d{10,13}$');
     if (digits.hasMatch(raw)) {
       try {
@@ -164,19 +184,28 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
       } catch (_) {}
     }
     return null;
+    // If null, the UI will simply omit the timestamp line.
   }
 
+  /// Parses announcements_json array.
   List<_AnnItem> _parseArray(String jsonStr) {
     if (jsonStr.isEmpty) return const [];
     try {
       final decoded = jsonDecode(jsonStr);
       if (decoded is List) {
         return decoded.map<_AnnItem>((e) {
-          final m = (e is Map) ? e : <String, dynamic>{};
-          final id    = (m['id'] ?? '').toString();
+          // Remove unnecessary cast warning by dropping `as Map`
+          final m = (e is Map)
+              ? Map<String, dynamic>.from(e)
+              : <String, dynamic>{};
+
+          // Normalize keys commonly used upstream.
+          final id = (m['id'] ?? '').toString();
           final title = (m['title'] ?? '').toString();
-          final text  = (m['text'] ?? '').toString();
-          final when  = (m['published_at'] ?? '').toString();
+          final text = (m['text'] ?? m['body'] ?? '').toString();
+          final when = (m['published_at'] ?? m['publishedAt'] ?? m['published'])
+              ?.toString() ?? '';
+
           return _AnnItem(
             id: id.isEmpty ? 'item-${DateTime.now().microsecondsSinceEpoch}' : id,
             title: title,
@@ -191,12 +220,13 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     return const [];
   }
 
-  // --------------- Formatting helpers ----------------
+  // ---------------------- Formatting helpers ----------------------
 
   String _formatCentral(DateTime dUtc) {
     final central = tz.TZDateTime.from(dUtc, widget.location);
-    const w = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const w = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     final wd = w[central.weekday - 1];
     final mo = m[central.month - 1];
     int h = central.hour % 12; if (h == 0) h = 12;
@@ -205,58 +235,52 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with WidgetsBinding
     return '$wd, $mo ${central.day} ${central.year} $h:$mm $ap';
   }
 
-  // --------------- UI ----------------
+  // ---------------------- UI ----------------------
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    final hasAny = _items.isNotEmpty && _items.any((it) => it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
 
+    final hasAny = _items.any((it) =>
+    it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
+
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: hasAny
+          ? ListView.separated(
+        itemCount: _items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final a = _items[index];
+          final whenLabel =
+          (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
+          return _AnnouncementCard(
+            title: (a.title.isEmpty && a.text.isNotEmpty)
+                ? 'Announcement'
+                : a.title,
+            body: a.text,
+            whenLabel: whenLabel,
+          );
+        },
+      )
+          : ListView(
+        children: const [
+          _AnnouncementCard(
+            title: 'No active announcement',
+            body: 'Please check back later.',
+            whenLabel: null,
+          ),
+        ],
+      ),
+    );
+
+    // Swipe-to-refresh: RC fetch only (no local asset).
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: hasAny
-            ? ListView.separated(
-          itemCount: _items.length + 1, // +1 for the Refresh button at bottom
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == _items.length) {
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: ElevatedButton(
-                  onPressed: _refresh,
-                  child: const Text('Refresh messages'),
-                ),
-              );
-            }
-            final a = _items[index];
-            final whenLabel = (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
-            return _AnnouncementCard(
-              title: (a.title.isEmpty && a.text.isNotEmpty) ? 'Announcement' : a.title,
-              body: a.text,
-              whenLabel: whenLabel,
-            );
-          },
-        )
-            : ListView(
-          children: [
-            const _AnnouncementCard(
-              title: 'No active announcement',
-              body: 'Please check back later.',
-              whenLabel: null,
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ElevatedButton(
-                onPressed: _refresh,
-                child: const Text('Refresh messages'),
-              ),
-            ),
-          ],
-        ),
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: content,
       ),
     );
   }
@@ -283,7 +307,7 @@ class _AnnouncementCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title — force black
+            // Title
             Text(
               title.isEmpty ? 'Announcement' : title,
               style: (Theme.of(context).textTheme.titleMedium ??
@@ -294,7 +318,7 @@ class _AnnouncementCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Body — force black
+            // Body
             Text(
               body,
               style: (Theme.of(context).textTheme.bodyLarge ??
