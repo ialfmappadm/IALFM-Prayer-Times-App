@@ -67,10 +67,12 @@ flutter_launcher_icons:
 # Flutter Native Splash config
 # ----------------------------
 flutter_native_splash:
-  color: "#0A1733"
-  image: assets/branding/ialfm_logo.png
-  color_dark: "#0A1733"
-  image_dark: assets/branding/ialfm_logo.png
+  background_image: assets/branding/ialfm_splash_screen.png
+  #color: "#0A1733"
+  #image: assets/branding/ialfm_logo.png
+  #color_dark: "#0A1733"
+  #image_dark: assets/branding/ialfm_logo.png
   android_12:
     image: assets/branding/ialfm_logo.png
+    color: "#0A1733"
     icon_background_color: "#0A1733"

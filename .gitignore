@@ -25,6 +25,7 @@ ios/Runner.xcodeproj/project.xcworkspace/
 
 # Exclude macOS completely
 macos/
+**/.DS_Store
 
 # Exclude Windows completely
 windows/
@@ -46,3 +47,8 @@ tools/fcm/package-lock.json
 
 .flutter-plugins-dependencies
 local.json
+
+# Local Android res backups (yours from earlier steps)
+android/app/src/main/res_backup_*/
+android/app/src/main/res_backup_overwritten_*/
+
