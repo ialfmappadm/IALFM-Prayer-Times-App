@@ -88,6 +88,7 @@ android {
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.android.material:material:1.13.0") // Material 3 dependency
     // Add others if you call them natively:
     // implementation("com.google.firebase:firebase-auth")
     // implementation("com.google.firebase:firebase-firestore")

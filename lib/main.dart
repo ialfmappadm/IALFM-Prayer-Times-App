@@ -1,15 +1,23 @@
-
 // lib/main.dart
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode
+
+// Keep native splash until initialization completes (prevents double splash).
+// Docs: preserve/remove API.
+// - Plugin docs: https://pub.dev/packages/flutter_native_splash
+// - Android 12 migration guidance: https://developer.android.com/develop/ui/views/launch/splash-screen/migrate
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // ONE splash flow
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+// App Check (new API accepts provider instances via providerAndroid/providerApple).
+// See Dart API signature and Firebase docs.
 import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'models.dart'; // loadPrayerDays(), PrayerDay, PrayerTime
@@ -33,15 +41,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
-  // App Check in the background isolate (avoid placeholder token)
-  try {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider:
-      kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider:
-      kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
-    );
-  } catch (_) {}
+
+  // NEW API: use provider instances, not the old enums.
+  // In debug builds, use Debug providers; in release, production providers.
+  // (See Dart API signature defaults and Firebase docs.)
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid:
+    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple:
+    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  ); // [1](https://www.b4x.com/android/forum/threads/solved-how-to-implement-theme-materialcomponents-daynight.137708/)[2](https://github.com/shafayathossain/AnimatedSplashScreen)
+
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -52,19 +62,22 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // IMPORTANT: Keep native splash while we initialize—prevents “double splash”.
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding); // ONE splash
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Register background handler ONCE at startup
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // App Check activation (foreground)
+  // App Check (NEW API with provider instances).
   await FirebaseAppCheck.instance.activate(
-    androidProvider:
-    kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider:
-    kDebugMode ? AppleProvider.debug : AppleProvider.appAttestWithDeviceCheckFallback,
-  );
+    providerAndroid:
+    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple:
+    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  ); // [1](https://www.b4x.com/android/forum/threads/solved-how-to-implement-theme-materialcomponents-daynight.137708/)
 
   // Optional error hook
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -81,7 +94,6 @@ Future<void> main() async {
 
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     final base = ThemeData(
@@ -113,7 +125,6 @@ class BootstrapApp extends StatelessWidget {
 
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
-
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -122,14 +133,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
   final PrayerTimesRepository _repo = PrayerTimesRepository();
 
-  // NEW: schedule a daily refresh at local midnight so today/tomorrow stay current.
-  Timer? _midnightTimer; // NEW
+  // schedule a daily refresh at local midnight so today/tomorrow stay current.
+  Timer? _midnightTimer;
 
   @override
   void initState() {
     super.initState();
+
     _initFuture = _initializeAll();
-    _scheduleMidnightRefresh(); // NEW
+
+    // When initialization is finished (success or error), drop the native splash.
+    _initFuture.whenComplete(() {
+      if (mounted) FlutterNativeSplash.remove(); // ONE splash
+    }); // [3](https://dev.to/programmerhasan/adding-a-splash-screen-to-your-flutter-app-with-flutternativesplash-32kn)[4](https://www.daniweb.com/programming/mobile-development/tutorials/537009/android-native-how-to-add-material-3-top-app-bar)
+
+    _scheduleMidnightRefresh();
 
     // Foreground FCM -> refresh Storage -> rebuild UI
     FirebaseMessaging.onMessage.listen((m) async {
@@ -150,12 +168,11 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     });
   }
 
-  // NEW: compute delay to next local midnight and refresh then.
-  void _scheduleMidnightRefresh() { // NEW
+  // compute delay to next local midnight and refresh then.
+  void _scheduleMidnightRefresh() {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
-
     _midnightTimer?.cancel();
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
@@ -169,7 +186,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
   @override
   void dispose() {
-    _midnightTimer?.cancel(); // NEW
+    _midnightTimer?.cancel();
     super.dispose();
   }
 
@@ -188,17 +205,20 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
             temperatureF: r.temperatureF,
           );
         }
+
         if (snap.hasError) {
+          // Ensure native splash is removed if we reached error.
+          FlutterNativeSplash.remove();
           return _SplashScaffold(
+            key: const ValueKey('bootstrap_error'), // fixes analyzer warning
             title: 'Starting up…',
             subtitle: 'Error:\n${snap.error}',
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
-        return const _SplashScaffold(
-          title: 'Starting up…',
-          subtitle: 'Preparing prayer times and settings',
-        );
+
+        // While waiting, draw nothing—native splash is still visible.
+        return const SizedBox.shrink();
       },
     );
   }
@@ -226,7 +246,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     // Best-effort refresh from Firebase at startup (fallback to local if missing)
     try {
       final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
-      debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+      debugPrint(
+          'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
@@ -316,7 +337,6 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -354,6 +374,7 @@ class _SplashScaffold extends StatelessWidget {
 
 // --------------------------- NAVIGATION BAR ---------------------------
 // (No pill, underline highlight)
+
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -368,7 +389,6 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
-
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -388,8 +408,8 @@ class _HomeTabsState extends State<HomeTabs> {
       }
     });
 
-    // NEW: Background tap -> open Alerts (index 1)
-    FirebaseMessaging.onMessageOpenedApp.listen((m) { // NEW
+    // Background tap -> open Alerts (index 1)
+    FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
           _index = 1;
@@ -398,8 +418,8 @@ class _HomeTabsState extends State<HomeTabs> {
       }
     });
 
-    // NEW: Cold start via tap -> open Alerts (index 1)
-    FirebaseMessaging.instance.getInitialMessage().then((m) { // NEW
+    // Cold start via tap -> open Alerts (index 1)
+    FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
           _index = 1;
@@ -421,7 +441,6 @@ class _HomeTabsState extends State<HomeTabs> {
       ),
       AnnouncementsTab(location: widget.location),
     ];
-
     return Scaffold(
       // Only show header on Notifications tab
       appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
@@ -473,7 +492,6 @@ class _NavUnderlineIcon extends StatelessWidget {
     required this.active,
     required this.size,
   });
-
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -507,7 +525,6 @@ class _NavUnderlineBellIcon extends StatelessWidget {
     required this.showBadge,
     required this.size,
   });
-
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -552,6 +569,7 @@ class _NavUnderlineBellIcon extends StatelessWidget {
 }
 
 // --------------------------- HELPERS ---------------------------
+
 class LatLon {
   final double lat;
   final double lon;
@@ -559,8 +577,8 @@ class LatLon {
 }
 
 LatLon _coordsForLocation(tz.Location location) {
-  final lname = location.name.toLowerCase();
-  if (lname.contains('america/chicago')) {
+  final locationName = location.name.toLowerCase(); // renamed from lname
+  if (locationName.contains('america/chicago')) {
     return const LatLon(33.0354, -97.0830);
   }
   return const LatLon(33.0354, -97.0830);

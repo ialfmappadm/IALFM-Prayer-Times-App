@@ -5,7 +5,7 @@
     <application
         android:name="${applicationName}"
         android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- Main launcher activity -->
         <activity

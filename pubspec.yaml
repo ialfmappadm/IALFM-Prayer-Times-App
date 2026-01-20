@@ -67,12 +67,25 @@ flutter_launcher_icons:
 # Flutter Native Splash config
 # ----------------------------
 flutter_native_splash:
-  background_image: assets/branding/ialfm_splash_screen.png
-  #color: "#0A1733"
-  #image: assets/branding/ialfm_logo.png
-  #color_dark: "#0A1733"
-  #image_dark: assets/branding/ialfm_logo.png
+  # --- Full-bleed splash artwork for iOS and Android < 12 ---
+  #background_image: assets/branding/ialfm_splash_screen.png
+  # iOS rendering: fill the screen like a true splash poster
+  color: "#0A1733"
+  color_dark: "#0A1733"
+  image: assets/branding/ialfm_splash_foreground.png
+  image_dark: assets/branding/ialfm_splash_foreground.png
+  ios_content_mode: scaleAspectFill
+  # Optional quality-of-life flags
+  fullscreen: true     # Hide status bar during splash
+  web: false           # Skip web generation if you don't need it
+
+  # --- Android 12+ (required: background image is NOT supported by the OS) ---
   android_12:
-    image: assets/branding/ialfm_logo.png
+    image: assets/branding/ialfm_splash_foreground.png
+    image_dark: assets/branding/ialfm_splash_foreground.png
     color: "#0A1733"
+    color_dark: "#0A1733"
     icon_background_color: "#0A1733"
+    icon_background_color_dark: "#0A1733"
+
+
