@@ -74,7 +74,7 @@ flutter_native_splash:
   color_dark: "#0A1733"
   image: assets/branding/ialfm_splash_foreground.png
   image_dark: assets/branding/ialfm_splash_foreground.png
-  ios_content_mode: scaleAspectFill
+  ios_content_mode: scaleAspectFit # scaleAspectFill
   # Optional quality-of-life flags
   fullscreen: true     # Hide status bar during splash
   web: false           # Skip web generation if you don't need it
