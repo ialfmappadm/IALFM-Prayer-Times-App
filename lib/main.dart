@@ -108,7 +108,7 @@ class BootstrapApp extends StatelessWidget {
     );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Prayer Times',
+      title: 'IALFM',
       theme: base.copyWith(
         textTheme: textTheme,
         navigationBarTheme: const NavigationBarThemeData(
