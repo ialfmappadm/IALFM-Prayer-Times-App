@@ -1,57 +1,52 @@
+
 // lib/main.dart
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // kDebugMode
-
-// Keep native splash until initialization completes (prevents double splash).
-// Docs: preserve/remove API.
-// - Plugin docs: https://pub.dev/packages/flutter_native_splash
-// - Android 12 migration guidance: https://developer.android.com/develop/ui/views/launch/splash-screen/migrate
-import 'package:flutter_native_splash/flutter_native_splash.dart'; // ONE splash flow
+import 'package:flutter/foundation.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-
-// App Check (new API accepts provider instances via providerAndroid/providerApple).
-// See Dart API signature and Firebase docs.
 import 'package:firebase_app_check/firebase_app_check.dart';
 
-import 'models.dart'; // loadPrayerDays(), PrayerDay, PrayerTime
+// Font Awesome
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+// App files
+import 'models.dart';
 import 'pages/prayer_page.dart';
 import 'utils/time_utils.dart';
 import 'widgets/announcements_tab.dart';
 import 'prayer_times_firebase.dart';
+import 'pages/social_page.dart';
+import 'pages/directory_page.dart';
+import 'pages/more_page.dart';
 
-// ---- TWEAK THESE SIZES ----
-const double kNavIconSize = 30.0; // Icon size (selected icon adds +3)
-const double kNavBarHeight = 72.0; // Bottom NavigationBar height
+// NEW: match page navy/gold
+import 'app_colors.dart';
 
-// GLOBAL: ScaffoldMessenger key for app-wide SnackBars
+// ---- COMPACT NAV TUNING ----
+const double kNavIconSize = 18.0;   // subtle base size
+const double kNavBarHeight = 50.0;  // shorter bar
+
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
-/// Background FCM: init Firebase, App Check, then refresh local file if instructed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
-
-  // NEW API: use provider instances, not the old enums.
-  // In debug builds, use Debug providers; in release, production providers.
-  // (See Dart API signature defaults and Firebase docs.)
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple:
-    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  ); // [1](https://www.b4x.com/android/forum/threads/solved-how-to-implement-theme-materialcomponents-daynight.137708/)[2](https://github.com/shafayathossain/AnimatedSplashScreen)
-
+    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  );
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -62,24 +57,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  // IMPORTANT: Keep native splash while we initialize—prevents “double splash”.
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding); // ONE splash
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Register background handler ONCE at startup
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  // App Check (NEW API with provider instances).
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple:
-    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  ); // [1](https://www.b4x.com/android/forum/threads/solved-how-to-implement-theme-materialcomponents-daynight.137708/)
+    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  );
 
-  // Optional error hook
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
@@ -106,15 +94,26 @@ class BootstrapApp extends StatelessWidget {
       bodyMedium: GoogleFonts.manrope(),
       bodyLarge: GoogleFonts.manrope(),
     );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'IALFM',
       theme: base.copyWith(
         textTheme: textTheme,
-        navigationBarTheme: const NavigationBarThemeData(
-          // Remove the pill by making indicator transparent
+        navigationBarTheme: NavigationBarThemeData(
+          // No pill
           indicatorColor: Colors.transparent,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          // Hide labels
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+          // Tone icons: subtle unselected, slightly brighter selected
+          iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+            final selected = states.contains(MaterialState.selected);
+            return IconThemeData(
+              color: (selected
+                  ? AppColors.textSecondary.withOpacity(0.95)
+                  : AppColors.textSecondary.withOpacity(0.70)),
+            );
+          }),
         ),
       ),
       scaffoldMessengerKey: messengerKey,
@@ -132,43 +131,22 @@ class _BootstrapScreen extends StatefulWidget {
 class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
   final PrayerTimesRepository _repo = PrayerTimesRepository();
-
-  // schedule a daily refresh at local midnight so today/tomorrow stay current.
   Timer? _midnightTimer;
 
   @override
   void initState() {
     super.initState();
-
     _initFuture = _initializeAll();
-
-    // When initialization is finished (success or error), drop the native splash.
     _initFuture.whenComplete(() {
-      if (mounted) FlutterNativeSplash.remove(); // ONE splash
-    }); // [3](https://dev.to/programmerhasan/adding-a-splash-screen-to-your-flutter-app-with-flutternativesplash-32kn)[4](https://www.daniweb.com/programming/mobile-development/tutorials/537009/android-native-how-to-add-material-3-top-app-bar)
-
+      if (mounted) FlutterNativeSplash.remove();
+    });
     _scheduleMidnightRefresh();
 
-    // Foreground FCM -> refresh Storage -> rebuild UI
-    FirebaseMessaging.onMessage.listen((m) async {
-      if (m.data['updatePrayerTimes'] == 'true') {
-        final yearStr = m.data['year'];
-        final year = (yearStr != null) ? int.tryParse(yearStr) : null;
-        final ok = await _repo.refreshFromFirebase(year: year);
-        if (!mounted) return;
-        if (ok) {
-          setState(() {
-            _initFuture = _initializeAll(); // re-read from disk -> rebuild UI
-          });
-          messengerKey.currentState?.showSnackBar(
-            const SnackBar(content: Text('Prayer times updated')),
-          );
-        }
-      }
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      // Badge handled in HomeTabs
     });
   }
 
-  // compute delay to next local midnight and refresh then.
   void _scheduleMidnightRefresh() {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
@@ -177,9 +155,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
       setState(() {
-        _initFuture = _initializeAll(); // pick new today/tomorrow
+        _initFuture = _initializeAll();
       });
-      // schedule again for the next day
       _scheduleMidnightRefresh();
     });
   }
@@ -205,26 +182,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
             temperatureF: r.temperatureF,
           );
         }
-
         if (snap.hasError) {
-          // Ensure native splash is removed if we reached error.
           FlutterNativeSplash.remove();
           return _SplashScaffold(
-            key: const ValueKey('bootstrap_error'), // fixes analyzer warning
+            key: const ValueKey('bootstrap_error'),
             title: 'Starting up…',
             subtitle: 'Error:\n${snap.error}',
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
-
-        // While waiting, draw nothing—native splash is still visible.
         return const SizedBox.shrink();
       },
     );
   }
 
   Future<_InitResult> _initializeAll() async {
-    // FCM permissions / topic subscription
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true, badge: true, sound: true, provisional: false,
@@ -235,7 +207,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('FCM setup error: $e\n$st');
     }
 
-    // Timezone
     tz.Location location;
     try {
       location = await initCentralTime();
@@ -243,16 +214,15 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
-    // Best-effort refresh from Firebase at startup (fallback to local if missing)
     try {
       final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
       debugPrint(
-          'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+        'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}',
+      );
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
 
-    // Load local canonical file (asset fallback) for current year
     final nowLocal = DateTime.now();
     List<PrayerDay> days;
     try {
@@ -262,14 +232,12 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       days = <PrayerDay>[];
     }
 
-    // Pick today / tomorrow from the list
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
-    // Weather
     final coords = _coordsForLocation(location);
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
@@ -373,8 +341,6 @@ class _SplashScaffold extends StatelessWidget {
 }
 
 // --------------------------- NAVIGATION BAR ---------------------------
-// (No pill, underline highlight)
-
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -395,35 +361,32 @@ class HomeTabs extends StatefulWidget {
 
 class _HomeTabsState extends State<HomeTabs> {
   int _index = 0;
-  bool hasNewNotification = false;
+  bool hasNewAnnouncement = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Foreground: show badge only for announcement pings
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
-        setState(() => hasNewNotification = true);
+        setState(() => hasNewAnnouncement = true);
       }
     });
 
-    // Background tap -> open Alerts (index 1)
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
           _index = 1;
-          hasNewNotification = false; // clear badge
+          hasNewAnnouncement = false;
         });
       }
     });
 
-    // Cold start via tap -> open Alerts (index 1)
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
           _index = 1;
-          hasNewNotification = false; // clear badge
+          hasNewAnnouncement = false;
         });
       }
     });
@@ -440,40 +403,104 @@ class _HomeTabsState extends State<HomeTabs> {
         temperatureF: widget.temperatureF,
       ),
       AnnouncementsTab(location: widget.location),
+      const SocialPage(),
+      const DirectoryPage(),
+      const MorePage(),
     ];
-    return Scaffold(
-      // Only show header on Notifications tab
-      appBar: _index == 1 ? AppBar(title: const Text('Notifications')) : null,
-      body: pages[_index],
 
-      // Material 3 NavigationBar (indicator/pill removed via theme)
+    return Scaffold(
+      body: pages[_index],
       bottomNavigationBar: NavigationBar(
+        // Make bar blend with your page navy
+        backgroundColor: AppColors.bgPrimary,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         height: kNavBarHeight,
         selectedIndex: _index,
         onDestinationSelected: (i) {
           setState(() {
             _index = i;
-            if (i == 1) hasNewNotification = false; // clear badge when opening Alerts
+            if (i == 1) hasNewAnnouncement = false;
           });
         },
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
+          // PRAYER — switch to Font Awesome (regular clock by default)
           NavigationDestination(
-            label: 'Prayer',
-            icon: _NavUnderlineIcon(
-              icon: Icons.access_time, active: false, size: kNavIconSize,
+            label: '',
+            icon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.clock, // regular (subtle)
+              // ALT options:
+              // icon: FontAwesomeIcons.solidClock, // solid
+              // icon: FontAwesomeIcons.mosque,     // semantic
+              active: false,
+              size: kNavIconSize,
             ),
-            selectedIcon: _NavUnderlineIcon(
-              icon: Icons.access_time, active: true, size: kNavIconSize + 3,
+            selectedIcon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.clock,
+              active: true,
+              size: kNavIconSize + 2,
             ),
           ),
+
+          // ALERTS — FA bullhorn + badge
           NavigationDestination(
-            label: 'Alerts',
-            icon: _NavUnderlineBellIcon(
-              active: false, showBadge: hasNewNotification, size: kNavIconSize,
+            label: '',
+            icon: _NavUnderlineFaBadgeIcon(
+              icon: FontAwesomeIcons.bullhorn,
+              active: false,
+              showBadge: hasNewAnnouncement,
+              size: kNavIconSize,
             ),
-            selectedIcon: _NavUnderlineBellIcon(
-              active: true, showBadge: hasNewNotification, size: kNavIconSize + 3,
+            selectedIcon: _NavUnderlineFaBadgeIcon(
+              icon: FontAwesomeIcons.bullhorn,
+              active: true,
+              showBadge: hasNewAnnouncement,
+              size: kNavIconSize + 2,
+            ),
+          ),
+
+          // SOCIAL — FA hashtag
+          NavigationDestination(
+            label: '',
+            icon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.hashtag,
+              active: false,
+              size: kNavIconSize,
+            ),
+            selectedIcon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.hashtag,
+              active: true,
+              size: kNavIconSize + 2,
+            ),
+          ),
+
+          // DIRECTORY — FA address-book (regular)
+          NavigationDestination(
+            label: '',
+            icon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.addressBook,
+              active: false,
+              size: kNavIconSize,
+            ),
+            selectedIcon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.addressBook,
+              active: true,
+              size: kNavIconSize + 2,
+            ),
+          ),
+
+          // MORE — FA ellipsis (solid)
+          NavigationDestination(
+            label: '',
+            icon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.ellipsis,
+              active: false,
+              size: kNavIconSize,
+            ),
+            selectedIcon: _NavUnderlineFaIcon(
+              icon: FontAwesomeIcons.ellipsis,
+              active: true,
+              size: kNavIconSize + 2,
             ),
           ),
         ],
@@ -482,12 +509,12 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// ---- Helpers: underline highlight (no pill)
-class _NavUnderlineIcon extends StatelessWidget {
+// ---- Underline helpers (subtle) ----
+class _NavUnderlineFaIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
   final double size;
-  const _NavUnderlineIcon({
+  const _NavUnderlineFaIcon({
     required this.icon,
     required this.active,
     required this.size,
@@ -499,13 +526,13 @@ class _NavUnderlineIcon extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: size),
-        const SizedBox(height: 4),
+        FaIcon(icon, size: size),
+        const SizedBox(height: 3),
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 3, // underline thickness (try 4 for bolder)
-          width: active ? 22 : 0, // underline length (try 26 for wider)
+          height: 1.5,           // thinner 2 previously
+          width: active ? 14 : 0, // shorter 18 previously
           decoration: BoxDecoration(
             color: lineColor,
             borderRadius: BorderRadius.circular(2),
@@ -516,11 +543,13 @@ class _NavUnderlineIcon extends StatelessWidget {
   }
 }
 
-class _NavUnderlineBellIcon extends StatelessWidget {
+class _NavUnderlineFaBadgeIcon extends StatelessWidget {
+  final IconData icon;
   final bool active;
   final bool showBadge;
   final double size;
-  const _NavUnderlineBellIcon({
+  const _NavUnderlineFaBadgeIcon({
+    required this.icon,
     required this.active,
     required this.showBadge,
     required this.size,
@@ -535,29 +564,29 @@ class _NavUnderlineBellIcon extends StatelessWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(Icons.notifications, size: size),
+            FaIcon(icon, size: size),
             if (showBadge)
               Positioned(
                 right: -2,
                 top: -2,
                 child: Container(
-                  width: 12,
-                  height: 12,
+                  width: 8, //was 10
+                  height: 8, //was 10
                   decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
+                    border: Border.all(color: Colors.white, width: 1.2),
                   ),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 3, // underline thickness
-          width: active ? 22 : 0, // underline length
+          height: 2,
+          width: active ? 18 : 0,
           decoration: BoxDecoration(
             color: lineColor,
             borderRadius: BorderRadius.circular(2),
@@ -568,8 +597,7 @@ class _NavUnderlineBellIcon extends StatelessWidget {
   }
 }
 
-// --------------------------- HELPERS ---------------------------
-
+// ---- HELPERS (coords & weather) ----
 class LatLon {
   final double lat;
   final double lon;
@@ -577,7 +605,7 @@ class LatLon {
 }
 
 LatLon _coordsForLocation(tz.Location location) {
-  final locationName = location.name.toLowerCase(); // renamed from lname
+  final locationName = location.name.toLowerCase();
   if (locationName.contains('america/chicago')) {
     return const LatLon(33.0354, -97.0830);
   }
