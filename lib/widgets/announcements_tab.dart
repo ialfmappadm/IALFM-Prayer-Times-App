@@ -2,8 +2,10 @@
 // lib/widgets/announcements_tab.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // for SystemUiOverlayStyle
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:timezone/timezone.dart' as tz;
+import '../app_colors.dart'; // navy/gold + gradient
 
 /// Lightweight UI model for each announcement item.
 class _AnnItem {
@@ -12,7 +14,6 @@ class _AnnItem {
   final String text;
   /// Canonical UTC timestamp (nullable if the server omits it).
   final DateTime? publishedAtUtc;
-
   _AnnItem({
     required this.id,
     required this.title,
@@ -24,7 +25,6 @@ class _AnnItem {
 class AnnouncementsTab extends StatefulWidget {
   final tz.Location location; // passed from HomeTabs (America/Chicago)
   const AnnouncementsTab({super.key, required this.location});
-
   @override
   State<AnnouncementsTab> createState() => _AnnouncementsTabState();
 }
@@ -55,33 +55,28 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     }
   }
 
-  // ---------------------- Remote Config ----------------------
-
+  // -------------------- Remote Config --------------------
   /// Initialize RC and load announcements immediately.
   Future<void> _initRemoteConfig() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
-
       // NOTE: RemoteConfigSettings is NOT const — do not prefix with `const`.
       await rc.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(seconds: 10),
         minimumFetchInterval: Duration.zero, // update whenever asked
       ));
-
       // Legacy single-item keys for backward compatibility.
       await rc.setDefaults(const {
         'announcement_active': true,
         'announcement_title': 'Announcement',
-        'announcement_text': 'Assalamu Alaikum', // spelling tweak (optional)
+        'announcement_text': 'Assalamu Alaikum',
         'announcement_published_at': '',
         // New shape: array JSON and optional version
         'announcements_json': '[]',
         'announcements_version': '',
       });
-
       final updated = await rc.fetchAndActivate();
       debugPrint('RemoteConfig fetchAndActivate -> updated=$updated');
-
       _readAnnouncements(rc);
     } catch (e, st) {
       debugPrint('Remote Config init error: $e\n$st');
@@ -150,9 +145,8 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     }
   }
 
-  // ---------------------- Parsing helpers ----------------------
-
-  /// Accepts ISO-8601 with or without colon in TZ offset, or epoch sec/ms.
+  // -------------------- Parsing helpers --------------------
+  /// Accepts ISO-8601 with/without colon in TZ offset, or epoch sec/ms.
   DateTime? _parseToUtc(String raw) {
     if (raw.isEmpty) return null;
 
@@ -166,7 +160,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     if (iso != null) return iso;
 
     // 2) Fix offsets like "-0600" -> "-06:00"
-    final m = RegExp(r'^(.*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$')
+    final m = RegExp(r'^(\S*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$')
         .firstMatch(raw);
     if (m != null) {
       final fixed = '${m.group(1)}${m.group(2)}:${m.group(3)}';
@@ -194,18 +188,16 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       final decoded = jsonDecode(jsonStr);
       if (decoded is List) {
         return decoded.map<_AnnItem>((e) {
-          // Remove unnecessary cast warning by dropping `as Map`
           final m = (e is Map)
               ? Map<String, dynamic>.from(e)
               : <String, dynamic>{};
-
           // Normalize keys commonly used upstream.
           final id = (m['id'] ?? '').toString();
           final title = (m['title'] ?? '').toString();
           final text = (m['text'] ?? m['body'] ?? '').toString();
           final when = (m['published_at'] ?? m['publishedAt'] ?? m['published'])
-              ?.toString() ?? '';
-
+              ?.toString() ??
+              '';
           return _AnnItem(
             id: id.isEmpty ? 'item-${DateTime.now().microsecondsSinceEpoch}' : id,
             title: title,
@@ -220,13 +212,14 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     return const [];
   }
 
-  // ---------------------- Formatting helpers ----------------------
-
+  // -------------------- Formatting helpers --------------------
   String _formatCentral(DateTime dUtc) {
     final central = tz.TZDateTime.from(dUtc, widget.location);
     const w = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const m = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
     final wd = w[central.weekday - 1];
     final mo = m[central.month - 1];
     int h = central.hour % 12; if (h == 0) h = 12;
@@ -235,52 +228,74 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     return '$wd, $mo ${central.day} ${central.year} $h:$mm $ap';
   }
 
-  // ---------------------- UI ----------------------
-
+  // -------------------- UI --------------------
   @override
   Widget build(BuildContext context) {
+    // Build the list (or placeholder) we already had
+    Widget listContent;
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+      listContent = const Center(child: CircularProgressIndicator());
+    } else {
+      final hasAny = _items.any((it) =>
+      it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
 
-    final hasAny = _items.any((it) =>
-    it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
+      final content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: hasAny
+            ? ListView.separated(
+          itemCount: _items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final a = _items[index];
+            final whenLabel =
+            (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
+            return _AnnouncementCard(
+              title: (a.title.isEmpty && a.text.isNotEmpty)
+                  ? 'Announcement'
+                  : a.title,
+              body: a.text,
+              whenLabel: whenLabel,
+            );
+          },
+        )
+            : ListView(
+          children: const [
+            _AnnouncementCard(
+              title: 'No active announcement',
+              body: 'Please check back later.',
+              whenLabel: null,
+            ),
+          ],
+        ),
+      );
 
-    final content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: hasAny
-          ? ListView.separated(
-        itemCount: _items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final a = _items[index];
-          final whenLabel =
-          (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
-          return _AnnouncementCard(
-            title: (a.title.isEmpty && a.text.isNotEmpty)
-                ? 'Announcement'
-                : a.title,
-            body: a.text,
-            whenLabel: whenLabel,
-          );
-        },
-      )
-          : ListView(
-        children: const [
-          _AnnouncementCard(
-            title: 'No active announcement',
-            body: 'Please check back later.',
-            whenLabel: null,
-          ),
-        ],
-      ),
-    );
-
-    // Swipe-to-refresh: RC fetch only (no local asset).
-    return SafeArea(
-      child: RefreshIndicator(
+      // Pull to refresh
+      listContent = RefreshIndicator(
         onRefresh: _refresh,
         child: content,
+      );
+    }
+
+    // ✅ New Scaffold with blue AppBar + gradient background to match Social page
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.bgPrimary, // navy/blue header
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Notifications',
+          style: TextStyle(
+            color: Colors.white,   // white title on blue
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        systemOverlayStyle: SystemUiOverlayStyle.light, // status bar icons light
+      ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        child: SafeArea(child: listContent),
       ),
     );
   }
