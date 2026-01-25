@@ -1,26 +1,30 @@
 
+// lib/pages/social_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // for SystemUiOverlayStyle
+import 'package:flutter/services.dart'; // SystemUiOverlayStyle
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../app_colors.dart'; // adjust if your colors file is elsewhere
+
+import '../app_colors.dart';
+import '../main.dart' show AppGradients;
+
+// Cool Light palette anchors
+const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
+const _kLightTextMuted   = Color(0xFF4A6273);
 
 class SocialPage extends StatelessWidget {
   const SocialPage({super.key});
 
-  // --- IALFM destinations ---
+  // IALFM destinations
   static const String _igHandle = 'ialfm_masjid';
-  static final Uri _igAppUri =
-  Uri.parse('instagram://user?username=$_igHandle');
-  static final Uri _igWebUri =
-  Uri.parse('https://www.instagram.com/$_igHandle/');
+  static final Uri _igAppUri = Uri.parse('instagram://user?username=$_igHandle');
+  static final Uri _igWebUri = Uri.parse('https://www.instagram.com/$_igHandle/');
 
   static const String _fbUser = 'ialfmmasjid';
   static final Uri _fbWebUri = Uri.parse('https://www.facebook.com/$_fbUser');
   static final Uri _fbAppUri =
   Uri.parse('fb://facewebmodal/f?href=https://www.facebook.com/$_fbUser');
 
-  // --- Launch helpers ---
   Future<void> _openInstagram(BuildContext context) async {
     final ok = await _tryLaunch(_igAppUri);
     if (!ok) {
@@ -51,30 +55,49 @@ class SocialPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color white = Colors.white;                 // icons/text on blue
-    final Color whiteSubtle = Colors.white.withOpacity(0.75);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    // Theme-adaptive gradient with Light fallback if extension missing
+    final gradient = Theme.of(context).extension<AppGradients>()?.page ??
+        (isLight
+            ? const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF6F9FC), Colors.white],
+        )
+            : AppColors.pageGradient);
+
+    // AppBar per theme
+    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
+    final titleColor = isLight ? _kLightTextPrimary : Colors.white;
+    final iconsColor = titleColor;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark
+        : SystemUiOverlayStyle.light;
+
+    // Icon/text colors per theme (request: dark icons in Light, white in Dark)
+    final socialIconColor  = isLight ? _kLightTextPrimary : Colors.white;
+    final primaryTextColor = socialIconColor;
+    final secondaryText    = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        // ✅ Blue (navy) background so the title shows clearly
-        backgroundColor: AppColors.bgPrimary,
+        backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Follow Us...',
+        title: Text(
+          'Follow Us…',
           style: TextStyle(
-            color: white,            // ✅ white heading on blue
+            color: titleColor,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: const IconThemeData(color: white),  // white back icon
-        systemOverlayStyle: SystemUiOverlayStyle.light, // status bar icons light
+        iconTheme: IconThemeData(color: iconsColor),
+        systemOverlayStyle: overlay,
       ),
       body: Container(
-        // Same blue gradient as other pages
-        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        decoration: BoxDecoration(gradient: gradient),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -82,27 +105,24 @@ class SocialPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // --- Instagram (white icon, centered) ---
+                  // Instagram
                   InkWell(
                     onTap: () => _openInstagram(context),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                       child: Column(
                         children: [
-                          const FaIcon(
+                          FaIcon(
                             FontAwesomeIcons.instagram,
                             size: 96,
-                            color: white,
+                            color: socialIconColor, // <- dark in Light, white in Dark
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '@$_igHandle',
-                            style: const TextStyle(
-                              color: white,
+                            style: TextStyle(
+                              color: primaryTextColor,
                               fontSize: 22,
                               fontWeight: FontWeight.w600,
                             ),
@@ -110,7 +130,7 @@ class SocialPage extends StatelessWidget {
                           Text(
                             'instagram.com/$_igHandle',
                             style: TextStyle(
-                              color: whiteSubtle,
+                              color: secondaryText,
                               fontSize: 16,
                             ),
                           ),
@@ -118,30 +138,26 @@ class SocialPage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 36),
 
-                  // --- Facebook (white icon, centered) ---
+                  // Facebook
                   InkWell(
                     onTap: () => _openFacebook(context),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                       child: Column(
                         children: [
-                          const FaIcon(
+                          FaIcon(
                             FontAwesomeIcons.facebookF,
                             size: 80,
-                            color: white,
+                            color: socialIconColor, // <- dark in Light, white in Dark
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '@$_fbUser',
-                            style: const TextStyle(
-                              color: white,
+                            style: TextStyle(
+                              color: primaryTextColor,
                               fontSize: 22,
                               fontWeight: FontWeight.w600,
                             ),
@@ -149,7 +165,7 @@ class SocialPage extends StatelessWidget {
                           Text(
                             'facebook.com/$_fbUser',
                             style: TextStyle(
-                              color: whiteSubtle,
+                              color: secondaryText,
                               fontSize: 16,
                             ),
                           ),

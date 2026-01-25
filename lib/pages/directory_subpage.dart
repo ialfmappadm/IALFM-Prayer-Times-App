@@ -1,12 +1,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../app_colors.dart';
+
+// Uses AppGradients from main.dart (ThemeExtension)
+import '../main.dart' show AppGradients;
 
 class DirectorySubPage extends StatelessWidget {
   final String title;
   final Widget body;
-
   const DirectorySubPage({
     super.key,
     required this.title,
@@ -15,21 +16,23 @@ class DirectorySubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const white = Colors.white;
+    final cs = Theme.of(context).colorScheme;
+    final gradients = Theme.of(context).extension<AppGradients>();
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.bgPrimary,
+        backgroundColor: cs.primary,
         elevation: 0,
         centerTitle: true,
         title: Text(
           title,
-          style: const TextStyle(color: white, fontSize: 20, fontWeight: FontWeight.w600),
+          style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.w600),
         ),
-        iconTheme: const IconThemeData(color: white),
+        iconTheme: IconThemeData(color: cs.onPrimary),
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        decoration: BoxDecoration(gradient: gradients?.page),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),

@@ -4,11 +4,26 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-import '../utils/time_utils.dart'; // NextPrayerTracker, formatCountdown, format12h
+import '../utils/time_utils.dart';
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
 import '../models.dart';
 import '../app_colors.dart';
+import '../main.dart' show AppGradients;
+
+// ---- Cool Light constants ----
+const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
+const _kLightTextMuted   = Color(0xFF4A6273);
+const _kLightRowAlt      = Color(0xFFE5ECF2);
+const _kLightCard        = Color(0xFFFFFFFF);
+const _kLightDivider     = Color(0xFF7B90A0);
+const _kLightHighlight   = Color(0xFFFFF0C9);
+
+// Cool-blue countdown panel
+const _kLightPanel       = Color(0xFFE9F2F9);
+const _kLightPanelTop    = Color(0xFFDDEAF3);
+const _kLightPanelBottom = Color(0xFFCBDCE8);
+const _kLightGoldDigits  = Color(0xFF9C7C2C); // darker gold for legibility
 
 const double kTempFallbackF = 72.0;
 
@@ -35,7 +50,6 @@ class PrayerPage extends StatefulWidget {
 class _PrayerPageState extends State<PrayerPage> {
   Timer? _ticker;
 
-  // NEW: tracker + state that only changes when needed
   late NextPrayerTracker _tracker;
   Duration _remaining = Duration.zero;
   NextPrayer? _next;
@@ -47,26 +61,23 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _initTrackerAndTicker() {
-    // Initialize tracker once with current props
     _tracker = NextPrayerTracker(
       loc: widget.location,
       nowLocal: DateTime.now(),
       today: widget.today,
       tomorrow: widget.tomorrow,
     );
-
     _next = _tracker.current;
     _remaining = _tracker.tick(DateTime.now());
 
-    // Start after first frame to avoid any pre-paint jank.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ticker?.cancel();
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
         final rem = _tracker.tick(DateTime.now());
         if (!mounted) return;
         setState(() {
-          _remaining = rem;
-          _next = _tracker.current; // flips only at boundary/day change
+          _remaining = rem.isNegative ? Duration.zero : rem;
+          _next = _tracker.current;
         });
       });
     });
@@ -75,17 +86,11 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   void didUpdateWidget(covariant PrayerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If 'today'/'tomorrow' or location change (midnight refresh or remote update),
-    // re-initialize the tracker once rather than recomputing every second.
     final dayChanged =
         oldWidget.today.date != widget.today.date ||
             oldWidget.tomorrow?.date != widget.tomorrow?.date;
-
     final locChanged = oldWidget.location.name != widget.location.name;
-
-    if (dayChanged || locChanged) {
-      _initTrackerAndTicker();
-    }
+    if (dayChanged || locChanged) _initTrackerAndTicker();
   }
 
   @override
@@ -94,30 +99,25 @@ class _PrayerPageState extends State<PrayerPage> {
     super.dispose();
   }
 
+  // Safe title casing including Jummua'h variants
   String _titleCase(String s) {
-    switch (s.toLowerCase()) {
-      case 'fajr':
-        return 'Fajr';
-      case 'sunrise':
-        return 'Sunrise';
-      case 'dhuhr':
-        return 'Dhuhr';
-      case 'asr':
-        return 'Asr';
-      case 'maghrib':
-        return 'Maghrib';
-      case 'isha':
-        return 'Isha';
+    final x = s.toLowerCase();
+    switch (x) {
+      case 'fajr':    return 'Fajr';
+      case 'sunrise': return 'Sunrise';
+      case 'dhuhr':   return 'Dhuhr';
+      case 'asr':     return 'Asr';
+      case 'maghrib': return 'Maghrib';
+      case 'isha':    return 'Isha';
       case "jummua'h":
-        return "Jummua'h";
-      case 'jumuah':
-        return 'Jumuah';
+      case "jummu'ah":
+      case 'jummuah':
+      case 'jumuah':  return "Jummua'h";
       default:
-        return s;
+        return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
     }
   }
 
-  // Guarded builder to surface child build errors on-screen.
   Widget _guarded(Widget Function() build) {
     try {
       return build();
@@ -126,95 +126,146 @@ class _PrayerPageState extends State<PrayerPage> {
       return Container(
         color: Colors.red.shade900,
         padding: const EdgeInsets.all(16),
-        child: Text(
-          'Error building widget:\n$e',
-          style: const TextStyle(color: Colors.white),
-        ),
+        child: Text('Error building widget:\n$e',
+            style: const TextStyle(color: Colors.white)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Use tracker-driven values; do not recompute next prayer here.
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    final bgGradient =
+        Theme.of(context).extension<AppGradients>()?.page ??
+            AppColors.pageGradient;
+
     final next = _next;
     final remaining = _remaining.isNegative ? Duration.zero : _remaining;
 
-    // If tracker isn't ready yet (first frame), render a minimal placeholder.
     if (next == null) {
       return const Scaffold(
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        body: SafeArea(child: Center(child: CircularProgressIndicator())),
       );
     }
 
+    // Text styles for the table
+    final headerTextStyle = TextStyle(
+      color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
+      fontSize: 16, fontWeight: FontWeight.w600,
+    );
+    final nameTextStyle = TextStyle(
+      color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
+      fontSize: 16, fontWeight: FontWeight.w500,
+    );
+    final valueTextStyle = TextStyle(
+      color: isLight ? _kLightTextPrimary : AppColors.textPrimary,
+      fontSize: 16, fontWeight: FontWeight.w600,
+    );
+
     final bannerTitle = '${_titleCase(next.name)} Adhan in…';
 
-    // Keep your existing naming map (unchanged)
     final adhanByName = <String, String>{
-      'Fajr': widget.today.prayers['fajr']?.begin ?? '',
-      'Sunrise': widget.today.sunrise ?? '',
-      'Dhuhr': widget.today.prayers['dhuhr']?.begin ?? '',
-      'Asr': widget.today.prayers['asr']?.begin ?? '',
-      'Maghrib': widget.today.prayers['maghrib']?.begin ?? '',
-      'Isha': widget.today.prayers['isha']?.begin ?? '',
-      "Jummua'h": '13:30', // static
+      'Fajr'    : widget.today.prayers['fajr']?.begin ?? '',
+      'Sunrise' : widget.today.sunrise ?? '',
+      'Dhuhr'   : widget.today.prayers['dhuhr']?.begin ?? '',
+      'Asr'     : widget.today.prayers['asr']?.begin ?? '',
+      'Maghrib' : widget.today.prayers['maghrib']?.begin ?? '',
+      'Isha'    : widget.today.prayers['isha']?.begin ?? '',
+      "Jummua'h": '13:30',
     };
 
     final iqamahByName = <String, String>{
-      'Fajr': widget.today.prayers['fajr']?.iqamah ?? '',
-      'Sunrise': '', // no iqamah for sunrise
-      'Dhuhr': widget.today.prayers['dhuhr']?.iqamah ?? '',
-      'Asr': widget.today.prayers['asr']?.iqamah ?? '',
-      'Maghrib': widget.today.prayers['maghrib']?.iqamah ?? '',
-      'Isha': widget.today.prayers['isha']?.iqamah ?? '',
-      "Jummua'h": '14:00', // static
+      'Fajr'    : widget.today.prayers['fajr']?.iqamah ?? '',
+      'Sunrise' : '',
+      'Dhuhr'   : widget.today.prayers['dhuhr']?.iqamah ?? '',
+      'Asr'     : widget.today.prayers['asr']?.iqamah ?? '',
+      'Maghrib' : widget.today.prayers['maghrib']?.iqamah ?? '',
+      'Isha'    : widget.today.prayers['isha']?.iqamah ?? '',
+      "Jummua'h": '14:00',
     };
+
+    // ---- Countdown section (theme-adaptive) ----
+    final Widget countdownSection = isLight
+        ? Container(
+      decoration: BoxDecoration(
+        color: _kLightPanel,
+        border: Border(
+          top:    BorderSide(color: _kLightPanelTop,    width: 1),
+          bottom: BorderSide(color: _kLightPanelBottom, width: 1),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          Text(
+            bannerTitle,
+            style: const TextStyle(
+              color: _kLightTextMuted,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            formatCountdown(remaining),
+            style: const TextStyle(
+              color: _kLightGoldDigits,
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
+      ),
+    )
+        : Container(
+      color: AppColors.bgPrimary,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        children: [
+          Text(
+            bannerTitle,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            formatCountdown(remaining),
+            style: const TextStyle(
+              color: AppColors.countdownText,
+              fontSize: 42,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
+      ),
+    );
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Top header (white in Light, navy in Dark)
         _guarded(() => TopHeader(
           location: widget.location,
-          nowLocal: DateTime.now(), // show live clock in header if it uses it
+          nowLocal: DateTime.now(),
           today: widget.today,
           tomorrow: widget.tomorrow,
           temperatureF: widget.temperatureF ?? kTempFallbackF,
         )),
-        // Thin gold divider under header
+
+        // Thin gold underline
         Container(height: 1, color: AppColors.goldDivider),
 
-        // Countdown banner area (navy background)
-        Container(
-          color: AppColors.bgPrimary,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Column(
-            children: [
-              Text(
-                bannerTitle,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                formatCountdown(remaining),
-                style: const TextStyle(
-                  color: AppColors.countdownText,
-                  fontSize: 42,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Countdown
+        countdownSection,
 
-        // Table fills the rest of the screen
+        // Salah table
         Expanded(
           child: _guarded(
                 () => SalahTable(
@@ -222,44 +273,44 @@ class _PrayerPageState extends State<PrayerPage> {
               iqamahByName: iqamahByName,
               highlightName: _titleCase(next.name),
               expandRowsToFill: true,
+
+              // Header row: white in Light; navy gradient in Dark
               headerGreen: false,
-              headerBackgroundGradient: AppColors.headerGradient,
-              rowEvenColor: AppColors.bgSecondary,
-              rowOddColor: AppColors.bgSecondary,
-              highlightColor: AppColors.rowHighlight,
-              headerStyle: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-              nameStyle: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-              adhanStyle: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-              iqamahStyle: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-              order: const ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jummua'h"],
+              headerBackgroundGradient:
+              isLight ? null : AppColors.headerGradient,
+              headerBackgroundColor: isLight ? Colors.white : null,
+
+              // Rows
+              rowOddColor:  isLight ? _kLightCard   : AppColors.bgSecondary,
+              rowEvenColor: isLight ? _kLightRowAlt : AppColors.bgSecondary,
+
+              // Highlight
+              highlightColor:      AppColors.rowHighlight, // Dark brand
+              highlightColorLight: _kLightHighlight,       // Light soft gold
+
+              // Subtle dividers in Light
+              rowDividerColorLight: _kLightDivider.withValues(alpha: 0.16),
+
+              // Text styles
+              headerStyle: headerTextStyle,
+              nameStyle:   nameTextStyle,
+              adhanStyle:  valueTextStyle,
+              iqamahStyle: valueTextStyle,
+
+              order: const [
+                'Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jummua'h"
+              ],
             ),
           ),
         ),
       ],
     );
 
-    // Use a Scaffold to guarantee paint; keep your gradient.
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Container(
-          decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+          decoration: BoxDecoration(gradient: bgGradient),
           child: content,
         ),
       ),
