@@ -1,13 +1,17 @@
 
-// lib/main.dart
+// lib/main.dart (with SnackBar white bubble patch for Light & Dark)
+
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
+
+// Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -25,14 +29,12 @@ import 'prayer_times_firebase.dart';
 import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
-
-// NEW: match page navy/gold
 import 'app_colors.dart';
+import 'theme_controller.dart';
 
-// ---- COMPACT NAV TUNING ----
-const double kNavIconSize = 18.0;   // subtle base size
-const double kNavBarHeight = 50.0;  // shorter bar
-
+// ---- NAV TUNING ----
+const double kNavIconSize = 18.0; // subtle base size
+const double kNavBarHeight = 50.0; // shorter bar
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
@@ -80,44 +82,177 @@ Future<void> main() async {
   });
 }
 
+// -------------------- Light (Cool) ColorScheme --------------------
+const ColorScheme lightColorScheme = ColorScheme(
+  brightness: Brightness.light,
+  primary: Color(0xFF0A2C42),                 // Navy
+  onPrimary: Color(0xFFFFFFFF),
+  primaryContainer: Color(0xFFD6E6F1),
+  onPrimaryContainer: Color(0xFF0A2231),
+
+  secondary: Color(0xFFC7A447),               // Gold
+  onSecondary: Color(0xFF231A00),
+  secondaryContainer: Color(0xFFFFF0C9),
+  onSecondaryContainer: Color(0xFF2A2000),
+
+  // Using surfaces for page canvas in M3:
+  surface: Color(0xFFFFFFFF),
+  onSurface: Color(0xFF0F2432),
+
+  // Outline for hairlines/dividers:
+  outline: Color(0xFF7B90A0),
+  outlineVariant: Color(0xFFC7D3DC),
+
+  // Status
+  error: Color(0xFFB3261E),
+  onError: Color(0xFFFFFFFF),
+  errorContainer: Color(0xFFF9DEDC),
+  onErrorContainer: Color(0xFF410002),
+
+  inverseSurface: Color(0xFF102431),
+  onInverseSurface: Color(0xFFE7EEF4), // <- correct param name
+  inversePrimary: Color(0xFF9CC6E7),
+
+  shadow: Color(0xFF000000),
+  scrim: Color(0xFF000000),
+);
+
+// Light gradient to mirror the dark gradient feel
+const LinearGradient pageGradientLight = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [ Color(0xFFF6F9FC), Color(0xFFFFFFFF) ],
+);
+
+// ---- ThemeExtension to carry a page gradient via Theme ----
+@immutable
+class AppGradients extends ThemeExtension<AppGradients> {
+  final Gradient page;
+  const AppGradients({required this.page});
+
+  @override
+  AppGradients copyWith({Gradient? page}) =>
+      AppGradients(page: page ?? this.page);
+
+  @override
+  AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
+    if (other is! AppGradients) return this;
+    return t < 0.5 ? this : other;
+  }
+
+  static const light = AppGradients(page: pageGradientLight);
+  static const dark  = AppGradients(page: AppColors.pageGradient);
+}
+
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final base = ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
+    // ---- LIGHT THEME (Cool) ----
+    final baseLight = ThemeData(
       useMaterial3: true,
-    );
-    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).copyWith(
-      titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-      titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-      bodyMedium: GoogleFonts.manrope(),
-      bodyLarge: GoogleFonts.manrope(),
+      colorScheme: lightColorScheme,
+      scaffoldBackgroundColor: lightColorScheme.surface,
+      textTheme: GoogleFonts.manropeTextTheme().copyWith(
+        titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+        titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
+        bodyMedium:  GoogleFonts.manrope(),
+        bodyLarge:   GoogleFonts.manrope(),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected
+                ? lightColorScheme.primary.withValues(alpha: 0.95)
+                : const Color(0xFF556978).withValues(alpha: 0.75),
+          );
+        }),
+      ),
+
+      // 👇 NEW: White bubble + dark text SnackBars in LIGHT
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: Colors.white,
+        contentTextStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        actionTextColor: Colors.black,
+        elevation: 3,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+
+      extensions: const <ThemeExtension<dynamic>>[
+        AppGradients.light,
+      ],
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'IALFM',
-      theme: base.copyWith(
-        textTheme: textTheme,
-        navigationBarTheme: NavigationBarThemeData(
-          // No pill
-          indicatorColor: Colors.transparent,
-          // Hide labels
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-          // Tone icons: subtle unselected, slightly brighter selected
-          iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
-            final selected = states.contains(MaterialState.selected);
-            return IconThemeData(
-              color: (selected
-                  ? AppColors.textSecondary.withOpacity(0.95)
-                  : AppColors.textSecondary.withOpacity(0.70)),
-            );
-          }),
-        ),
+    // ---- DARK THEME (Your Navy–Gold) ----
+    final baseDark = ThemeData(
+      brightness: Brightness.dark,
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.bgPrimary,
+      textTheme: GoogleFonts.manropeTextTheme().copyWith(
+        titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+        titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
+        bodyMedium:  GoogleFonts.manrope(),
+        bodyLarge:   GoogleFonts.manrope(),
       ),
-      scaffoldMessengerKey: messengerKey,
-      home: const _BootstrapScreen(),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.bgPrimary,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected
+                ? Colors.white.withValues(alpha: 0.95)
+                : Colors.white.withValues(alpha: 0.70),
+          );
+        }),
+      ),
+
+      // 👇 NEW: White bubble + dark text SnackBars in DARK
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: Colors.white, // <- force white bubble in dark
+        contentTextStyle: const TextStyle(
+          color: Colors.black,          // <- dark text
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        actionTextColor: Colors.black,
+        elevation: 3,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+
+      extensions: const <ThemeExtension<dynamic>>[
+        AppGradients.dark,
+      ],
+    );
+
+    // React to Settings (ThemeController.themeMode)
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.themeMode,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'IALFM',
+          themeMode: mode,
+          theme: baseLight,
+          darkTheme: baseDark,
+          scaffoldMessengerKey: messengerKey,
+          home: const _BootstrapScreen(),
+        );
+      },
     );
   }
 }
@@ -140,6 +275,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     _initFuture.whenComplete(() {
       if (mounted) FlutterNativeSplash.remove();
     });
+
     _scheduleMidnightRefresh();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -151,6 +287,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
+
     _midnightTimer?.cancel();
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
@@ -216,9 +353,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
     try {
       final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
-      debugPrint(
-        'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}',
-      );
+      debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
@@ -305,6 +440,7 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -340,7 +476,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// --------------------------- NAVIGATION BAR ---------------------------
+// ------------------------------- NAVIGATION BAR -------------------------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -411,8 +547,7 @@ class _HomeTabsState extends State<HomeTabs> {
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: NavigationBar(
-        // Make bar blend with your page navy
-        backgroundColor: AppColors.bgPrimary,
+        // NOTE: No hardcoded backgroundColor here—theme drives Light/Dark.
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         height: kNavBarHeight,
@@ -424,14 +559,11 @@ class _HomeTabsState extends State<HomeTabs> {
           });
         },
         destinations: [
-          // PRAYER — switch to Font Awesome (regular clock by default)
+          // PRAYER — FA clock
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.clock, // regular (subtle)
-              // ALT options:
-              // icon: FontAwesomeIcons.solidClock, // solid
-              // icon: FontAwesomeIcons.mosque,     // semantic
+              icon: FontAwesomeIcons.clock,
               active: false,
               size: kNavIconSize,
             ),
@@ -441,7 +573,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-
           // ALERTS — FA bullhorn + badge
           NavigationDestination(
             label: '',
@@ -458,7 +589,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-
           // SOCIAL — FA hashtag
           NavigationDestination(
             label: '',
@@ -473,8 +603,7 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-
-          // DIRECTORY — FA address-book (regular)
+          // DIRECTORY — FA address-book
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
@@ -488,8 +617,7 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-
-          // MORE — FA ellipsis (solid)
+          // MORE — FA ellipsis
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
@@ -519,6 +647,7 @@ class _NavUnderlineFaIcon extends StatelessWidget {
     required this.active,
     required this.size,
   });
+
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -531,8 +660,8 @@ class _NavUnderlineFaIcon extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 1.5,           // thinner 2 previously
-          width: active ? 14 : 0, // shorter 18 previously
+          height: 1.5,
+          width: active ? 14 : 0,
           decoration: BoxDecoration(
             color: lineColor,
             borderRadius: BorderRadius.circular(2),
@@ -554,6 +683,7 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
     required this.showBadge,
     required this.size,
   });
+
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -570,8 +700,8 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
                 right: -2,
                 top: -2,
                 child: Container(
-                  width: 8, //was 10
-                  height: 8, //was 10
+                  width: 8,
+                  height: 8,
                   decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,

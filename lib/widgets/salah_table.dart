@@ -20,15 +20,24 @@ class SalahTable extends StatelessWidget {
   // Row colors
   final Color rowEvenColor;
   final Color rowOddColor;
+
+  /// Highlight for **Dark** (and fallback); keeps your current brand
   final Color highlightColor;
 
-  // Layout options
+  /// Highlight for **Light** (soft so text stays legible)
+  final Color? highlightColorLight;
+
+  // Layout
   final bool expandRowsToFill;
 
   // Header visuals
-  final bool headerGreen; // if true, force classic green header
-  final Gradient? headerBackgroundGradient; // preferred gradient when headerGreen=false
-  final Color? headerBackgroundColor;      // preferred solid color when headerGreen=false
+  final bool headerGreen;
+  final Gradient? headerBackgroundGradient;
+  final Color? headerBackgroundColor;
+
+  /// Light-mode hairline divider between rows
+  final Color? rowDividerColorLight;
+  final double rowDividerThickness;
 
   const SalahTable({
     super.key,
@@ -41,16 +50,22 @@ class SalahTable extends StatelessWidget {
     this.adhanStyle,
     this.iqamahStyle,
     this.rowEvenColor = AppColors.bgSecondary,
-    this.rowOddColor = AppColors.bgSecondary,
+    this.rowOddColor  = AppColors.bgSecondary,
     this.highlightColor = AppColors.rowHighlight,
+    this.highlightColorLight,                  // <-- NEW
     this.expandRowsToFill = false,
     this.headerGreen = false,
     this.headerBackgroundGradient,
     this.headerBackgroundColor,
+
+    this.rowDividerColorLight,                 // <-- NEW
+    this.rowDividerThickness = 1,              // <-- NEW
   });
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     // Fallback text styles
     final headerTextStyle = headerStyle ?? const TextStyle(
       color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w600,
@@ -65,26 +80,52 @@ class SalahTable extends StatelessWidget {
       color: AppColors.textMuted, fontSize: 16, fontWeight: FontWeight.w500,
     );
 
-    // Filter to only entries that have an Adhan time
+    // Keep only entries that have an adhan time
     final entries = order.where((n) {
       final v = adhanByName[n];
       return v != null && v.isNotEmpty;
     }).toList();
 
-    // Helper: build a single data row
+    // Header background: green override > custom > default
+    final BoxDecoration? headerDecoration = headerGreen
+        ? const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFF2E7D32), Color(0xFF388E3C)],
+        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+      ),
+    )
+        : (headerBackgroundGradient != null
+        ? BoxDecoration(gradient: headerBackgroundGradient)
+        : (headerBackgroundColor != null
+        ? BoxDecoration(color: headerBackgroundColor)
+        : const BoxDecoration(gradient: AppColors.headerGradient)));
+
     Widget buildRow(String name, int i) {
-      final adhanRaw = adhanByName[name]!;
-      final adhan12 = format12h(adhanRaw);
+      final adhanRaw  = adhanByName[name]!;
+      final adhan12   = format12h(adhanRaw);
       final iqamahRaw = iqamahByName != null ? (iqamahByName![name] ?? '') : '';
-      final iqamah12 = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
+      final iqamah12  = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
+
       final isHighlight = (highlightName != null && highlightName == name);
 
-      final bg = isHighlight
-          ? highlightColor
+      // Background resolves per theme
+      final Color bg = isHighlight
+          ? (isLight ? (highlightColorLight ?? highlightColor) : highlightColor)
           : (i % 2 == 0 ? rowEvenColor : rowOddColor);
 
+      // Subtle divider only in Light
+      final BoxBorder? border = isLight
+          ? Border(
+        bottom: BorderSide(
+          color: (rowDividerColorLight ??
+              const Color(0xFF7B90A0).withValues(alpha: 0.16)),
+          width: rowDividerThickness,
+        ),
+      )
+          : null;
+
       final content = Container(
-        color: bg,
+        decoration: BoxDecoration(color: bg, border: border),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
@@ -98,7 +139,7 @@ class SalahTable extends StatelessWidget {
                         : nameTextStyle,
                   ),
                   const SizedBox(width: 6),
-                  // Use gold-soft accents for glyphs to match the palette
+                  // Brand glyph color
                   prayerGlyph(name, color: AppColors.goldSoft),
                 ],
               ),
@@ -127,35 +168,21 @@ class SalahTable extends StatelessWidget {
           ],
         ),
       );
+
       return expandRowsToFill ? Expanded(child: content) : content;
     }
 
-    // Decide header decoration: green override, custom gradient/color, or app default gradient
-    final BoxDecoration? headerDecoration = headerGreen
-        ? const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [Color(0xFF2E7D32), Color(0xFF388E3C)], // classic green
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ),
-    )
-        : (headerBackgroundGradient != null
-        ? BoxDecoration(gradient: headerBackgroundGradient)
-        : (headerBackgroundColor != null
-        ? BoxDecoration(color: headerBackgroundColor)
-        : const BoxDecoration(gradient: AppColors.headerGradient)));
-
     return Column(
       children: [
-        // ── Header row
+        // Header row
         Container(
           decoration: headerDecoration,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
               const SizedBox(width: 4),
-              Expanded(child: Text('Salah', style: headerTextStyle)),
-              Expanded(child: Center(child: Text('Adhan', style: headerTextStyle))),
+              Expanded(child: Text('Salah',  style: headerTextStyle)),
+              Expanded(child: Center(child: Text('Adhan',  style: headerTextStyle))),
               Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,
@@ -165,7 +192,7 @@ class SalahTable extends StatelessWidget {
             ],
           ),
         ),
-        // ── Data rows
+        // Data rows
         ...List.generate(entries.length, (i) => buildRow(entries[i], i)),
       ],
     );
