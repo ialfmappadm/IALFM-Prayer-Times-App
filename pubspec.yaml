@@ -19,6 +19,7 @@ dependencies:
   hijri: ^3.0.0
   url_launcher: ^6.3.2
   http: ^1.2.1
+  font_awesome_flutter: ^10.12.0
 
   # ----- Firebase (aligned with latest FlutterFire 2025/26) -----
   # firebase_core 4.3.x -> Firebase iOS SDK ~12.6.x; matches current Flutter stable toolchain
