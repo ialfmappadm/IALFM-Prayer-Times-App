@@ -2,183 +2,119 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../app_colors.dart';
 import 'directory_contact_page.dart';
 import 'directory_subpage.dart';
 
-/// Simple model so the page is dynamic (add/remove rows, toggle chevron).
-class _DirItem {
-  final IconData icon;
-  final String label;
-  final void Function(BuildContext) onTap;
-  final bool showChevron;
-  const _DirItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.showChevron = true,
-  });
-}
-
 class DirectoryPage extends StatelessWidget {
   const DirectoryPage({super.key});
 
-  // Labels
-  static const String _tContact     = 'Contact Us';
-  static const String _tImam        = 'Our Imam';
-  static const String _tBoard       = 'Board of Directors';
-  static const String _tSchool      = 'Sunday School';
-  static const String _tNewsletter  = 'Newsletter';
-  static const String _tPillars     = 'Pillars Academy';
+  // ---- Labels
+  static const String _tDirectory = 'Directory';
+  static const String _tContact = 'Contact Us';
+  static const String _tImam = 'Our Imam';
+  static const String _tBoard = 'Board of Directors';
+
+  static const String _tSundaySchool = 'Sunday School';
+  static const String _tPillars = 'Pillars Academy';
   static const String _tQuranSchool = 'Quran School';
-  static const String _tCalendar    = 'Annual Calendar';
 
-  List<_DirItem> _items(BuildContext context) => <_DirItem>[
-    _DirItem(
-      icon: FontAwesomeIcons.phone,
-      label: _tContact,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.user,
-      label: _tImam,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tImam,
-            body: _SectionPlaceholder(lines: ['Our Imam page content coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.users,
-      label: _tBoard,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tBoard,
-            body: _SectionPlaceholder(lines: ['Board of Directors content coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.mosque,
-      label: _tSchool,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tSchool,
-            body: _SectionPlaceholder(lines: ['Sunday School content coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.newspaper,
-      label: _tNewsletter,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tNewsletter,
-            body: _SectionPlaceholder(lines: ['Newsletter sign‑up / archive coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      // ⬇️ Renamed icon
-      icon: FontAwesomeIcons.bookQuran,
-      label: _tPillars,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tPillars,
-            body: _SectionPlaceholder(lines: ['Pillars Academy information coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.bookOpen,
-      label: _tQuranSchool,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tQuranSchool,
-            body: _SectionPlaceholder(lines: ['Quran School details coming soon.']),
-          ),
-        ),
-      ),
-    ),
-    _DirItem(
-      icon: FontAwesomeIcons.calendarCheck,
-      label: _tCalendar,
-      onTap: (_) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DirectorySubPage(
-            title: _tCalendar,
-            body: _SectionPlaceholder(lines: ['Annual Calendar coming soon.']),
-          ),
-        ),
-      ),
-    ),
-  ];
+  static const String _tNewsletter = 'Newsletter';
+  static const String _tLinkTree = 'Link Tree';
+  static const String _tCalendar = 'Annual Calendar';
 
-  // Reusable row UI (FA icon + label + optional chevron)
-  Widget _row({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required bool showChevron, // ⬅️ now required (removes analyzer hint)
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        child: Row(
-          children: [
-            FaIcon(icon, color: AppColors.textPrimary, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (showChevron)
-              const FaIcon(
-                FontAwesomeIcons.chevronRight,
-                size: 14,
-                color: AppColors.textPrimary,
-              ),
-          ],
+  // ---- Sections
+  static const String _sManagement = 'Management';
+  static const String _sPrograms = 'Programs';
+  static const String _sResources = 'Resources';
+
+  // TODO: put your real Link Tree / hub URL here
+  static const String _linkTreeUrl = 'https://linktr.ee/ialfm';
+
+  // ---- Helpers
+  Future<bool> _open(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Widget _sectionHeader(String title) {
+    const gold = Color(0xFFC9A23F);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: gold,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
         ),
       ),
     );
   }
 
-  Divider _divider() => Divider(
-    height: 1,
-    // ⬇️ withOpacity -> withValues(alpha: ...)
-    color: Colors.white.withValues(alpha: 0.08),
-    indent: 14,
-    endIndent: 14,
-  );
+  Widget _card({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Material(
+        color: AppColors.bgPrimary.withValues(alpha: 0.35),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withOpacity(0.08)),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            // ~48dp+ tap target
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Row(
+              children: [
+                FaIcon(icon, color: AppColors.textPrimary, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    // Increased to 18 for readability
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const FaIcon(
+                  FontAwesomeIcons.chevronRight,
+                  size: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Small gap between rows
+  Widget get _rowGap => const SizedBox(height: 8);
+
+  // Large gap between sections
+  Widget get _sectionGap => const SizedBox(height: 24);
 
   @override
   Widget build(BuildContext context) {
     const white = Colors.white;
-    final items = _items(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -187,7 +123,7 @@ class DirectoryPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          'Directory',
+          _tDirectory,
           style: TextStyle(color: white, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         iconTheme: const IconThemeData(color: white),
@@ -199,31 +135,160 @@ class DirectoryPage extends StatelessWidget {
           const Positioned.fill(
             child: DecoratedBox(decoration: BoxDecoration(gradient: AppColors.pageGradient)),
           ),
+
           SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              children: [
-                // Grouped card with all rows
-                Container(
-                  decoration: BoxDecoration(
-                    // ⬇️ withOpacity -> withValues(alpha: ...)
-                    color: AppColors.bgPrimary.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < items.length; i++) ...[
-                        _row(
-                          icon: items[i].icon,
-                          label: items[i].label,
-                          onTap: () => items[i].onTap(context),
-                          showChevron: items[i].showChevron, // ⬅️ always passed
-                        ),
-                        if (i < items.length - 1) _divider(),
-                      ],
-                    ],
-                  ),
+            child: CustomScrollView(
+              slivers: [
+                // Title spacing from top
+                SliverToBoxAdapter(child: SizedBox(height: 12)),
+                // Page horizontal padding
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverList.list(children: [
+                    // ========== MANAGEMENT ==========
+                    _sectionHeader(_sManagement),
+                    _card(
+                      icon: FontAwesomeIcons.phone,
+                      label: _tContact,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
+                        );
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.user,
+                      label: _tImam,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tImam,
+                              body: _SectionPlaceholder(lines: ['Our Imam page content coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.users,
+                      label: _tBoard,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tBoard,
+                              body: _SectionPlaceholder(lines: ['Board of Directors content coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    _sectionGap,
+
+                    // ========== PROGRAMS ==========
+                    _sectionHeader(_sPrograms),
+                    _card(
+                      icon: FontAwesomeIcons.school, // or FontAwesomeIcons.mosque
+                      label: _tSundaySchool,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tSundaySchool,
+                              body: _SectionPlaceholder(lines: ['Sunday School content coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.bookQuran,
+                      label: _tPillars,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tPillars,
+                              body: _SectionPlaceholder(lines: ['Pillars Academy information coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.bookOpen,
+                      label: _tQuranSchool,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tQuranSchool,
+                              body: _SectionPlaceholder(lines: ['Quran School details coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    _sectionGap,
+
+                    // ========== RESOURCES ==========
+                    _sectionHeader(_sResources),
+                    _card(
+                      icon: FontAwesomeIcons.newspaper,
+                      label: _tNewsletter,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tNewsletter,
+                              body: _SectionPlaceholder(lines: ['Newsletter sign‑up / archive coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.link,
+                      label: _tLinkTree,
+                      onTap: () async {
+                        final ok = await _open(Uri.parse(_linkTreeUrl));
+                        if (!ok && context.mounted) {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(content: Text('Could not open Link Tree')));
+                        }
+                      },
+                    ),
+                    _rowGap,
+                    _card(
+                      icon: FontAwesomeIcons.calendarCheck,
+                      label: _tCalendar,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DirectorySubPage(
+                              title: _tCalendar,
+                              body: _SectionPlaceholder(lines: ['Annual Calendar coming soon.']),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Bottom padding
+                    const SizedBox(height: 24),
+                  ]),
                 ),
+
+                // Fill the rest so content reaches bottom on tall screens
+                SliverFillRemaining(hasScrollBody: false, child: const SizedBox(height: 1)),
               ],
             ),
           ),
@@ -236,6 +301,7 @@ class DirectoryPage extends StatelessWidget {
 class _SectionPlaceholder extends StatelessWidget {
   final List<String> lines;
   const _SectionPlaceholder({required this.lines});
+
   @override
   Widget build(BuildContext context) {
     return Column(

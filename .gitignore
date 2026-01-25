@@ -52,3 +52,4 @@ local.json
 android/app/src/main/res_backup_*/
 android/app/src/main/res_backup_overwritten_*/
 
+bundletool*.jar
