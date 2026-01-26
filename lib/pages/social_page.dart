@@ -4,13 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Match More/Directory theme
+import '../app_colors.dart';
+import '../main.dart' show AppGradients;
+
 /// ===============================
-///  CONFIG
+/// CONFIG
 /// ===============================
 
 /// Layout:
-///   'cards' -> one logo per row (recommended for readability)
-///   'grid'  -> two-up grid for the two Instagrams; Facebook full width below
+/// 'cards' -> one logo per row (recommended for readability)
+/// 'grid'  -> two-up grid for the two Instagrams; Facebook full width below
 const _layout = 'cards';
 
 /// Fixed glyph size (applies to IG + FB so they look uniform)
@@ -21,7 +25,7 @@ const double _cardRadius = 16.0;
 const double _cardHPadding = 24.0;
 const double _cardVPadding = 16.0;
 
-/// Light palette anchors
+/// Light palette anchors (used only for the AppBar title in light mode)
 const _kLightTextPrimary = Color(0xFF0F2432);
 const _kLightTextMuted   = Color(0xFF4A6273);
 
@@ -53,21 +57,18 @@ class SocialPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme   = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
+    final cs      = theme.colorScheme;
 
-    // Calm fallback page background gradient
-    final gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: isLight
-          ? const [Color(0xFFF6F9FC), Colors.white]
-          : const [Color(0xFF0D1117), Color(0xFF0D1117)],
-    );
+    // Page gradient: prefer AppGradients (same as More/Directory), otherwise AppColors fallback.
+    final pageGradient = theme.extension<AppGradients>()?.page ?? AppColors.pageGradient;
 
-    final appBarBg   = isLight ? Colors.white : const Color(0xFF0D1117);
+    // AppBar consistent with other pages
+    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
     final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
-    final titleText  = isLight ? _kLightTextPrimary : Colors.white;
+    // Text colors inside cards (match other pages)
+    final titleText  = cs.onSurface;
     final subText    = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
 
     final items = <_SocialItem>[
@@ -111,7 +112,7 @@ class SocialPage extends StatelessWidget {
         systemOverlayStyle: overlay,
       ),
       body: Container(
-        decoration: BoxDecoration(gradient: gradient),
+        decoration: BoxDecoration(gradient: pageGradient),
         child: SafeArea(
           child: _buildBody(context, items, titleText, subText),
         ),
@@ -131,7 +132,7 @@ class SocialPage extends StatelessWidget {
       final fb = items.firstWhere((e) => e.networkLabel == 'Facebook');
 
       return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24), // match More/Directory
         child: Column(
           children: [
             LayoutBuilder(
@@ -155,7 +156,7 @@ class SocialPage extends StatelessWidget {
 
     // 'cards' → one per row
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24), // match More/Directory
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (_, i) => _CardTile(
@@ -168,7 +169,6 @@ class SocialPage extends StatelessWidget {
 }
 
 /// =============== Model ===============
-
 class _SocialItem {
   _SocialItem({
     required this.networkLabel,
@@ -187,8 +187,7 @@ class _SocialItem {
   final String svgAsset;
 }
 
-/// =============== Tile (no ring; uniform size; no context-after-await lint) ===============
-
+/// =============== Tile (bubble glaze + hairline like More/Directory) ===============
 class _CardTile extends StatelessWidget {
   const _CardTile({
     required this.item,
@@ -204,16 +203,23 @@ class _CardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final bg  = isLight ? Colors.white : const Color(0xFF0D1117);
-    final brd = isLight
-        ? Colors.black.withValues(alpha: 0.06)
-        : Colors.white.withValues(alpha: 0.08);
+    final theme  = Theme.of(context);
+    final cs     = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Bubble glaze identical to More/Directory
+    final bg = isDark
+        ? Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black)
+        : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+
+    // Hairline identical to More/Directory
+    final brd = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : cs.outline.withValues(alpha: 0.30);
 
     return InkWell(
       borderRadius: BorderRadius.circular(_cardRadius),
       onTap: () async {
-        // No helper that captures context across awaits; we inline and guard with mounted.
         final okApp = await _tryLaunch(item.appUri);
         if (!okApp) {
           final okWeb = await _tryLaunch(item.webUri);
@@ -232,7 +238,7 @@ class _CardTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(_cardRadius),
           border: Border.all(color: brd),
           boxShadow: [
-            if (isLight)
+            if (!isDark)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 14,
@@ -277,7 +283,6 @@ class _CardTile extends StatelessWidget {
 }
 
 /// =============== Launch helper (no BuildContext here) ===============
-
 Future<bool> _tryLaunch(Uri uri) async {
   try {
     return await launchUrl(uri, mode: LaunchMode.externalApplication);

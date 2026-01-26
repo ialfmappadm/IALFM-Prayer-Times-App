@@ -5,34 +5,31 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
-// NEW: match navy background like Announcement/Contact
+// Match More/Social/Contact navy treatment
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 import 'directory_contact_page.dart';
 
-// ====== 🔧 CONFIGURE THESE TWO ======
+// ====== CONFIG ======
 const String _latestNewsletterEndpoint =
-    "https://latestnewsletter-kp6o4talda-uc.a.run.app"; // Cloud Run URL (v2)
+    "https://latestnewsletter-kp6o4talda-uc.a.run.app";
 
 final Uri _mailchimpArchiveUrl = Uri.parse(
-  // TIP: paste your Mailchimp archive page URL here
   "https://us15.campaign-archive.com/home/?u=537cf06a4d5391e8cd0381f61&id=f9ee0724dc",
 );
 
-// ====== PAGE WIDGET ======
+// ====== PAGE ======
 class DirectoryPage extends StatelessWidget {
   const DirectoryPage({super.key});
 
-  // ---- Page title
+  // Section headers
   static const String _tDirectory = 'Directory';
-
-  // ---- Section headers
   static const String _sContact = 'Contact';
   static const String _sManagement = 'Management';
   static const String _sPrograms = 'Programs';
   static const String _sResources = 'Resources';
 
-  // ---- Labels
+  // Row labels
   static const String _tContact = 'Contact Us';
   static const String _tImam = 'Our Imam';
   static const String _tBoard = 'Board of Directors';
@@ -55,7 +52,7 @@ class DirectoryPage extends StatelessWidget {
   static const String _tDocs = 'IALFM Documents';
   static const String _tVolunteer = 'Become a Volunteer';
 
-  // ---- External links
+  // Links
   static final Uri _imam = Uri.parse('https://www.ialfm.org/our-imam/');
   static final Uri _board = Uri.parse('https://www.ialfm.org/bod/');
   static final Uri _committees = Uri.parse('https://www.ialfm.org/committees/');
@@ -75,7 +72,7 @@ class DirectoryPage extends StatelessWidget {
   static final Uri _linkTree = Uri.parse('https://linktr.ee/ialfm');
   static final Uri _linkTreeYouth = Uri.parse('https://linktr.ee/ialfmyouth');
 
-  // ---- Helpers
+  // ---------- Behavior ----------
   Future<bool> _open(BuildContext context, Uri uri) async {
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -106,13 +103,11 @@ class DirectoryPage extends StatelessWidget {
         final match = RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(body);
         final url = match?.group(1);
         if (url != null) {
-          // Normalize any &amp; that may slip through
-          final cleaned = url.replaceAll('&amp;', '&');
+          final cleaned = url.replaceAll('&amp;', '&'); // normalize
           await _open(context, Uri.parse(cleaned));
           return;
         }
       }
-      // Fallback
       await _open(context, _mailchimpArchiveUrl);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,14 +124,17 @@ class DirectoryPage extends StatelessWidget {
     }
   }
 
+  // ---------- UI helpers (copied to match MorePage exactly) ----------
+
+  // Section header (gold, 16, w600)
   Widget _sectionHeader(BuildContext context, String title) {
-    final cs = Theme.of(context).colorScheme;
+    const gold = Color(0xFFC7A447);
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
       child: Text(
         title,
-        style: TextStyle(
-          color: cs.secondary,
+        style: const TextStyle(
+          color: gold,
           fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.4,
@@ -145,95 +143,109 @@ class DirectoryPage extends StatelessWidget {
     );
   }
 
+  // Bubble card background + hairline (identical to MorePage._card)
   Widget _card(BuildContext context, {required Widget child}) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bg = isDark
+        ? Color.alphaBlend(const Color(0xFF0A2C42).withValues(alpha: 0.25), Colors.black)
+        : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+
+    final hairline =
+    isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
+
     return Container(
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: bg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.28)),
+        border: Border.all(color: hairline),
       ),
       child: child,
     );
   }
 
-  Widget _row({
+  // ListTile row (one-line 56dp, same paddings as More)
+  Widget _navRow({
     required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
     final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    return ListTile(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            FaIcon(icon, size: 18, color: cs.onSurface),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            FaIcon(FontAwesomeIcons.chevronRight, size: 14, color: cs.onSurface),
-          ],
-        ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      minLeadingWidth: 0,
+      horizontalTitleGap: 12,
+      dense: false, // one-line -> 56dp
+      leading: FaIcon(icon, size: 18, color: cs.onSurface),
+      title: Text(
+        label,
+        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
+      trailing: FaIcon(FontAwesomeIcons.chevronRight, size: 14, color: cs.onSurface),
     );
   }
 
-  Widget _divider(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Divider(height: 1, color: cs.outline.withOpacity(0.28), indent: 12, endIndent: 12);
+  // Hairline like MorePage
+  Divider _hairline(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    return Divider(
+      height: 1,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : cs.outline.withValues(alpha: 0.30),
+      indent: 12,
+      endIndent: 12,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
-
-    // Use the same navy treatment as other pages (Announcement/Contact/Social)
     final gradients = theme.extension<AppGradients>();
+
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
+    final iconsColor = titleColor;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     return Scaffold(
-      // Let the gradient paint the page; Scaffold remains transparent
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           _tDirectory,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
+        iconTheme: IconThemeData(color: iconsColor),
         systemOverlayStyle: overlay,
       ),
       body: Container(
-        // Match navy background across pages
-        decoration: BoxDecoration(gradient: gradients?.page),
+        decoration: BoxDecoration(gradient: gradients?.page), // same navy background
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            // EXACT same page padding as MorePage
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
               // ===== CONTACT =====
               _sectionHeader(context, _sContact),
               _card(
                 context,
-                child: _row(
+                child: _navRow(
                   context: context,
                   icon: FontAwesomeIcons.phone,
                   label: _tContact,
                   onTap: () {
-                    // 👉 Wire Contact Us → DirectoryContactPage
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
                     );
@@ -248,11 +260,11 @@ class DirectoryPage extends StatelessWidget {
                 context,
                 child: Column(
                   children: [
-                    _row(context: context, icon: FontAwesomeIcons.user,        label: _tImam,        onTap: () => _open(context, _imam)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.users,       label: _tBoard,       onTap: () => _open(context, _board)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.peopleGroup, label: _tCommittees,  onTap: () => _open(context, _committees)),
+                    _navRow(context: context, icon: FontAwesomeIcons.user,        label: _tImam,       onTap: () => _open(context, _imam)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.users,       label: _tBoard,      onTap: () => _open(context, _board)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.peopleGroup, label: _tCommittees, onTap: () => _open(context, _committees)),
                   ],
                 ),
               ),
@@ -264,11 +276,11 @@ class DirectoryPage extends StatelessWidget {
                 context,
                 child: Column(
                   children: [
-                    _row(context: context, icon: FontAwesomeIcons.school,    label: _tSundaySchool, onTap: () => _open(context, _sundaySchool)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.bookQuran, label: _tPillars,      onTap: () => _open(context, _pillars)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.bookOpen,  label: _tQuranSchool,  onTap: () => _open(context, _quran)),
+                    _navRow(context: context, icon: FontAwesomeIcons.school,    label: _tSundaySchool, onTap: () => _open(context, _sundaySchool)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.bookQuran, label: _tPillars,      onTap: () => _open(context, _pillars)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.bookOpen,  label: _tQuranSchool,  onTap: () => _open(context, _quran)),
                   ],
                 ),
               ),
@@ -280,11 +292,11 @@ class DirectoryPage extends StatelessWidget {
                 context,
                 child: Column(
                   children: [
-                    _row(context: context, icon: FontAwesomeIcons.userPlus,        label: _tSignupInd, onTap: () => _open(context, _mIndiv)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.usersViewfinder, label: _tSignupFam, onTap: () => _open(context, _mFamily)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.rightToBracket,  label: _tRenew,     onTap: () => _open(context, _mRenew)),
+                    _navRow(context: context, icon: FontAwesomeIcons.userPlus,        label: _tSignupInd, onTap: () => _open(context, _mIndiv)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.usersViewfinder, label: _tSignupFam, onTap: () => _open(context, _mFamily)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.rightToBracket,  label: _tRenew,     onTap: () => _open(context, _mRenew)),
                   ],
                 ),
               ),
@@ -296,8 +308,7 @@ class DirectoryPage extends StatelessWidget {
                 context,
                 child: Column(
                   children: [
-                    // Newsletter → sheet with Latest vs All Past
-                    _row(
+                    _navRow(
                       context: context,
                       icon: FontAwesomeIcons.newspaper,
                       label: _tNewsletter,
@@ -305,6 +316,7 @@ class DirectoryPage extends StatelessWidget {
                         await showModalBottomSheet<void>(
                           context: context,
                           showDragHandle: true,
+                          backgroundColor: Theme.of(context).colorScheme.surface,
                           builder: (ctx) {
                             final cs = Theme.of(ctx).colorScheme;
                             return SafeArea(
@@ -337,24 +349,23 @@ class DirectoryPage extends StatelessWidget {
                         );
                       },
                     ),
-                    _divider(context),
+                    _hairline(context),
 
-                    _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTree,       onTap: () => _open(context, _linkTree)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTreeYouth,  onTap: () => _open(context, _linkTreeYouth)),
-                    _divider(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.link,            label: _tLinkTree,      onTap: () => _open(context, _linkTree)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.link,            label: _tLinkTreeYouth, onTap: () => _open(context, _linkTreeYouth)),
+                    _hairline(context),
 
-                    _row(context: context, icon: FontAwesomeIcons.calendarCheck, label: _tCalendar,  onTap: () => _open(context, _calendar)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.lifeRing,      label: _tERF,       onTap: () => _open(context, _erf)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.fileLines,     label: _tDocs,      onTap: () => _open(context, _docs)),
-                    _divider(context),
-                    _row(context: context, icon: FontAwesomeIcons.handsHelping,  label: _tVolunteer, onTap: () => _open(context, _volunteer)),
+                    _navRow(context: context, icon: FontAwesomeIcons.calendarCheck,   label: _tCalendar,  onTap: () => _open(context, _calendar)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.lifeRing,        label: _tERF,       onTap: () => _open(context, _erf)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.fileLines,       label: _tDocs,      onTap: () => _open(context, _docs)),
+                    _hairline(context),
+                    _navRow(context: context, icon: FontAwesomeIcons.handsHelping,    label: _tVolunteer, onTap: () => _open(context, _volunteer)),
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
             ],
           ),
