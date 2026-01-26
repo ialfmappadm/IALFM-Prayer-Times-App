@@ -41,6 +41,11 @@ dependencies:
   # SVG for Insta and Facebook
   flutter_svg: ^2.0.10+1
 
+  # Localization for Arabic/English (SDK component, not from pub.dev)
+  flutter_localizations:
+    sdk: flutter
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

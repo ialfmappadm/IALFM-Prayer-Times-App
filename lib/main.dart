@@ -1,5 +1,8 @@
 
-// lib/main.dart (with SnackBar white bubble patch for Light & Dark)
+// lib/main.dart
+// - Initializes Flutter bindings and runApp in the SAME zone (prevents zone mismatch).
+// - Adds Arabic/English localization via LocaleController.
+// - Preserves your existing themes, gradients, Firebase/AppCheck, and tabs.
 
 import 'dart:async';
 import 'dart:convert';
@@ -16,6 +19,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+
+// Localization
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'locale_controller.dart';
 
 // Font Awesome
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -49,6 +56,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
+
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -59,23 +67,30 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  // Put EVERYTHING in the same zone so `ensureInitialized` & `runApp` share context.
+  runZonedGuarded(() async {
+    BindingBase.debugZoneErrorsAreFatal = true;
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid:
-    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  );
+    final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('FlutterError: ${details.exceptionAsString()}');
-  };
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid:
+      kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+      providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    );
 
-  runZonedGuarded(() {
+    // Route Flutter framework errors into this zone as well
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      Zone.current.handleUncaughtError(
+        details.exception,
+        details.stack ?? StackTrace.current,
+      );
+    };
+
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
     debugPrint('Uncaught async error: $error\n$stack');
@@ -85,34 +100,30 @@ Future<void> main() async {
 // -------------------- Light (Cool) ColorScheme --------------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF0A2C42),                 // Navy
+  primary: Color(0xFF0A2C42), // Navy
   onPrimary: Color(0xFFFFFFFF),
   primaryContainer: Color(0xFFD6E6F1),
   onPrimaryContainer: Color(0xFF0A2231),
 
-  secondary: Color(0xFFC7A447),               // Gold
+  secondary: Color(0xFFC7A447), // Gold
   onSecondary: Color(0xFF231A00),
   secondaryContainer: Color(0xFFFFF0C9),
   onSecondaryContainer: Color(0xFF2A2000),
 
-  // Using surfaces for page canvas in M3:
   surface: Color(0xFFFFFFFF),
   onSurface: Color(0xFF0F2432),
 
-  // Outline for hairlines/dividers:
   outline: Color(0xFF7B90A0),
   outlineVariant: Color(0xFFC7D3DC),
 
-  // Status
   error: Color(0xFFB3261E),
   onError: Color(0xFFFFFFFF),
   errorContainer: Color(0xFFF9DEDC),
   onErrorContainer: Color(0xFF410002),
 
   inverseSurface: Color(0xFF102431),
-  onInverseSurface: Color(0xFFE7EEF4), // <- correct param name
+  onInverseSurface: Color(0xFFE7EEF4),
   inversePrimary: Color(0xFF9CC6E7),
-
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
@@ -121,7 +132,7 @@ const ColorScheme lightColorScheme = ColorScheme(
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
-  colors: [ Color(0xFFF6F9FC), Color(0xFFFFFFFF) ],
+  colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
 );
 
 // ---- ThemeExtension to carry a page gradient via Theme ----
@@ -129,11 +140,9 @@ const LinearGradient pageGradientLight = LinearGradient(
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
-
   @override
   AppGradients copyWith({Gradient? page}) =>
       AppGradients(page: page ?? this.page);
-
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
@@ -141,7 +150,7 @@ class AppGradients extends ThemeExtension<AppGradients> {
   }
 
   static const light = AppGradients(page: pageGradientLight);
-  static const dark  = AppGradients(page: AppColors.pageGradient);
+  static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
 class BootstrapApp extends StatelessWidget {
@@ -149,16 +158,16 @@ class BootstrapApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ---- LIGHT THEME (Cool) ----
+    // ---- LIGHT THEME ----
     final baseLight = ThemeData(
       useMaterial3: true,
       colorScheme: lightColorScheme,
       scaffoldBackgroundColor: lightColorScheme.surface,
       textTheme: GoogleFonts.manropeTextTheme().copyWith(
         titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-        titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
-        bodyMedium:  GoogleFonts.manrope(),
-        bodyLarge:   GoogleFonts.manrope(),
+        titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+        bodyMedium: GoogleFonts.manrope(),
+        bodyLarge: GoogleFonts.manrope(),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -174,8 +183,7 @@ class BootstrapApp extends StatelessWidget {
           );
         }),
       ),
-
-      // 👇 NEW: White bubble + dark text SnackBars in LIGHT
+      // White bubble + dark text SnackBars in LIGHT
       snackBarTheme: SnackBarThemeData(
         backgroundColor: Colors.white,
         contentTextStyle: const TextStyle(
@@ -188,22 +196,21 @@ class BootstrapApp extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-
       extensions: const <ThemeExtension<dynamic>>[
         AppGradients.light,
       ],
     );
 
-    // ---- DARK THEME (Your Navy–Gold) ----
+    // ---- DARK THEME (Navy–Gold) ----
     final baseDark = ThemeData(
       brightness: Brightness.dark,
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.bgPrimary,
       textTheme: GoogleFonts.manropeTextTheme().copyWith(
         titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-        titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
-        bodyMedium:  GoogleFonts.manrope(),
-        bodyLarge:   GoogleFonts.manrope(),
+        titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+        bodyMedium: GoogleFonts.manrope(),
+        bodyLarge: GoogleFonts.manrope(),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.bgPrimary,
@@ -219,12 +226,11 @@ class BootstrapApp extends StatelessWidget {
           );
         }),
       ),
-
-      // 👇 NEW: White bubble + dark text SnackBars in DARK
+      // White bubble + dark text SnackBars in DARK
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: Colors.white, // <- force white bubble in dark
+        backgroundColor: Colors.white,
         contentTextStyle: const TextStyle(
-          color: Colors.black,          // <- dark text
+          color: Colors.black,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -233,24 +239,41 @@ class BootstrapApp extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-
       extensions: const <ThemeExtension<dynamic>>[
         AppGradients.dark,
       ],
     );
 
-    // React to Settings (ThemeController.themeMode)
+    // React to Settings (ThemeController + LocaleController)
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'IALFM',
-          themeMode: mode,
-          theme: baseLight,
-          darkTheme: baseDark,
-          scaffoldMessengerKey: messengerKey,
-          home: const _BootstrapScreen(),
+        return ValueListenableBuilder<Locale?>(
+          valueListenable: LocaleController.locale,
+          builder: (context, appLocale, __) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'IALFM',
+              themeMode: mode,
+              theme: baseLight,
+              darkTheme: baseDark,
+              scaffoldMessengerKey: messengerKey,
+
+              // ---- Localization ----
+              locale: appLocale, // null => system; Locale('ar') => Arabic; Locale('en') => English
+              supportedLocales: const [
+                Locale('en'),
+                Locale('ar'),
+              ],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+
+              home: const _BootstrapScreen(),
+            );
+          },
         );
       },
     );
@@ -275,7 +298,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     _initFuture.whenComplete(() {
       if (mounted) FlutterNativeSplash.remove();
     });
-
     _scheduleMidnightRefresh();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -287,7 +309,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
-
     _midnightTimer?.cancel();
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
@@ -339,6 +360,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         alert: true, badge: true, sound: true, provisional: false,
       );
       debugPrint('FCM permission: ${settings.authorizationStatus}');
+      // Consider gating iOS topic sub until APNS exists; keeping as-is per your current flow.
       await FirebaseMessaging.instance.subscribeToTopic('allUsers');
     } catch (e, st) {
       debugPrint('FCM setup error: $e\n$st');
@@ -366,7 +388,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
-
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
@@ -440,7 +461,6 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -476,7 +496,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ------------------------------- NAVIGATION BAR -------------------------------
+// ------------------------ NAVIGATION BAR ------------------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -502,13 +522,11 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   void initState() {
     super.initState();
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
         setState(() => hasNewAnnouncement = true);
       }
     });
-
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -517,7 +535,6 @@ class _HomeTabsState extends State<HomeTabs> {
         });
       }
     });
-
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -547,7 +564,6 @@ class _HomeTabsState extends State<HomeTabs> {
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: NavigationBar(
-        // NOTE: No hardcoded backgroundColor here—theme drives Light/Dark.
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         height: kNavBarHeight,
@@ -647,7 +663,6 @@ class _NavUnderlineFaIcon extends StatelessWidget {
     required this.active,
     required this.size,
   });
-
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -683,7 +698,6 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
     required this.showBadge,
     required this.size,
   });
-
   @override
   Widget build(BuildContext context) {
     final Color lineColor =

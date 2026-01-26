@@ -5,11 +5,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
-import '../theme_controller.dart';
-
-import 'about_page.dart';
-import 'privacy_policy_page.dart';
-import 'support_page.dart';
+import '../theme_controller.dart';      // your existing theme controller
+import '../locale_controller.dart';     // <-- new
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -18,44 +15,32 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  // ----- Preview-only state (no persistence yet) -----
-  // Accessibility
-  bool reduceAnimations = false;
-  String textSize = 'Default'; // Small / Default / Large
-  bool highContrast = false;
+  // Preview (non-persistent) items we've kept
+  String textSize = 'Default';            // Small / Default / Large
+  String clockFormat = '12‑Hour';         // 12‑Hour / 24‑Hour
+  String language = 'English';            // English / العربية
+  String lastSync = '—';
 
-  // Notifications (preview only)
-  bool adhan = false;
-  bool iqamah = false;
-  bool jumuah = false;
-
-  // Prayer & Time
-  bool countdown = true;
-  String clockFormat = '12‑Hour'; // 12‑Hour / 24‑Hour
-
-  // Language & Hijri
-  String language = 'English'; // English / العربية
-  int hijriUserOffset = 0;     // -1, 0, +1
-
-  // App Behavior
-  String defaultTab = 'Prayer'; // Prayer / Announcements / Social / Directory / More
-  bool keepScreenAwake = false;
+  // Moved to Accessibility
   bool haptics = true;
 
-  // Data & Storage
-  String lastSync = '—';
+  // Collapsed state (start collapsed as requested)
+  bool _accExpanded = false;
+  bool _notifExpanded = false;
+  bool _timeExpanded = false;
+  bool _langExpanded = false;
+  bool _dataExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
+    final theme     = Theme.of(context);
+    final isLight   = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
 
-    // Match Social/Directory header
-    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    // Match Social/Directory/Contact header
+    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
-    final iconsColor = titleColor;
-    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -64,16 +49,16 @@ class _MorePageState extends State<MorePage> {
         elevation: 0,
         centerTitle: true,
         title: Text('More', style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600)),
-        iconTheme: IconThemeData(color: iconsColor),
+        iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
       ),
       body: Container(
-        decoration: BoxDecoration(gradient: gradients?.page),
+        decoration: BoxDecoration(gradient: gradients?.page ?? AppColors.pageGradient),
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
-              // ============= ACCESSIBILITY =============
+              // ============= ACCESSIBILITY (collapsed by default) =============
               _sectionHeader(context, 'Accessibility'),
               _card(
                 context,
@@ -82,11 +67,12 @@ class _MorePageState extends State<MorePage> {
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
-                    initiallyExpanded: true,
+                    initiallyExpanded: _accExpanded,
+                    onExpansionChanged: (v) => setState(() => _accExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.universalAccess),
                     title: _secTitle(context, 'Accessibility'),
                     children: [
-                      // Dark Mode (driven by ThemeController)
+                      // Dark Mode — bind strictly to ThemeController to avoid first-toggle no-op
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: ThemeController.themeMode,
                         builder: (context, mode, _) {
@@ -97,24 +83,30 @@ class _MorePageState extends State<MorePage> {
                             label: 'Dark Mode',
                             value: isDark,
                             onChanged: (v) {
-                              ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
+                              ThemeController.setThemeMode(
+                                v ? ThemeMode.dark : ThemeMode.light,
+                              );
                               HapticFeedback.lightImpact();
                             },
                           );
                         },
                       ),
                       const _Hairline(),
+
+                      // Haptic Feedback (moved from App Behavior)
                       _switchRow(
                         context: context,
-                        icon: FontAwesomeIcons.wandMagicSparkles,
-                        label: 'Reduce Animations',
-                        value: reduceAnimations,
+                        icon: FontAwesomeIcons.mobileScreenButton,
+                        label: 'Haptic Feedback',
+                        value: haptics,
                         onChanged: (v) {
-                          setState(() => reduceAnimations = v);
-                          _toast('Preview: Reduce animations ${v ? 'on' : 'off'}');
+                          setState(() => haptics = v);
+                          HapticFeedback.lightImpact();
                         },
                       ),
                       const _Hairline(),
+
+                      // Optional: keep Text Size (preview only)
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.textHeight,
@@ -132,17 +124,6 @@ class _MorePageState extends State<MorePage> {
                           _toast('Preview: Text size = $choice');
                         },
                       ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.highlighter,
-                        label: 'High Contrast',
-                        value: highContrast,
-                        onChanged: (v) {
-                          setState(() => highContrast = v);
-                          _toast('Preview: High contrast ${v ? 'on' : 'off'}');
-                        },
-                      ),
                     ],
                   ),
                 ),
@@ -150,7 +131,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= NOTIFICATIONS (preview only) =============
+              // ============= NOTIFICATIONS (left intact; still collapsed) =============
               _sectionHeader(context, 'Notifications'),
               _card(
                 context,
@@ -159,6 +140,8 @@ class _MorePageState extends State<MorePage> {
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
+                    initiallyExpanded: _notifExpanded,
+                    onExpansionChanged: (v) => setState(() => _notifExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.bell),
                     title: _secTitle(context, 'Notifications'),
                     children: [
@@ -170,39 +153,6 @@ class _MorePageState extends State<MorePage> {
                           _toast('Preview: would request OS permission or open Settings');
                         },
                       ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.circlePlay,
-                        label: 'Daily Adhan Alerts',
-                        value: adhan,
-                        onChanged: (v) {
-                          setState(() => adhan = v);
-                          _toast('Preview: Adhan alerts ${v ? 'enabled' : 'disabled'}');
-                        },
-                      ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.personPraying,
-                        label: 'Daily Iqamah Alerts',
-                        value: iqamah,
-                        onChanged: (v) {
-                          setState(() => iqamah = v);
-                          _toast('Preview: Iqamah alerts ${v ? 'enabled' : 'disabled'}');
-                        },
-                      ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.mosque,
-                        label: 'Jumu‘ah Reminder',
-                        value: jumuah,
-                        onChanged: (v) {
-                          setState(() => jumuah = v);
-                          _toast('Preview: Jumu‘ah reminder ${v ? 'enabled' : 'disabled'}');
-                        },
-                      ),
                     ],
                   ),
                 ),
@@ -210,8 +160,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= PRAYER & TIME =============
-              _sectionHeader(context, 'Prayer & Time'),
+              // ============= TIME (no Countdown; keep Time Format only) =============
+              _sectionHeader(context, 'Time'),
               _card(
                 context,
                 child: Theme(
@@ -219,20 +169,11 @@ class _MorePageState extends State<MorePage> {
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
+                    initiallyExpanded: _timeExpanded,
+                    onExpansionChanged: (v) => setState(() => _timeExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.clock),
-                    title: _secTitle(context, 'Prayer & Time'),
+                    title: _secTitle(context, 'Time'),
                     children: [
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.hourglassHalf,
-                        label: 'Countdown to Next Prayer',
-                        value: countdown,
-                        onChanged: (v) {
-                          setState(() => countdown = v);
-                          _toast('Preview: Countdown ${v ? 'on' : 'off'}');
-                        },
-                      ),
-                      const _Hairline(),
                       _segmentedRow(
                         context: context,
                         icon: FontAwesomeIcons.clock,
@@ -242,6 +183,7 @@ class _MorePageState extends State<MorePage> {
                         onChanged: (i) {
                           setState(() => clockFormat = i == 0 ? '12‑Hour' : '24‑Hour');
                           _toast('Preview: Time format = $clockFormat');
+                          // TODO: wire to your actual time-format controller
                         },
                       ),
                     ],
@@ -251,8 +193,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= LANGUAGE & HIJRI =============
-              _sectionHeader(context, 'Language & Hijri'),
+              // ============= LANGUAGE (wire Arabic) =============
+              _sectionHeader(context, 'Language'),
               _card(
                 context,
                 child: Theme(
@@ -260,13 +202,15 @@ class _MorePageState extends State<MorePage> {
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
+                    initiallyExpanded: _langExpanded,
+                    onExpansionChanged: (v) => setState(() => _langExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.language),
-                    title: _secTitle(context, 'Language & Hijri'),
+                    title: _secTitle(context, 'Language'),
                     children: [
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.language,
-                        label: 'Language',
+                        label: 'App Language',
                         value: language,
                         onTap: () async {
                           final choice = await _chooseOne(
@@ -276,21 +220,16 @@ class _MorePageState extends State<MorePage> {
                             selected: language,
                           );
                           if (choice == null) return;
+
                           setState(() => language = choice);
-                          _toast('Preview: Language = $choice');
-                        },
-                      ),
-                      const _Hairline(),
-                      _segmentedRow(
-                        context: context,
-                        icon: FontAwesomeIcons.calendarDay,
-                        label: 'Hijri Date Adjustment',
-                        segments: const ['−1', '0', '+1'],
-                        index: hijriUserOffset + 1,
-                        onChanged: (i) {
-                          final val = i - 1;
-                          setState(() => hijriUserOffset = val);
-                          _toast('Preview: Hijri offset ${val >= 0 ? '+$val' : '$val'}');
+
+                          // Apply the locale
+                          if (choice == 'العربية') {
+                            LocaleController.setLocale(const Locale('ar'));
+                          } else {
+                            LocaleController.setLocale(const Locale('en'));
+                          }
+                          _toast('Language: $choice');
                         },
                       ),
                     ],
@@ -300,65 +239,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= APP BEHAVIOR =============
-              _sectionHeader(context, 'App Behavior'),
-              _card(
-                context,
-                child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                    childrenPadding: const EdgeInsets.only(bottom: 8),
-                    leading: _secIcon(FontAwesomeIcons.gear),
-                    title: _secTitle(context, 'App Behavior'),
-                    children: [
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.house,
-                        label: 'Default Home Tab',
-                        value: defaultTab,
-                        onTap: () async {
-                          final choice = await _chooseOne(
-                            context,
-                            title: 'Default Home Tab',
-                            options: const ['Prayer', 'Announcements', 'Social', 'Directory', 'More'],
-                            selected: defaultTab,
-                          );
-                          if (choice == null) return;
-                          setState(() => defaultTab = choice);
-                          _toast('Preview: Default tab = $choice');
-                        },
-                      ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.mobileScreenButton,
-                        label: 'Haptic Feedback',
-                        value: haptics,
-                        onChanged: (v) {
-                          setState(() => haptics = v);
-                          HapticFeedback.lightImpact();
-                        },
-                      ),
-                      const _Hairline(),
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.lock,
-                        label: 'Keep Screen Awake (Prayer Page)',
-                        value: keepScreenAwake,
-                        onChanged: (v) {
-                          setState(() => keepScreenAwake = v);
-                          _toast('Preview: Keep screen awake ${v ? 'on' : 'off'}');
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ============= DATA & STORAGE =============
+              // ============= DATA & STORAGE (kept; collapsed) =============
               _sectionHeader(context, 'Data & Storage'),
               _card(
                 context,
@@ -367,6 +248,8 @@ class _MorePageState extends State<MorePage> {
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
+                    initiallyExpanded: _dataExpanded,
+                    onExpansionChanged: (v) => setState(() => _dataExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.database),
                     title: _secTitle(context, 'Data & Storage'),
                     children: [
@@ -377,15 +260,6 @@ class _MorePageState extends State<MorePage> {
                         onPressed: () async {
                           setState(() => lastSync = TimeOfDay.now().format(context));
                           _toast('Preview: Data refreshed');
-                        },
-                      ),
-                      const _Hairline(),
-                      _buttonRow(
-                        context: context,
-                        icon: FontAwesomeIcons.trashCan,
-                        label: 'Clear Cached Data',
-                        onPressed: () {
-                          _toast('Preview: Cache cleared');
                         },
                       ),
                       const _Hairline(),
@@ -401,31 +275,6 @@ class _MorePageState extends State<MorePage> {
               ),
 
               const SizedBox(height: 24),
-
-              // ============= ABOUT & LEGAL =============
-              _sectionHeader(context, 'About & Legal'),
-              _card(context, child: Column(children: [
-                _navRow(
-                  context: context,
-                  icon: FontAwesomeIcons.circleInfo,
-                  label: 'About',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AboutPage())),
-                ),
-                const _Hairline(),
-                _navRow(
-                  context: context,
-                  icon: FontAwesomeIcons.shieldHalved,
-                  label: 'Privacy Policy',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyPage())),
-                ),
-                const _Hairline(),
-                _navRow(
-                  context: context,
-                  icon: FontAwesomeIcons.envelope,
-                  label: 'Support',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportPage())),
-                ),
-              ])),
             ],
           ),
         ),
@@ -433,27 +282,33 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ---------- Shared UI helpers ----------
+  // ---------------- Shared UI helpers (identical look to Directory/More) ----------------
+
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
       child: Text(
         title,
-        style: const TextStyle(color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+        style: const TextStyle(
+          color: gold,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
 
   Widget _card(BuildContext context, {required Widget child}) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final cs    = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark
-        ? Color.alphaBlend(const Color(0xFF0A2C42).withValues(alpha: 0.25), Colors.black)
+        ? Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black)
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
-    final hairline = isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
-
+    final hairline =
+    isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
     return Container(
       decoration: BoxDecoration(
         color: bg,
@@ -489,7 +344,7 @@ class _MorePageState extends State<MorePage> {
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
           Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
-          Switch(value: value, onChanged: onChanged),
+          Switch.adaptive(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -543,7 +398,8 @@ class _MorePageState extends State<MorePage> {
           ]),
           const SizedBox(height: 10),
           SegmentedButton<int>(
-            segments: List.generate(segments.length, (i) => ButtonSegment(value: i, label: Text(segments[i]))),
+            segments: List.generate(segments.length, (i) =>
+                ButtonSegment(value: i, label: Text(segments[i]))),
             selected: {index},
             onSelectionChanged: (s) => onChanged(s.first),
           ),
@@ -588,31 +444,6 @@ class _MorePageState extends State<MorePage> {
           Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
           FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
         ],
-      ),
-    );
-  }
-
-  // <-- Missing before: now included -->
-  Widget _navRow({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Row(
-          children: [
-            FaIcon(icon, size: 18, color: cs.onSurface),
-            const SizedBox(width: 12),
-            Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
-            FaIcon(FontAwesomeIcons.chevronRight, size: 14, color: cs.onSurface),
-          ],
-        ),
       ),
     );
   }
