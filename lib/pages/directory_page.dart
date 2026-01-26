@@ -5,13 +5,17 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
+// NEW: match navy background like Announcement/Contact
+import '../app_colors.dart';
+import '../main.dart' show AppGradients;
+import 'directory_contact_page.dart';
+
 // ====== 🔧 CONFIGURE THESE TWO ======
 const String _latestNewsletterEndpoint =
     "https://latestnewsletter-kp6o4talda-uc.a.run.app"; // Cloud Run URL (v2)
 
 final Uri _mailchimpArchiveUrl = Uri.parse(
-  // TIP: paste the URL from Mailchimp → Audience → Signup forms → Form builder → Campaign archive page
-  // Example (adjust to your u/id): https://us15.campaign-archive.com/home/?u=537cf06a4d5391e8cd0381f61&id=f9ee0724dc
+  // TIP: paste your Mailchimp archive page URL here
   "https://us15.campaign-archive.com/home/?u=537cf06a4d5391e8cd0381f61&id=f9ee0724dc",
 );
 
@@ -93,7 +97,10 @@ class DirectoryPage extends StatelessWidget {
 
   Future<void> _openLatestNewsletter(BuildContext context) async {
     try {
-      final resp = await http.get(Uri.parse(_latestNewsletterEndpoint)).timeout(const Duration(seconds: 8));
+      final resp = await http
+          .get(Uri.parse(_latestNewsletterEndpoint))
+          .timeout(const Duration(seconds: 8));
+
       if (resp.statusCode == 200) {
         final body = resp.body;
         final match = RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(body);
@@ -192,151 +199,165 @@ class DirectoryPage extends StatelessWidget {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
 
+    // Use the same navy treatment as other pages (Announcement/Contact/Social)
+    final gradients = theme.extension<AppGradients>();
+    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+
     return Scaffold(
+      // Let the gradient paint the page; Scaffold remains transparent
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: isLight ? Colors.white : theme.colorScheme.surface,
+        backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
         title: const Text(
           _tDirectory,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
-        systemOverlayStyle: isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
+        systemOverlayStyle: overlay,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          children: [
-            // ===== CONTACT =====
-            _sectionHeader(context, _sContact),
-            _card(context,
-              child: _row(
-                context: context,
-                icon: FontAwesomeIcons.phone,
-                label: _tContact,
-                onTap: () {
-                  // TODO: push your Contact page route here if needed
-                },
+      body: Container(
+        // Match navy background across pages
+        decoration: BoxDecoration(gradient: gradients?.page),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: [
+              // ===== CONTACT =====
+              _sectionHeader(context, _sContact),
+              _card(
+                context,
+                child: _row(
+                  context: context,
+                  icon: FontAwesomeIcons.phone,
+                  label: _tContact,
+                  onTap: () {
+                    // 👉 Wire Contact Us → DirectoryContactPage
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // ===== MANAGEMENT =====
-            _sectionHeader(context, _sManagement),
-            _card(context,
-              child: Column(
-                children: [
-                  _row(context: context, icon: FontAwesomeIcons.user, label: _tImam, onTap: () => _open(context, _imam)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.users, label: _tBoard, onTap: () => _open(context, _board)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.peopleGroup, label: _tCommittees, onTap: () => _open(context, _committees)),
-                ],
+              // ===== MANAGEMENT =====
+              _sectionHeader(context, _sManagement),
+              _card(
+                context,
+                child: Column(
+                  children: [
+                    _row(context: context, icon: FontAwesomeIcons.user,        label: _tImam,        onTap: () => _open(context, _imam)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.users,       label: _tBoard,       onTap: () => _open(context, _board)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.peopleGroup, label: _tCommittees,  onTap: () => _open(context, _committees)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // ===== PROGRAMS =====
-            _sectionHeader(context, _sPrograms),
-            _card(context,
-              child: Column(
-                children: [
-                  _row(context: context, icon: FontAwesomeIcons.school, label: _tSundaySchool, onTap: () => _open(context, _sundaySchool)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.bookQuran, label: _tPillars, onTap: () => _open(context, _pillars)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.bookOpen, label: _tQuranSchool, onTap: () => _open(context, _quran)),
-                ],
+              // ===== PROGRAMS =====
+              _sectionHeader(context, _sPrograms),
+              _card(
+                context,
+                child: Column(
+                  children: [
+                    _row(context: context, icon: FontAwesomeIcons.school,    label: _tSundaySchool, onTap: () => _open(context, _sundaySchool)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.bookQuran, label: _tPillars,      onTap: () => _open(context, _pillars)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.bookOpen,  label: _tQuranSchool,  onTap: () => _open(context, _quran)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // ===== MEMBERSHIP =====
-            _sectionHeader(context, _tMembership),
-            _card(context,
-              child: Column(
-                children: [
-                  _row(context: context, icon: FontAwesomeIcons.userPlus, label: _tSignupInd, onTap: () => _open(context, _mIndiv)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.usersViewfinder, label: _tSignupFam, onTap: () => _open(context, _mFamily)),
-                  _divider(context),
-                  _row(context: context, icon: FontAwesomeIcons.rightToBracket, label: _tRenew, onTap: () => _open(context, _mRenew)),
-                ],
+              // ===== MEMBERSHIP =====
+              _sectionHeader(context, _tMembership),
+              _card(
+                context,
+                child: Column(
+                  children: [
+                    _row(context: context, icon: FontAwesomeIcons.userPlus,        label: _tSignupInd, onTap: () => _open(context, _mIndiv)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.usersViewfinder, label: _tSignupFam, onTap: () => _open(context, _mFamily)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.rightToBracket,  label: _tRenew,     onTap: () => _open(context, _mRenew)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // ===== RESOURCES =====
-            _sectionHeader(context, _sResources),
-            _card(context,
-              child: Column(
-                children: [
-                  // Newsletter → sheet with Latest vs All Past
-                  _row(
-                    context: context,
-                    icon: FontAwesomeIcons.newspaper,
-                    label: _tNewsletter,
-                    onTap: () async {
-                      await showModalBottomSheet<void>(
-                        context: context,
-                        showDragHandle: true,
-                        builder: (ctx) {
-                          final cs = Theme.of(ctx).colorScheme;
-                          return SafeArea(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: FaIcon(FontAwesomeIcons.circlePlay, color: cs.onSurface, size: 18),
-                                    title: const Text('Open Latest Newsletter'),
-                                    onTap: () async {
-                                      Navigator.pop(ctx);
-                                      await _openLatestNewsletter(context);
-                                    },
-                                  ),
-                                  ListTile(
-                                    leading: FaIcon(FontAwesomeIcons.list, color: cs.onSurface, size: 18),
-                                    title: const Text('View All Past Newsletters'),
-                                    onTap: () async {
-                                      Navigator.pop(ctx);
-                                      await _open(context, _mailchimpArchiveUrl);
-                                    },
-                                  ),
-                                ],
+              // ===== RESOURCES =====
+              _sectionHeader(context, _sResources),
+              _card(
+                context,
+                child: Column(
+                  children: [
+                    // Newsletter → sheet with Latest vs All Past
+                    _row(
+                      context: context,
+                      icon: FontAwesomeIcons.newspaper,
+                      label: _tNewsletter,
+                      onTap: () async {
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          showDragHandle: true,
+                          builder: (ctx) {
+                            final cs = Theme.of(ctx).colorScheme;
+                            return SafeArea(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ListTile(
+                                      leading: FaIcon(FontAwesomeIcons.circlePlay, color: cs.onSurface, size: 18),
+                                      title: const Text('Open Latest Newsletter'),
+                                      onTap: () async {
+                                        Navigator.pop(ctx);
+                                        await _openLatestNewsletter(context);
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: FaIcon(FontAwesomeIcons.list, color: cs.onSurface, size: 18),
+                                      title: const Text('View All Past Newsletters'),
+                                      onTap: () async {
+                                        Navigator.pop(ctx);
+                                        await _open(context, _mailchimpArchiveUrl);
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  _divider(context),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    _divider(context),
 
-                  _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTree, onTap: () => _open(context, _linkTree)),
-                  _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTree,       onTap: () => _open(context, _linkTree)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTreeYouth,  onTap: () => _open(context, _linkTreeYouth)),
+                    _divider(context),
 
-                  _row(context: context, icon: FontAwesomeIcons.link, label: _tLinkTreeYouth, onTap: () => _open(context, _linkTreeYouth)),
-                  _divider(context),
-
-                  _row(context: context, icon: FontAwesomeIcons.calendarCheck, label: _tCalendar, onTap: () => _open(context, _calendar)),
-                  _divider(context),
-
-                  _row(context: context, icon: FontAwesomeIcons.lifeRing, label: _tERF, onTap: () => _open(context, _erf)),
-                  _divider(context),
-
-                  _row(context: context, icon: FontAwesomeIcons.fileLines, label: _tDocs, onTap: () => _open(context, _docs)),
-                  _divider(context),
-
-                  _row(context: context, icon: FontAwesomeIcons.handsHelping, label: _tVolunteer, onTap: () => _open(context, _volunteer)),
-                ],
+                    _row(context: context, icon: FontAwesomeIcons.calendarCheck, label: _tCalendar,  onTap: () => _open(context, _calendar)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.lifeRing,      label: _tERF,       onTap: () => _open(context, _erf)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.fileLines,     label: _tDocs,      onTap: () => _open(context, _docs)),
+                    _divider(context),
+                    _row(context: context, icon: FontAwesomeIcons.handsHelping,  label: _tVolunteer, onTap: () => _open(context, _volunteer)),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
