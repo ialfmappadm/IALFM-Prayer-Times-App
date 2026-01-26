@@ -1,83 +1,101 @@
 
-// lib/pages/social_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // SystemUiOverlayStyle
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../app_colors.dart';
-import '../main.dart' show AppGradients;
+/// ===============================
+///  CONFIG
+/// ===============================
 
-// Cool Light palette anchors
-const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
+/// Layout:
+///   'cards' -> one logo per row (recommended for readability)
+///   'grid'  -> two-up grid for the two Instagrams; Facebook full width below
+const _layout = 'cards';
+
+/// Fixed glyph size (applies to IG + FB so they look uniform)
+const double _iconSize = 72.0;
+
+/// Card styling (lowerCamelCase to satisfy lints)
+const double _cardRadius = 16.0;
+const double _cardHPadding = 24.0;
+const double _cardVPadding = 16.0;
+
+/// Light palette anchors
+const _kLightTextPrimary = Color(0xFF0F2432);
 const _kLightTextMuted   = Color(0xFF4A6273);
 
 class SocialPage extends StatelessWidget {
   const SocialPage({super.key});
 
-  // IALFM destinations
+  // ========= Accounts =========
+  // IALFM Instagram
   static const String _igHandle = 'ialfm_masjid';
   static final Uri _igAppUri = Uri.parse('instagram://user?username=$_igHandle');
   static final Uri _igWebUri = Uri.parse('https://www.instagram.com/$_igHandle/');
 
+  // IALFM Youth Instagram
+  static const String _igYouthHandle = 'ialfmyouth';
+  static final Uri _igYouthAppUri = Uri.parse('instagram://user?username=$_igYouthHandle');
+  static final Uri _igYouthWebUri = Uri.parse('https://www.instagram.com/$_igYouthHandle/');
+
+  // Facebook
   static const String _fbUser = 'ialfmmasjid';
   static final Uri _fbWebUri = Uri.parse('https://www.facebook.com/$_fbUser');
   static final Uri _fbAppUri =
   Uri.parse('fb://facewebmodal/f?href=https://www.facebook.com/$_fbUser');
 
-  Future<void> _openInstagram(BuildContext context) async {
-    final ok = await _tryLaunch(_igAppUri);
-    if (!ok) {
-      final okWeb = await _tryLaunch(_igWebUri);
-      if (!okWeb) _toast(context, 'Could not open Instagram');
-    }
-  }
-
-  Future<void> _openFacebook(BuildContext context) async {
-    final ok = await _tryLaunch(_fbAppUri);
-    if (!ok) {
-      final okWeb = await _tryLaunch(_fbWebUri);
-      if (!okWeb) _toast(context, 'Could not open Facebook');
-    }
-  }
-
-  Future<bool> _tryLaunch(Uri uri) async {
-    try {
-      return await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
+  // ========= SVG asset paths (your project uses /branding) =========
+  static const String _igSvg = 'assets/branding/instagram.svg';
+  static const String _fbSvg = 'assets/branding/facebook.svg';
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final theme   = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
 
-    // Theme-adaptive gradient with Light fallback if extension missing
-    final gradient = Theme.of(context).extension<AppGradients>()?.page ??
-        (isLight
-            ? const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF6F9FC), Colors.white],
-        )
-            : AppColors.pageGradient);
+    // Calm fallback page background gradient
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: isLight
+          ? const [Color(0xFFF6F9FC), Colors.white]
+          : const [Color(0xFF0D1117), Color(0xFF0D1117)],
+    );
 
-    // AppBar per theme
-    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg   = isLight ? Colors.white : const Color(0xFF0D1117);
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
-    final iconsColor = titleColor;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark
-        : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
-    // Icon/text colors per theme (request: dark icons in Light, white in Dark)
-    final socialIconColor  = isLight ? _kLightTextPrimary : Colors.white;
-    final primaryTextColor = socialIconColor;
-    final secondaryText    = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
+    final titleText  = isLight ? _kLightTextPrimary : Colors.white;
+    final subText    = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
+
+    final items = <_SocialItem>[
+      _SocialItem(
+        networkLabel: 'Instagram',
+        handle: '@$_igHandle',
+        urlText: 'instagram.com/$_igHandle',
+        appUri: _igAppUri,
+        webUri: _igWebUri,
+        svgAsset: _igSvg,
+      ),
+      _SocialItem(
+        networkLabel: 'Instagram',
+        handle: '@$_igYouthHandle',
+        urlText: 'instagram.com/$_igYouthHandle',
+        appUri: _igYouthAppUri,
+        webUri: _igYouthWebUri,
+        svgAsset: _igSvg,
+      ),
+      _SocialItem(
+        networkLabel: 'Facebook',
+        handle: '@$_fbUser',
+        urlText: 'facebook.com/$_fbUser',
+        appUri: _fbAppUri,
+        webUri: _fbWebUri,
+        svgAsset: _fbSvg,
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -87,98 +105,183 @@ class SocialPage extends StatelessWidget {
         centerTitle: true,
         title: Text(
           'Follow Us…',
-          style: TextStyle(
-            color: titleColor,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
-        iconTheme: IconThemeData(color: iconsColor),
+        iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
       ),
       body: Container(
         decoration: BoxDecoration(gradient: gradient),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Instagram
-                  InkWell(
-                    onTap: () => _openInstagram(context),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      child: Column(
-                        children: [
-                          FaIcon(
-                            FontAwesomeIcons.instagram,
-                            size: 96,
-                            color: socialIconColor, // <- dark in Light, white in Dark
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            '@$_igHandle',
-                            style: TextStyle(
-                              color: primaryTextColor,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'instagram.com/$_igHandle',
-                            style: TextStyle(
-                              color: secondaryText,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-
-                  // Facebook
-                  InkWell(
-                    onTap: () => _openFacebook(context),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      child: Column(
-                        children: [
-                          FaIcon(
-                            FontAwesomeIcons.facebookF,
-                            size: 80,
-                            color: socialIconColor, // <- dark in Light, white in Dark
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            '@$_fbUser',
-                            style: TextStyle(
-                              color: primaryTextColor,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'facebook.com/$_fbUser',
-                            style: TextStyle(
-                              color: secondaryText,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          child: _buildBody(context, items, titleText, subText),
         ),
       ),
     );
+  }
+
+  Widget _buildBody(
+      BuildContext context,
+      List<_SocialItem> items,
+      Color titleText,
+      Color subText,
+      ) {
+    if (_layout == 'grid') {
+      // Two-up IG, Facebook full width below
+      final ig = items.where((e) => e.networkLabel == 'Instagram').toList();
+      final fb = items.firstWhere((e) => e.networkLabel == 'Facebook');
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
+          children: [
+            LayoutBuilder(
+              builder: (ctx, c) {
+                final w = (c.maxWidth - 14) / 2;
+                return Row(
+                  children: [
+                    Expanded(child: _CardTile(item: ig[0], titleText: titleText, subText: subText, width: w)),
+                    const SizedBox(width: 14),
+                    Expanded(child: _CardTile(item: ig[1], titleText: titleText, subText: subText, width: w)),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _CardTile(item: fb, titleText: titleText, subText: subText),
+          ],
+        ),
+      );
+    }
+
+    // 'cards' → one per row
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (_, i) => _CardTile(
+        item: items[i],
+        titleText: titleText,
+        subText: subText,
+      ),
+    );
+  }
+}
+
+/// =============== Model ===============
+
+class _SocialItem {
+  _SocialItem({
+    required this.networkLabel,
+    required this.handle,
+    required this.urlText,
+    required this.appUri,
+    required this.webUri,
+    required this.svgAsset,
+  });
+
+  final String networkLabel; // Instagram / Facebook
+  final String handle;
+  final String urlText;
+  final Uri appUri;
+  final Uri webUri;
+  final String svgAsset;
+}
+
+/// =============== Tile (no ring; uniform size; no context-after-await lint) ===============
+
+class _CardTile extends StatelessWidget {
+  const _CardTile({
+    required this.item,
+    required this.titleText,
+    required this.subText,
+    this.width,
+  });
+
+  final _SocialItem item;
+  final Color titleText;
+  final Color subText;
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final bg  = isLight ? Colors.white : const Color(0xFF0D1117);
+    final brd = isLight
+        ? Colors.black.withValues(alpha: 0.06)
+        : Colors.white.withValues(alpha: 0.08);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(_cardRadius),
+      onTap: () async {
+        // No helper that captures context across awaits; we inline and guard with mounted.
+        final okApp = await _tryLaunch(item.appUri);
+        if (!okApp) {
+          final okWeb = await _tryLaunch(item.webUri);
+          if (!okWeb && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not open ${item.networkLabel}')),
+            );
+          }
+        }
+      },
+      child: Container(
+        width: width,
+        padding: const EdgeInsets.symmetric(horizontal: _cardHPadding, vertical: _cardVPadding),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(_cardRadius),
+          border: Border.all(color: brd),
+          boxShadow: [
+            if (isLight)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Pure SVG glyph — no ring; exact same size for all networks
+            SizedBox(
+              width: _iconSize,
+              height: _iconSize,
+              child: SvgPicture.asset(
+                item.svgAsset,
+                width: _iconSize,
+                height: _iconSize,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Handle (single line; ellipsis)
+            Text(
+              item.handle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: titleText, fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
+            // URL (single line; ellipsis)
+            Text(
+              item.urlText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: subText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// =============== Launch helper (no BuildContext here) ===============
+
+Future<bool> _tryLaunch(Uri uri) async {
+  try {
+    return await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    return false;
   }
 }
