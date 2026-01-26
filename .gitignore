@@ -53,3 +53,6 @@ android/app/src/main/res_backup_*/
 android/app/src/main/res_backup_overwritten_*/
 
 bundletool*.jar
+
+# Retired v1 functions folder
+functions/

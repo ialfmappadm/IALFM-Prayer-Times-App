@@ -1,1 +1,47 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"ialfm-prayer-times","appId":"1:432087736774:android:4b5e7082ce4cd7891992c7","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"ialfm-prayer-times","appId":"1:432087736774:ios:24fbf9d99f5920091992c7","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"ialfm-prayer-times","configurations":{"android":"1:432087736774:android:4b5e7082ce4cd7891992c7","ios":"1:432087736774:ios:24fbf9d99f5920091992c7","web":"1:432087736774:web:478627bfa8fd89881992c7"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ialfm-prayer-times",
+          "appId": "1:432087736774:android:4b5e7082ce4cd7891992c7",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "ialfm-prayer-times",
+          "appId": "1:432087736774:ios:24fbf9d99f5920091992c7",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ialfm-prayer-times",
+          "configurations": {
+            "android": "1:432087736774:android:4b5e7082ce4cd7891992c7",
+            "ios": "1:432087736774:ios:24fbf9d99f5920091992c7",
+            "web": "1:432087736774:web:478627bfa8fd89881992c7"
+          }
+        }
+      }
+    }
+  },
+
+  "functions": [
+    {
+      "source": "tools/newsletter/functions",
+      "codebase": "newsletter",
+      "runtime": "nodejs22",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}
