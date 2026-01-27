@@ -8,8 +8,8 @@ import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 import '../theme_controller.dart';
 import '../locale_controller.dart';
+import '../ux_prefs.dart'; // NEW
 
-// Generated localizations (requires l10n.yaml + app_en.arb + app_ar.arb)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 class MorePage extends StatefulWidget {
@@ -19,11 +19,8 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  // Preview-only state (not persisted)
-  String textSize = 'Default';             // 'Small' | 'Default' | 'Large'
-  String clockFormat = '12‑Hour';          // '12‑Hour' | '24‑Hour'
+  // Remove local 'haptics' and 'textSize' state — use UXPrefs instead
   String lastSync = '—';
-  bool haptics = true;
 
   // Collapsed by default
   bool _accExpanded = false;
@@ -32,14 +29,12 @@ class _MorePageState extends State<MorePage> {
   bool _langExpanded = false;
   bool _dataExpanded = false;
 
-  // Reflect current locale to a human label for the row
   String _currentLanguageLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final code = LocaleController.locale.value?.languageCode;
     return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
   }
 
-  // Apply language choice -> update LocaleController; UI reads it directly
   void _applyLanguageChoice(String choice, BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     if (choice == l10n.lang_arabic) {
@@ -47,8 +42,9 @@ class _MorePageState extends State<MorePage> {
     } else {
       LocaleController.setLocale(const Locale('en'));
     }
-    // No local 'language' field, so nothing to desync.
   }
+
+  String _currentTextSizeLabel() => UXPrefs.labelForScale(UXPrefs.textScale.value);
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +87,7 @@ class _MorePageState extends State<MorePage> {
                     leading: _secIcon(FontAwesomeIcons.universalAccess),
                     title: _secTitle(context, l10n.more_accessibility),
                     children: [
-                      // Dark mode (binds to ThemeController)
+                      // Dark Mode
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: ThemeController.themeMode,
                         builder: (context, mode, _) {
@@ -103,40 +99,53 @@ class _MorePageState extends State<MorePage> {
                             value: isDark,
                             onChanged: (v) {
                               ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
-                              HapticFeedback.lightImpact();
+                              UXPrefs.maybeHaptic(); // only if enabled
                             },
                           );
                         },
                       ),
                       const _Hairline(),
-                      // Haptics (moved from App Behavior)
-                      _switchRow(
-                        context: context,
-                        icon: FontAwesomeIcons.mobileScreenButton,
-                        label: l10n.more_haptics,
-                        value: haptics,
-                        onChanged: (v) {
-                          setState(() => haptics = v);
-                          HapticFeedback.lightImpact();
+
+                      // Haptic Feedback (default OFF)
+                      ValueListenableBuilder<bool>(
+                        valueListenable: UXPrefs.hapticsEnabled,
+                        builder: (context, enabled, _) {
+                          return _switchRow(
+                            context: context,
+                            icon: FontAwesomeIcons.mobileScreenButton,
+                            label: l10n.more_haptics,
+                            value: enabled,
+                            onChanged: (v) async {
+                              await UXPrefs.setHapticsEnabled(v);
+                            },
+                          );
                         },
                       ),
                       const _Hairline(),
-                      // Text Size picker (preview only)
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.textHeight,
-                        label: l10n.more_text_size,
-                        value: textSize,
-                        onTap: () async {
-                          final choice = await _chooseOne(
-                            context,
-                            title: l10n.more_text_size,
-                            options: const <String>['Small', 'Default', 'Large'],
-                            selected: textSize,
+
+                      // Text Size picker -> applies globally
+                      ValueListenableBuilder<double>(
+                        valueListenable: UXPrefs.textScale,
+                        builder: (context, scale, _) {
+                          return _pickerRow(
+                            context: context,
+                            icon: FontAwesomeIcons.textHeight,
+                            label: l10n.more_text_size,
+                            value: UXPrefs.labelForScale(scale),
+                            onTap: () async {
+                              final options = const <String>['Small', 'Default', 'Large'];
+                              final choice = await _chooseOne(
+                                context,
+                                title: l10n.more_text_size,
+                                options: options,
+                                selected: UXPrefs.labelForScale(UXPrefs.textScale.value),
+                              );
+                              if (choice == null) return;
+                              await UXPrefs.setTextScale(UXPrefs.scaleForLabel(choice));
+                              UXPrefs.maybeHaptic();
+                              setState(() {}); // updates the visible value text
+                            },
                           );
-                          if (choice == null) return;
-                          setState(() => textSize = choice);
-                          _toast('Preview: Text size = $choice');
                         },
                       ),
                     ],
@@ -164,7 +173,10 @@ class _MorePageState extends State<MorePage> {
                         context: context,
                         icon: FontAwesomeIcons.bell,
                         label: l10n.more_enable_notifications,
-                        onPressed: () => _toast('Preview: would request OS permission or open Settings'),
+                        onPressed: () {
+                          UXPrefs.maybeHaptic();
+                          _toast('Preview: would request OS permission or open Settings');
+                        },
                       ),
                     ],
                   ),
@@ -192,10 +204,10 @@ class _MorePageState extends State<MorePage> {
                         icon: FontAwesomeIcons.clock,
                         label: l10n.more_time_format,
                         segments: const <String>['12‑Hour', '24‑Hour'],
-                        index: clockFormat == '12‑Hour' ? 0 : 1,
+                        index: 0, // keep your existing logic if you wire a real setting later
                         onChanged: (i) {
-                          setState(() => clockFormat = i == 0 ? '12‑Hour' : '24‑Hour');
-                          _toast('Preview: Time format = $clockFormat');
+                          UXPrefs.maybeHaptic();
+                          _toast('Preview: Time format = ${i == 0 ? '12‑Hour' : '24‑Hour'}');
                         },
                       ),
                     ],
@@ -223,19 +235,21 @@ class _MorePageState extends State<MorePage> {
                         context: context,
                         icon: FontAwesomeIcons.language,
                         label: l10n.more_language_label,
-                        value: _currentLanguageLabel(context), // reads LocaleController
+                        value: _currentLanguageLabel(context),
                         onTap: () async {
                           final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
                           final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
                             context,
                             title: l10n.more_language,
-                            options: options,          // typed list avoids List<dynamic> inference
+                            options: options,
                             selected: selectedNow,
                           );
                           if (choice == null) return;
                           _applyLanguageChoice(choice, context);
+                          UXPrefs.maybeHaptic();
                           _toast('${l10n.more_language}: $choice');
+                          setState(() {}); // keep label accurate
                         },
                       ),
                     ],
@@ -264,6 +278,7 @@ class _MorePageState extends State<MorePage> {
                         icon: FontAwesomeIcons.rotate,
                         label: l10n.more_refresh_data,
                         onPressed: () async {
+                          UXPrefs.maybeHaptic();
                           setState(() => lastSync = TimeOfDay.now().format(context));
                           _toast('Preview: Data refreshed');
                         },
@@ -289,7 +304,6 @@ class _MorePageState extends State<MorePage> {
   }
 
   // ---------- Shared UI helpers ----------
-
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
     return Padding(
@@ -371,7 +385,7 @@ class _MorePageState extends State<MorePage> {
             Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
             Text(value, style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8))),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, size: 14), // stays LTR
+            const Icon(Icons.chevron_right, size: 14),
           ],
         ),
       ),
@@ -428,7 +442,6 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // Row with a trailing button (kept identical look; literal "Open" avoids new ARB keys)
   Widget _buttonRow({
     required BuildContext context,
     required IconData icon,
@@ -442,16 +455,13 @@ class _MorePageState extends State<MorePage> {
         children: [
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
-          ),
+          Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
           FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
         ],
       ),
     );
   }
 
-  // Bottom sheet with state managed inside so radios update immediately
   Future<String?> _chooseOne(
       BuildContext context, {
         required String title,

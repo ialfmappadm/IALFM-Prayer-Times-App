@@ -1,12 +1,12 @@
 
 // lib/main.dart
 // - Initializes bindings & runApp in the SAME zone.
-// - Adds locale-aware text themes: Manrope (en) and Cairo (ar).
-// - Preserves your Firebase/AppCheck, gradients, SnackBars, pages, and nav.
+// - Uses generated AppLocalizations (gen_l10n).
+// - Global LTR + global text scale via UXPrefs.
+// - Manrope primary + Arabic fallbacks (IBM Plex Sans Arabic -> Noto Sans Arabic).
 
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -20,8 +20,7 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
-// Localization (built-in)
-import 'package:flutter_localizations/flutter_localizations.dart';
+// Locale controller
 import 'locale_controller.dart';
 
 // Font Awesome
@@ -31,7 +30,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'models.dart';
 import 'pages/prayer_page.dart';
 import 'utils/time_utils.dart';
-import 'widgets/announcements_tab.dart';
+import 'widgets/announcements_tab.dart'; // If your file is named announcement.dart, adjust this import
 import 'prayer_times_firebase.dart';
 import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
@@ -39,12 +38,16 @@ import 'pages/more_page.dart';
 import 'app_colors.dart';
 import 'theme_controller.dart';
 
-// GENERATED localizations (gen_l10n)
+// NEW: UX preferences (text size + haptics)
+import 'ux_prefs.dart';
+
+// NEW: generated localizations (gen_l10n)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 // ---- NAV TUNING ----
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
+
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
@@ -85,7 +88,7 @@ Future<void> main() async {
       providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
-    // Route Flutter framework errors into this zone too
+    // Route Flutter framework errors into this zone too.
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       Zone.current.handleUncaughtError(
@@ -94,36 +97,34 @@ Future<void> main() async {
       );
     };
 
+    // NEW: Initialize UX preferences (haptics OFF by default, text scale default 1.0)
+    await UXPrefs.init();
+
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
     debugPrint('Uncaught async error: $error\n$stack');
   });
 }
 
-// -------------------- Light (Cool) ColorScheme --------------------
+// ------------------------ Light (Cool) ColorScheme ------------------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42), // Navy
   onPrimary: Color(0xFFFFFFFF),
   primaryContainer: Color(0xFFD6E6F1),
   onPrimaryContainer: Color(0xFF0A2231),
-
   secondary: Color(0xFFC7A447), // Gold
   onSecondary: Color(0xFF231A00),
   secondaryContainer: Color(0xFFFFF0C9),
   onSecondaryContainer: Color(0xFF2A2000),
-
   surface: Color(0xFFFFFFFF),
   onSurface: Color(0xFF0F2432),
-
   outline: Color(0xFF7B90A0),
   outlineVariant: Color(0xFFC7D3DC),
-
   error: Color(0xFFB3261E),
   onError: Color(0xFFFFFFFF),
   errorContainer: Color(0xFFF9DEDC),
   onErrorContainer: Color(0xFF410002),
-
   inverseSurface: Color(0xFF102431),
   onInverseSurface: Color(0xFFE7EEF4),
   inversePrimary: Color(0xFF9CC6E7),
@@ -131,7 +132,6 @@ const ColorScheme lightColorScheme = ColorScheme(
   scrim: Color(0xFF000000),
 );
 
-// Light gradient to mirror the dark gradient feel
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -143,9 +143,10 @@ const LinearGradient pageGradientLight = LinearGradient(
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
+
   @override
-  AppGradients copyWith({Gradient? page}) =>
-      AppGradients(page: page ?? this.page);
+  AppGradients copyWith({Gradient? page}) => AppGradients(page: page ?? this.page);
+
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
@@ -156,20 +157,19 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-
-// === REPLACE ONLY THE BootstrapApp CLASS IN lib/main.dart ===
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // React to Settings: Theme + Locale
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
-            // ---- Base UI text: always Manrope (protects English) ----
+            // ---- Base UI text: Manrope always (protect English) ----
             final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
@@ -177,26 +177,25 @@ class BootstrapApp extends StatelessWidget {
               bodyLarge:   GoogleFonts.manrope(),
             );
 
-            // ---- ONE fallback chain for Arabic glyphs only ----
-            // Order matters: IBM Plex Sans Arabic (crisp, neutral) → Noto Sans Arabic (broad support)
+            // ---- Arabic glyph fallback chain ----
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall:     t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium:    t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge:     t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall:    t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:   t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge:    t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall:    t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:   t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge:    t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall:  t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium: t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge:  t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall:      t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:     t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge:      t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:     t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium:    t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge:     t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:     t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium:    t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge:     t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall:   t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium:  t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge:   t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall:  t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium: t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge:  t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
@@ -231,7 +230,9 @@ class BootstrapApp extends StatelessWidget {
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              extensions: const <ThemeExtension<dynamic>>[ AppGradients.light ],
+              extensions: const <ThemeExtension<dynamic>>[
+                AppGradients.light,
+              ],
             );
 
             // ---- Dark theme ----
@@ -263,7 +264,9 @@ class BootstrapApp extends StatelessWidget {
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              extensions: const <ThemeExtension<dynamic>>[ AppGradients.dark ],
+              extensions: const <ThemeExtension<dynamic>>[
+                AppGradients.dark,
+              ],
             );
 
             return MaterialApp(
@@ -274,16 +277,27 @@ class BootstrapApp extends StatelessWidget {
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
 
-              // Localization (keep both locales)
-              locale: appLocale,
+              // ---- Localization: generated delegates + supported locales ----
+              locale: appLocale, // Locale('ar') or Locale('en') from LocaleController
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
 
-              // 🔒 GLOBAL LTR: prevents any page or bottom bar from mirroring
-              builder: (context, child) => Directionality(
-                textDirection: TextDirection.ltr,
-                child: child!,
-              ),
+              // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
+              builder: (context, child) {
+                return ValueListenableBuilder<double>(
+                  valueListenable: UXPrefs.textScale,
+                  builder: (context, scale, _) {
+                    final mq = MediaQuery.of(context);
+                    return Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: MediaQuery(
+                        data: mq.copyWith(textScaler: TextScaler.linear(scale)),
+                        child: child!,
+                      ),
+                    );
+                  },
+                );
+              },
 
               home: const _BootstrapScreen(),
             );
@@ -293,7 +307,6 @@ class BootstrapApp extends StatelessWidget {
     );
   }
 }
-
 
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
@@ -402,6 +415,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
+
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
@@ -475,6 +489,7 @@ class _SplashScaffold extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRetry;
   const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -525,6 +540,7 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
+
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -672,6 +688,7 @@ class _NavUnderlineFaIcon extends StatelessWidget {
     required this.active,
     required this.size,
   });
+
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
@@ -707,6 +724,7 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
     required this.showBadge,
     required this.size,
   });
+
   @override
   Widget build(BuildContext context) {
     final Color lineColor =
