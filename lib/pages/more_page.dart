@@ -1,15 +1,12 @@
-
 // lib/pages/more_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 import '../theme_controller.dart';
 import '../locale_controller.dart';
-import '../ux_prefs.dart'; // NEW
-
+import '../ux_prefs.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 class MorePage extends StatefulWidget {
@@ -19,10 +16,9 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  // Remove local 'haptics' and 'textSize' state — use UXPrefs instead
   String lastSync = '—';
 
-  // Collapsed by default
+  // collapsed by default
   bool _accExpanded = false;
   bool _notifExpanded = false;
   bool _timeExpanded = false;
@@ -48,14 +44,14 @@ class _MorePageState extends State<MorePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme     = Theme.of(context);
-    final isLight   = theme.brightness == Brightness.light;
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
-    final l10n      = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
 
-    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -63,7 +59,10 @@ class _MorePageState extends State<MorePage> {
         backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
-        title: Text(l10n.tab_more, style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text(
+          l10n.tab_more,
+          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+        ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
       ),
@@ -91,7 +90,9 @@ class _MorePageState extends State<MorePage> {
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: ThemeController.themeMode,
                         builder: (context, mode, _) {
-                          final isDark = mode == ThemeMode.dark;
+                          final platformDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+                          final isDark = (mode == ThemeMode.dark) ||
+                              (mode == ThemeMode.system && platformDark);
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.moon,
@@ -105,8 +106,7 @@ class _MorePageState extends State<MorePage> {
                         },
                       ),
                       const _Hairline(),
-
-                      // Haptic Feedback (default OFF)
+                      // Haptics (default OFF)
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
                         builder: (context, enabled, _) {
@@ -122,8 +122,7 @@ class _MorePageState extends State<MorePage> {
                         },
                       ),
                       const _Hairline(),
-
-                      // Text Size picker -> applies globally
+                      // Text Size picker
                       ValueListenableBuilder<double>(
                         valueListenable: UXPrefs.textScale,
                         builder: (context, scale, _) {
@@ -143,7 +142,7 @@ class _MorePageState extends State<MorePage> {
                               if (choice == null) return;
                               await UXPrefs.setTextScale(UXPrefs.scaleForLabel(choice));
                               UXPrefs.maybeHaptic();
-                              setState(() {}); // updates the visible value text
+                              setState(() {}); // update visible value
                             },
                           );
                         },
@@ -152,7 +151,6 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // ============= NOTIFICATIONS (preview only) =============
@@ -182,7 +180,6 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // ============= TIME (keep Time Format only) =============
@@ -214,7 +211,6 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // ============= LANGUAGE =============
@@ -256,7 +252,6 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // ============= DATA & STORAGE =============
@@ -294,7 +289,6 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
             ],
           ),
@@ -318,17 +312,23 @@ class _MorePageState extends State<MorePage> {
   }
 
   Widget _card(BuildContext context, {required Widget child}) {
-    final theme  = Theme.of(context);
-    final cs     = theme.colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+
+    // Subtle navy bubble in dark mode; gentle tint in light mode
     final bg = isDark
-        ? Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black)
+        ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35), const Color(0xFF0E2330))
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+
     final hairline =
     isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
+
     return Container(
       decoration: BoxDecoration(
-        color: bg, borderRadius: BorderRadius.circular(16), border: Border.all(color: hairline),
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: hairline),
       ),
       child: child,
     );
@@ -413,7 +413,10 @@ class _MorePageState extends State<MorePage> {
           ]),
           const SizedBox(height: 10),
           SegmentedButton<int>(
-            segments: List.generate(segments.length, (i) => ButtonSegment(value: i, label: Text(segments[i]))),
+            segments: List.generate(
+              segments.length,
+                  (i) => ButtonSegment(value: i, label: Text(segments[i])),
+            ),
             selected: {index},
             onSelectionChanged: (s) => onChanged(s.first),
           ),
@@ -469,7 +472,6 @@ class _MorePageState extends State<MorePage> {
         required String selected,
       }) async {
     String temp = selected;
-
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -477,7 +479,6 @@ class _MorePageState extends State<MorePage> {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         final l10n = AppLocalizations.of(context)!;
-
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return SafeArea(
