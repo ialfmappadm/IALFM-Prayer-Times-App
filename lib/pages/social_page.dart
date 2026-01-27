@@ -1,4 +1,3 @@
-
 // lib/pages/social_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 // Match More/Directory theme
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
-
 // NEW: generated localizations
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
@@ -23,13 +21,13 @@ const _layout = 'cards';
 const double _iconSize = 72.0;
 
 /// Card styling (lowerCamelCase to satisfy lints)
-const double _cardRadius   = 16.0;
+const double _cardRadius = 16.0;
 const double _cardHPadding = 24.0;
 const double _cardVPadding = 16.0;
 
 /// Light palette anchors (used only for the AppBar title in light mode)
 const _kLightTextPrimary = Color(0xFF0F2432);
-const _kLightTextMuted   = Color(0xFF4A6273);
+const _kLightTextMuted = Color(0xFF4A6273);
 
 class SocialPage extends StatelessWidget {
   const SocialPage({super.key});
@@ -58,22 +56,21 @@ class SocialPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!; // <-- localized strings
-
-    final theme  = Theme.of(context);
-    final isLight= theme.brightness == Brightness.light;
-    final cs     = theme.colorScheme;
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final cs = theme.colorScheme;
 
     // Page gradient: prefer AppGradients (same as More/Directory), otherwise AppColors fallback.
     final pageGradient = theme.extension<AppGradients>()?.page ?? AppColors.pageGradient;
 
     // AppBar consistent with other pages
-    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     // Text colors inside cards (match other pages)
     final titleText = cs.onSurface;
-    final subText   = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
+    final subText = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
 
     final items = <_SocialItem>[
       _SocialItem(
@@ -182,6 +179,7 @@ class _SocialItem {
     required this.webUri,
     required this.svgAsset,
   });
+
   final String networkLabel; // Instagram / Facebook
   final String handle;
   final String urlText;
@@ -198,6 +196,7 @@ class _CardTile extends StatelessWidget {
     required this.subText,
     this.width,
   });
+
   final _SocialItem item;
   final Color titleText;
   final Color subText;
@@ -206,12 +205,13 @@ class _CardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs    = theme.colorScheme;
-    final isDark= theme.brightness == Brightness.dark;
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Bubble glaze identical to More/Directory
+    // Bubble glaze identical to updated More/Directory:
+    // Use soft navy in dark mode (no harsh black)
     final bg = isDark
-        ? Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black)
+        ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35), const Color(0xFF0E2330))
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
 
     // Hairline identical to More/Directory
