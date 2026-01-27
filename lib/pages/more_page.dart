@@ -1,12 +1,16 @@
 
+// lib/pages/more_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
-import '../theme_controller.dart';      // your existing theme controller
-import '../locale_controller.dart';     // <-- new
+import '../theme_controller.dart';
+import '../locale_controller.dart';
+
+// Generated localizations (requires l10n.yaml + app_en.arb + app_ar.arb)
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -15,29 +19,44 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  // Preview (non-persistent) items we've kept
-  String textSize = 'Default';            // Small / Default / Large
-  String clockFormat = '12‑Hour';         // 12‑Hour / 24‑Hour
-  String language = 'English';            // English / العربية
+  // Preview-only state (not persisted)
+  String textSize = 'Default';             // 'Small' | 'Default' | 'Large'
+  String clockFormat = '12‑Hour';          // '12‑Hour' | '24‑Hour'
   String lastSync = '—';
-
-  // Moved to Accessibility
   bool haptics = true;
 
-  // Collapsed state (start collapsed as requested)
+  // Collapsed by default
   bool _accExpanded = false;
   bool _notifExpanded = false;
   bool _timeExpanded = false;
   bool _langExpanded = false;
   bool _dataExpanded = false;
 
+  // Reflect current locale to a human label for the row
+  String _currentLanguageLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final code = LocaleController.locale.value?.languageCode;
+    return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
+  }
+
+  // Apply language choice -> update LocaleController; UI reads it directly
+  void _applyLanguageChoice(String choice, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (choice == l10n.lang_arabic) {
+      LocaleController.setLocale(const Locale('ar'));
+    } else {
+      LocaleController.setLocale(const Locale('en'));
+    }
+    // No local 'language' field, so nothing to desync.
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme     = Theme.of(context);
     final isLight   = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
+    final l10n      = AppLocalizations.of(context)!;
 
-    // Match Social/Directory/Contact header
     final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
@@ -48,7 +67,7 @@ class _MorePageState extends State<MorePage> {
         backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
-        title: Text('More', style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text(l10n.tab_more, style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600)),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
       ),
@@ -58,8 +77,8 @@ class _MorePageState extends State<MorePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
-              // ============= ACCESSIBILITY (collapsed by default) =============
-              _sectionHeader(context, 'Accessibility'),
+              // ============= ACCESSIBILITY =============
+              _sectionHeader(context, l10n.more_accessibility),
               _card(
                 context,
                 child: Theme(
@@ -70,9 +89,9 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _accExpanded,
                     onExpansionChanged: (v) => setState(() => _accExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.universalAccess),
-                    title: _secTitle(context, 'Accessibility'),
+                    title: _secTitle(context, l10n.more_accessibility),
                     children: [
-                      // Dark Mode — bind strictly to ThemeController to avoid first-toggle no-op
+                      // Dark mode (binds to ThemeController)
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: ThemeController.themeMode,
                         builder: (context, mode, _) {
@@ -80,24 +99,21 @@ class _MorePageState extends State<MorePage> {
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.moon,
-                            label: 'Dark Mode',
+                            label: l10n.more_dark_mode,
                             value: isDark,
                             onChanged: (v) {
-                              ThemeController.setThemeMode(
-                                v ? ThemeMode.dark : ThemeMode.light,
-                              );
+                              ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
                               HapticFeedback.lightImpact();
                             },
                           );
                         },
                       ),
                       const _Hairline(),
-
-                      // Haptic Feedback (moved from App Behavior)
+                      // Haptics (moved from App Behavior)
                       _switchRow(
                         context: context,
                         icon: FontAwesomeIcons.mobileScreenButton,
-                        label: 'Haptic Feedback',
+                        label: l10n.more_haptics,
                         value: haptics,
                         onChanged: (v) {
                           setState(() => haptics = v);
@@ -105,18 +121,17 @@ class _MorePageState extends State<MorePage> {
                         },
                       ),
                       const _Hairline(),
-
-                      // Optional: keep Text Size (preview only)
+                      // Text Size picker (preview only)
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.textHeight,
-                        label: 'Text Size',
+                        label: l10n.more_text_size,
                         value: textSize,
                         onTap: () async {
                           final choice = await _chooseOne(
                             context,
-                            title: 'Text Size',
-                            options: const ['Small', 'Default', 'Large'],
+                            title: l10n.more_text_size,
+                            options: const <String>['Small', 'Default', 'Large'],
                             selected: textSize,
                           );
                           if (choice == null) return;
@@ -131,8 +146,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= NOTIFICATIONS (left intact; still collapsed) =============
-              _sectionHeader(context, 'Notifications'),
+              // ============= NOTIFICATIONS (preview only) =============
+              _sectionHeader(context, l10n.more_notifications),
               _card(
                 context,
                 child: Theme(
@@ -143,15 +158,13 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _notifExpanded,
                     onExpansionChanged: (v) => setState(() => _notifExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.bell),
-                    title: _secTitle(context, 'Notifications'),
+                    title: _secTitle(context, l10n.more_notifications),
                     children: [
                       _buttonRow(
                         context: context,
                         icon: FontAwesomeIcons.bell,
-                        label: 'Enable Notifications',
-                        onPressed: () {
-                          _toast('Preview: would request OS permission or open Settings');
-                        },
+                        label: l10n.more_enable_notifications,
+                        onPressed: () => _toast('Preview: would request OS permission or open Settings'),
                       ),
                     ],
                   ),
@@ -160,8 +173,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= TIME (no Countdown; keep Time Format only) =============
-              _sectionHeader(context, 'Time'),
+              // ============= TIME (keep Time Format only) =============
+              _sectionHeader(context, l10n.more_time),
               _card(
                 context,
                 child: Theme(
@@ -172,18 +185,17 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _timeExpanded,
                     onExpansionChanged: (v) => setState(() => _timeExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.clock),
-                    title: _secTitle(context, 'Time'),
+                    title: _secTitle(context, l10n.more_time),
                     children: [
                       _segmentedRow(
                         context: context,
                         icon: FontAwesomeIcons.clock,
-                        label: 'Time Format',
-                        segments: const ['12‑Hour', '24‑Hour'],
+                        label: l10n.more_time_format,
+                        segments: const <String>['12‑Hour', '24‑Hour'],
                         index: clockFormat == '12‑Hour' ? 0 : 1,
                         onChanged: (i) {
                           setState(() => clockFormat = i == 0 ? '12‑Hour' : '24‑Hour');
                           _toast('Preview: Time format = $clockFormat');
-                          // TODO: wire to your actual time-format controller
                         },
                       ),
                     ],
@@ -193,8 +205,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= LANGUAGE (wire Arabic) =============
-              _sectionHeader(context, 'Language'),
+              // ============= LANGUAGE =============
+              _sectionHeader(context, l10n.more_language),
               _card(
                 context,
                 child: Theme(
@@ -205,31 +217,25 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _langExpanded,
                     onExpansionChanged: (v) => setState(() => _langExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.language),
-                    title: _secTitle(context, 'Language'),
+                    title: _secTitle(context, l10n.more_language),
                     children: [
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.language,
-                        label: 'App Language',
-                        value: language,
+                        label: l10n.more_language_label,
+                        value: _currentLanguageLabel(context), // reads LocaleController
                         onTap: () async {
+                          final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
+                          final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
                             context,
-                            title: 'Language',
-                            options: const ['English', 'العربية'],
-                            selected: language,
+                            title: l10n.more_language,
+                            options: options,          // typed list avoids List<dynamic> inference
+                            selected: selectedNow,
                           );
                           if (choice == null) return;
-
-                          setState(() => language = choice);
-
-                          // Apply the locale
-                          if (choice == 'العربية') {
-                            LocaleController.setLocale(const Locale('ar'));
-                          } else {
-                            LocaleController.setLocale(const Locale('en'));
-                          }
-                          _toast('Language: $choice');
+                          _applyLanguageChoice(choice, context);
+                          _toast('${l10n.more_language}: $choice');
                         },
                       ),
                     ],
@@ -239,8 +245,8 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ============= DATA & STORAGE (kept; collapsed) =============
-              _sectionHeader(context, 'Data & Storage'),
+              // ============= DATA & STORAGE =============
+              _sectionHeader(context, l10n.more_data_storage),
               _card(
                 context,
                 child: Theme(
@@ -251,12 +257,12 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _dataExpanded,
                     onExpansionChanged: (v) => setState(() => _dataExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.database),
-                    title: _secTitle(context, 'Data & Storage'),
+                    title: _secTitle(context, l10n.more_data_storage),
                     children: [
                       _buttonRow(
                         context: context,
                         icon: FontAwesomeIcons.rotate,
-                        label: 'Refresh Data Now',
+                        label: l10n.more_refresh_data,
                         onPressed: () async {
                           setState(() => lastSync = TimeOfDay.now().format(context));
                           _toast('Preview: Data refreshed');
@@ -266,7 +272,7 @@ class _MorePageState extends State<MorePage> {
                       _staticRow(
                         context: context,
                         icon: FontAwesomeIcons.circleInfo,
-                        label: 'Last Sync',
+                        label: l10n.more_last_sync,
                         trailing: Text(lastSync),
                       ),
                     ],
@@ -282,7 +288,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ---------------- Shared UI helpers (identical look to Directory/More) ----------------
+  // ---------- Shared UI helpers ----------
 
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
@@ -291,18 +297,15 @@ class _MorePageState extends State<MorePage> {
       child: Text(
         title,
         style: const TextStyle(
-          color: gold,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.4,
+          color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4,
         ),
       ),
     );
   }
 
   Widget _card(BuildContext context, {required Widget child}) {
-    final theme = Theme.of(context);
-    final cs    = theme.colorScheme;
+    final theme  = Theme.of(context);
+    final cs     = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark
         ? Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black)
@@ -311,9 +314,7 @@ class _MorePageState extends State<MorePage> {
     isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
     return Container(
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: hairline),
+        color: bg, borderRadius: BorderRadius.circular(16), border: Border.all(color: hairline),
       ),
       child: child,
     );
@@ -370,7 +371,7 @@ class _MorePageState extends State<MorePage> {
             Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
             Text(value, style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8))),
             const SizedBox(width: 8),
-            FaIcon(FontAwesomeIcons.chevronRight, size: 14, color: cs.onSurface),
+            const Icon(Icons.chevron_right, size: 14), // stays LTR
           ],
         ),
       ),
@@ -398,8 +399,7 @@ class _MorePageState extends State<MorePage> {
           ]),
           const SizedBox(height: 10),
           SegmentedButton<int>(
-            segments: List.generate(segments.length, (i) =>
-                ButtonSegment(value: i, label: Text(segments[i]))),
+            segments: List.generate(segments.length, (i) => ButtonSegment(value: i, label: Text(segments[i]))),
             selected: {index},
             onSelectionChanged: (s) => onChanged(s.first),
           ),
@@ -428,6 +428,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
+  // Row with a trailing button (kept identical look; literal "Open" avoids new ARB keys)
   Widget _buttonRow({
     required BuildContext context,
     required IconData icon,
@@ -441,13 +442,16 @@ class _MorePageState extends State<MorePage> {
         children: [
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
-          Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
+          Expanded(
+            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+          ),
           FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
         ],
       ),
     );
   }
 
+  // Bottom sheet with state managed inside so radios update immediately
   Future<String?> _chooseOne(
       BuildContext context, {
         required String title,
@@ -455,40 +459,57 @@ class _MorePageState extends State<MorePage> {
         required String selected,
       }) async {
     String temp = selected;
+
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
-                ),
-                for (final opt in options)
-                  RadioListTile<String>(
-                    value: opt,
-                    groupValue: temp,
-                    onChanged: (v) => setState(() => temp = v ?? selected),
-                    title: Text(opt, style: TextStyle(color: cs.onSurface)),
-                  ),
-                const SizedBox(height: 8),
-                Row(
+        final l10n = AppLocalizations.of(context)!;
+
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, selected), child: const Text('Cancel'))),
-                    const SizedBox(width: 12),
-                    Expanded(child: FilledButton(onPressed: () => Navigator.pop(ctx, temp), child: const Text('Save'))),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    ),
+                    for (final opt in options)
+                      RadioListTile<String>(
+                        value: opt,
+                        groupValue: temp,
+                        onChanged: (v) => setModalState(() => temp = v ?? selected),
+                        title: Text(opt, style: TextStyle(color: cs.onSurface)),
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx, selected),
+                            child: Text(l10n.btn_cancel),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(ctx, temp),
+                            child: Text(l10n.btn_save),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

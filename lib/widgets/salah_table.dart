@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'prayer_glyphs.dart';
 import '../utils/time_utils.dart';
 import '../app_colors.dart';
+import '../localization/prayer_labels.dart';
 
 class SalahTable extends StatelessWidget {
   final Map<String, String> adhanByName;
@@ -21,10 +22,10 @@ class SalahTable extends StatelessWidget {
   final Color rowEvenColor;
   final Color rowOddColor;
 
-  /// Highlight for **Dark** (and fallback); keeps your current brand
+  /// Highlight for **Dark** (and fallback)
   final Color highlightColor;
 
-  /// Highlight for **Light** (soft so text stays legible)
+  /// Highlight for **Light**
   final Color? highlightColorLight;
 
   // Layout
@@ -43,23 +44,22 @@ class SalahTable extends StatelessWidget {
     super.key,
     required this.adhanByName,
     this.iqamahByName,
-    this.order = const ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha','Jummuah'],
+    this.order = const ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha',"Jummua'h"],
     this.highlightName,
     this.headerStyle,
     this.nameStyle,
     this.adhanStyle,
     this.iqamahStyle,
     this.rowEvenColor = AppColors.bgSecondary,
-    this.rowOddColor  = AppColors.bgSecondary,
+    this.rowOddColor = AppColors.bgSecondary,
     this.highlightColor = AppColors.rowHighlight,
-    this.highlightColorLight,                  // <-- NEW
+    this.highlightColorLight,
     this.expandRowsToFill = false,
     this.headerGreen = false,
     this.headerBackgroundGradient,
     this.headerBackgroundColor,
-
-    this.rowDividerColorLight,                 // <-- NEW
-    this.rowDividerThickness = 1,              // <-- NEW
+    this.rowDividerColorLight,
+    this.rowDividerThickness = 1,
   });
 
   @override
@@ -86,7 +86,7 @@ class SalahTable extends StatelessWidget {
       return v != null && v.isNotEmpty;
     }).toList();
 
-    // Header background: green override > custom > default
+    // Header background
     final BoxDecoration? headerDecoration = headerGreen
         ? const BoxDecoration(
       gradient: LinearGradient(
@@ -102,13 +102,12 @@ class SalahTable extends StatelessWidget {
 
     Widget buildRow(String name, int i) {
       final adhanRaw  = adhanByName[name]!;
-      final adhan12   = format12h(adhanRaw);
+      final adhan12   = format12h(adhanRaw);  // 12h English AM/PM
       final iqamahRaw = iqamahByName != null ? (iqamahByName![name] ?? '') : '';
       final iqamah12  = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
-
       final isHighlight = (highlightName != null && highlightName == name);
 
-      // Background resolves per theme
+      // Background per theme
       final Color bg = isHighlight
           ? (isLight ? (highlightColorLight ?? highlightColor) : highlightColor)
           : (i % 2 == 0 ? rowEvenColor : rowOddColor);
@@ -117,12 +116,14 @@ class SalahTable extends StatelessWidget {
       final BoxBorder? border = isLight
           ? Border(
         bottom: BorderSide(
-          color: (rowDividerColorLight ??
-              const Color(0xFF7B90A0).withValues(alpha: 0.16)),
+          color: (rowDividerColorLight ?? const Color(0xFF7B90A0).withValues(alpha: 0.16)),
           width: rowDividerThickness,
         ),
       )
           : null;
+
+      // Arabic (display) name; glyph still uses English key
+      final displayName = PrayerLabels.prayerName(context, name);
 
       final content = Container(
         decoration: BoxDecoration(color: bg, border: border),
@@ -133,13 +134,13 @@ class SalahTable extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    name,
+                    displayName,
                     style: isHighlight
                         ? nameTextStyle.copyWith(fontWeight: FontWeight.w700)
                         : nameTextStyle,
                   ),
                   const SizedBox(width: 6),
-                  // Brand glyph color
+                  // Brand glyph color (English key for the glyph)
                   prayerGlyph(name, color: AppColors.goldSoft),
                 ],
               ),
@@ -174,24 +175,25 @@ class SalahTable extends StatelessWidget {
 
     return Column(
       children: [
-        // Header row
+        // Header row (translated)
         Container(
           decoration: headerDecoration,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
               const SizedBox(width: 4),
-              Expanded(child: Text('Salah',  style: headerTextStyle)),
-              Expanded(child: Center(child: Text('Adhan',  style: headerTextStyle))),
+              Expanded(child: Text(PrayerLabels.colSalah(context),  style: headerTextStyle)),
+              Expanded(child: Center(child: Text(PrayerLabels.colAdhan(context),  style: headerTextStyle))),
               Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: Text('Iqamah', style: headerTextStyle),
+                  child: Text(PrayerLabels.colIqamah(context), style: headerTextStyle),
                 ),
               ),
             ],
           ),
         ),
+
         // Data rows
         ...List.generate(entries.length, (i) => buildRow(entries[i], i)),
       ],

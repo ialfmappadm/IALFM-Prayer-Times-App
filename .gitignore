@@ -56,3 +56,6 @@ bundletool*.jar
 
 # Retired v1 functions folder
 functions/
+
+# l10 generated files
+lib/l10n/generated/

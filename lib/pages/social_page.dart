@@ -1,17 +1,19 @@
 
+// lib/pages/social_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 // Match More/Directory theme
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 
+// NEW: generated localizations
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
 /// ===============================
 /// CONFIG
 /// ===============================
-
 /// Layout:
 /// 'cards' -> one logo per row (recommended for readability)
 /// 'grid'  -> two-up grid for the two Instagrams; Facebook full width below
@@ -21,7 +23,7 @@ const _layout = 'cards';
 const double _iconSize = 72.0;
 
 /// Card styling (lowerCamelCase to satisfy lints)
-const double _cardRadius = 16.0;
+const double _cardRadius   = 16.0;
 const double _cardHPadding = 24.0;
 const double _cardVPadding = 16.0;
 
@@ -49,15 +51,17 @@ class SocialPage extends StatelessWidget {
   static final Uri _fbAppUri =
   Uri.parse('fb://facewebmodal/f?href=https://www.facebook.com/$_fbUser');
 
-  // ========= SVG asset paths (your project uses /branding) =========
+  // ========= SVG asset paths =========
   static const String _igSvg = 'assets/branding/instagram.svg';
   static const String _fbSvg = 'assets/branding/facebook.svg';
 
   @override
   Widget build(BuildContext context) {
-    final theme   = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final cs      = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!; // <-- localized strings
+
+    final theme  = Theme.of(context);
+    final isLight= theme.brightness == Brightness.light;
+    final cs     = theme.colorScheme;
 
     // Page gradient: prefer AppGradients (same as More/Directory), otherwise AppColors fallback.
     final pageGradient = theme.extension<AppGradients>()?.page ?? AppColors.pageGradient;
@@ -68,8 +72,8 @@ class SocialPage extends StatelessWidget {
     final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     // Text colors inside cards (match other pages)
-    final titleText  = cs.onSurface;
-    final subText    = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
+    final titleText = cs.onSurface;
+    final subText   = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
 
     final items = <_SocialItem>[
       _SocialItem(
@@ -105,7 +109,7 @@ class SocialPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Follow Us…',
+          l10n.social_follow_us, // <-- localized header
           style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         iconTheme: IconThemeData(color: titleColor),
@@ -132,7 +136,7 @@ class SocialPage extends StatelessWidget {
       final fb = items.firstWhere((e) => e.networkLabel == 'Facebook');
 
       return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24), // match More/Directory
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         child: Column(
           children: [
             LayoutBuilder(
@@ -156,7 +160,7 @@ class SocialPage extends StatelessWidget {
 
     // 'cards' → one per row
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24), // match More/Directory
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (_, i) => _CardTile(
@@ -178,7 +182,6 @@ class _SocialItem {
     required this.webUri,
     required this.svgAsset,
   });
-
   final String networkLabel; // Instagram / Facebook
   final String handle;
   final String urlText;
@@ -195,7 +198,6 @@ class _CardTile extends StatelessWidget {
     required this.subText,
     this.width,
   });
-
   final _SocialItem item;
   final Color titleText;
   final Color subText;
@@ -203,9 +205,9 @@ class _CardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme  = Theme.of(context);
-    final cs     = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final cs    = theme.colorScheme;
+    final isDark= theme.brightness == Brightness.dark;
 
     // Bubble glaze identical to More/Directory
     final bg = isDark
@@ -213,9 +215,7 @@ class _CardTile extends StatelessWidget {
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
 
     // Hairline identical to More/Directory
-    final brd = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : cs.outline.withValues(alpha: 0.30);
+    final brd = isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
 
     return InkWell(
       borderRadius: BorderRadius.circular(_cardRadius),

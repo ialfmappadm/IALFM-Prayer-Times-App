@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // SystemUiOverlayStyle
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:timezone/timezone.dart' as tz;
-
-import '../app_colors.dart';             // brand colors/gradients
+import '../app_colors.dart'; // brand colors/gradients
 import '../main.dart' show AppGradients; // read theme gradient
+
+// NEW: generated localizations
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 // Cool Light palette anchors
 const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
@@ -57,7 +59,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     if (state == AppLifecycleState.resumed) _refresh();
   }
 
-  // -------------------------- Remote Config --------------------------
+  // ------------------------ Remote Config ------------------------
   Future<void> _initRemoteConfig() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
@@ -110,14 +112,14 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
     if (parsed.isEmpty) {
       final active = rc.getBool('announcement_active');
-      final title  = rc.getString('announcement_title').trim();
-      final text   = rc.getString('announcement_text').trim();
-      final when   = rc.getString('announcement_published_at').trim();
+      final title = rc.getString('announcement_title').trim();
+      final text  = rc.getString('announcement_text').trim();
+      final when  = rc.getString('announcement_published_at').trim();
       if (active && (title.isNotEmpty || text.isNotEmpty)) {
         parsed = <_AnnItem>[
           _AnnItem(
             id: 'legacy-0',
-            title: title.isEmpty ? 'Announcement' : title,
+            title: title.isEmpty ? 'Announcement' : title, // will be localized in UI
             text: text,
             publishedAtUtc: _parseToUtc(when),
           ),
@@ -141,8 +143,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     final iso = tryIso(raw);
     if (iso != null) return iso;
 
-    final m = RegExp(r'^(\S*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$')
-        .firstMatch(raw);
+    final m = RegExp(r'^(\S*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$').firstMatch(raw);
     if (m != null) {
       final fixed = '${m.group(1)}${m.group(2)}:${m.group(3)}';
       final fixedDt = tryIso(fixed);
@@ -167,10 +168,10 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       if (decoded is List) {
         return decoded.map<_AnnItem>((e) {
           final m = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
-          final id    = (m['id'] ?? '').toString();
-          final title = (m['title'] ?? '').toString();
-          final text  = (m['text']  ?? m['body'] ?? '').toString();
-          final when  = (m['published_at'] ?? m['publishedAt'] ?? m['published'])?.toString() ?? '';
+          final id   = (m['id'] ?? '').toString();
+          final title= (m['title'] ?? '').toString();
+          final text = (m['text']  ?? m['body'] ?? '').toString();
+          final when = (m['published_at'] ?? m['publishedAt'] ?? m['published'])?.toString() ?? '';
           return _AnnItem(
             id: id.isEmpty ? 'item-${DateTime.now().microsecondsSinceEpoch}' : id,
             title: title,
@@ -199,6 +200,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // <-- generated l10n
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     // Theme-adaptive page gradient with Light fallback if extension not present
@@ -215,15 +217,13 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
     final iconsColor = titleColor;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark
-        : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     Widget listContent;
     if (_loading) {
       listContent = const Center(child: CircularProgressIndicator());
     } else {
-      final hasAny = _items.any((it) =>
-      it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
+      final hasAny = _items.any((it) => it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
 
       final content = Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -233,29 +233,27 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final a = _items[index];
-            final whenLabel = (a.publishedAtUtc != null)
-                ? _formatCentral(a.publishedAtUtc!)
-                : null;
+            final whenLabel = (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
+            final safeTitle = (a.title.isEmpty && a.text.isNotEmpty)
+                ? l10n.ann_default_title // <-- localized fallback
+                : a.title;
             return _AnnouncementCard(
-              title: (a.title.isEmpty && a.text.isNotEmpty)
-                  ? 'Announcement'
-                  : a.title,
+              title: safeTitle,
               body: a.text,
               whenLabel: whenLabel,
             );
           },
         )
             : ListView(
-          children: const [
+          children: [
             _AnnouncementCard(
-              title: 'No active announcement',
-              body: 'Please check back later.',
+              title: l10n.ann_empty_title,         // <-- localized
+              body:  l10n.ann_empty_body,          // <-- localized
               whenLabel: null,
             ),
           ],
         ),
       );
-
       listContent = RefreshIndicator(onRefresh: _refresh, child: content);
     }
 
@@ -265,7 +263,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Notifications',
+          l10n.notifications_title, // <-- localized header
           style: TextStyle(
             color: titleColor,
             fontSize: 20,
@@ -296,17 +294,16 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-
-    // ✅ FORCE white bubble in both themes; dark text in Dark mode for readability
-    final Color cardColor      = Colors.white;
-    final Color titleColor     = isLight ? _kLightTextPrimary : Colors.black;
-    final Color bodyColor      = isLight ? _kLightTextPrimary : Colors.black87;
-    final Color timestampColor = isLight ? _kLightTextMuted   : Colors.black54;
+    // White bubble in both themes; dark text in Dark mode for readability
+    final Color cardColor     = Colors.white;
+    final Color titleColor    = isLight ? _kLightTextPrimary : Colors.black;
+    final Color bodyColor     = isLight ? _kLightTextPrimary : Colors.black87;
+    final Color timestampColor= isLight ? _kLightTextMuted   : Colors.black54;
 
     return Card(
       color: cardColor,
       elevation: 3,
-      surfaceTintColor: Colors.white,                       // avoid dark tint on iOS
+      surfaceTintColor: Colors.white,
       shadowColor: Colors.black.withOpacity(0.12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -314,9 +311,9 @@ class _AnnouncementCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title (always dark on white)
+            // Title
             Text(
-              title.isEmpty ? 'Announcement' : title,
+              title,
               style: (Theme.of(context).textTheme.titleMedium ??
                   const TextStyle(fontSize: 18))
                   .copyWith(
@@ -325,8 +322,7 @@ class _AnnouncementCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
-            // Body (always dark on white)
+            // Body
             Text(
               body,
               style: (Theme.of(context).textTheme.bodyLarge ??
@@ -336,7 +332,6 @@ class _AnnouncementCard extends StatelessWidget {
                 color: bodyColor,
               ),
             ),
-
             if (whenLabel != null) ...[
               const SizedBox(height: 8),
               Align(
@@ -345,9 +340,7 @@ class _AnnouncementCard extends StatelessWidget {
                   whenLabel!,
                   style: (Theme.of(context).textTheme.bodySmall ??
                       const TextStyle(fontSize: 12))
-                      .copyWith(
-                    color: timestampColor,
-                  ),
+                      .copyWith(color: timestampColor),
                 ),
               ),
             ],

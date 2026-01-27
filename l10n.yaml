@@ -1,0 +1,9 @@
+# l10n.yaml
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# Generate into your own package path (future-proof)
+output-dir: lib/l10n/generated
+nullable-getter: false
+untranslated-messages-file: build/l10n_untranslated.txt

@@ -1,8 +1,8 @@
 
 // lib/main.dart
-// - Initializes Flutter bindings and runApp in the SAME zone (prevents zone mismatch).
-// - Adds Arabic/English localization via LocaleController.
-// - Preserves your existing themes, gradients, Firebase/AppCheck, and tabs.
+// - Initializes bindings & runApp in the SAME zone.
+// - Adds locale-aware text themes: Manrope (en) and Cairo (ar).
+// - Preserves your Firebase/AppCheck, gradients, SnackBars, pages, and nav.
 
 import 'dart:async';
 import 'dart:convert';
@@ -20,7 +20,7 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
-// Localization
+// Localization (built-in)
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'locale_controller.dart';
 
@@ -39,9 +39,12 @@ import 'pages/more_page.dart';
 import 'app_colors.dart';
 import 'theme_controller.dart';
 
+// GENERATED localizations (gen_l10n)
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
 // ---- NAV TUNING ----
-const double kNavIconSize = 18.0; // subtle base size
-const double kNavBarHeight = 50.0; // shorter bar
+const double kNavIconSize = 18.0;
+const double kNavBarHeight = 50.0;
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
@@ -67,7 +70,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  // Put EVERYTHING in the same zone so `ensureInitialized` & `runApp` share context.
+  // Keep init and runApp in the SAME zone to prevent zone mismatch.
   runZonedGuarded(() async {
     BindingBase.debugZoneErrorsAreFatal = true;
 
@@ -82,7 +85,7 @@ Future<void> main() async {
       providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
-    // Route Flutter framework errors into this zone as well
+    // Route Flutter framework errors into this zone too
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       Zone.current.handleUncaughtError(
@@ -153,104 +156,116 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
+
+// === REPLACE ONLY THE BootstrapApp CLASS IN lib/main.dart ===
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ---- LIGHT THEME ----
-    final baseLight = ThemeData(
-      useMaterial3: true,
-      colorScheme: lightColorScheme,
-      scaffoldBackgroundColor: lightColorScheme.surface,
-      textTheme: GoogleFonts.manropeTextTheme().copyWith(
-        titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-        titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-        bodyMedium: GoogleFonts.manrope(),
-        bodyLarge: GoogleFonts.manrope(),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: Colors.transparent,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-          final selected = states.contains(WidgetState.selected);
-          return IconThemeData(
-            color: selected
-                ? lightColorScheme.primary.withValues(alpha: 0.95)
-                : const Color(0xFF556978).withValues(alpha: 0.75),
-          );
-        }),
-      ),
-      // White bubble + dark text SnackBars in LIGHT
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: Colors.white,
-        contentTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        actionTextColor: Colors.black,
-        elevation: 3,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      extensions: const <ThemeExtension<dynamic>>[
-        AppGradients.light,
-      ],
-    );
-
-    // ---- DARK THEME (Navy–Gold) ----
-    final baseDark = ThemeData(
-      brightness: Brightness.dark,
-      useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.bgPrimary,
-      textTheme: GoogleFonts.manropeTextTheme().copyWith(
-        titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-        titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-        bodyMedium: GoogleFonts.manrope(),
-        bodyLarge: GoogleFonts.manrope(),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.bgPrimary,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: Colors.transparent,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-          final selected = states.contains(WidgetState.selected);
-          return IconThemeData(
-            color: selected
-                ? Colors.white.withValues(alpha: 0.95)
-                : Colors.white.withValues(alpha: 0.70),
-          );
-        }),
-      ),
-      // White bubble + dark text SnackBars in DARK
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: Colors.white,
-        contentTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        actionTextColor: Colors.black,
-        elevation: 3,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      extensions: const <ThemeExtension<dynamic>>[
-        AppGradients.dark,
-      ],
-    );
-
-    // React to Settings (ThemeController + LocaleController)
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
+            // ---- Base UI text: always Manrope (protects English) ----
+            final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
+              titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              bodyMedium:  GoogleFonts.manrope(),
+              bodyLarge:   GoogleFonts.manrope(),
+            );
+
+            // ---- ONE fallback chain for Arabic glyphs only ----
+            // Order matters: IBM Plex Sans Arabic (crisp, neutral) → Noto Sans Arabic (broad support)
+            const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
+
+            TextTheme addFallbacks(TextTheme t) => t.copyWith(
+              bodySmall:     t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:    t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge:     t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:    t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium:   t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge:    t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:    t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium:   t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge:    t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall:  t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium: t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge:  t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+            );
+
+            final TextTheme chosenLight = addFallbacks(baseLatin);
+            final TextTheme chosenDark  = addFallbacks(baseLatin);
+
+            // ---- Light theme ----
+            final ThemeData baseLight = ThemeData(
+              useMaterial3: true,
+              colorScheme: lightColorScheme,
+              scaffoldBackgroundColor: lightColorScheme.surface,
+              textTheme: chosenLight,
+              navigationBarTheme: NavigationBarThemeData(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return IconThemeData(
+                    color: selected
+                        ? lightColorScheme.primary.withValues(alpha: 0.95)
+                        : const Color(0xFF556978).withValues(alpha: 0.75),
+                  );
+                }),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                backgroundColor: Colors.white,
+                contentTextStyle: const TextStyle(
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                actionTextColor: Colors.black,
+                elevation: 3,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              extensions: const <ThemeExtension<dynamic>>[ AppGradients.light ],
+            );
+
+            // ---- Dark theme ----
+            final ThemeData baseDark = ThemeData(
+              brightness: Brightness.dark,
+              useMaterial3: true,
+              scaffoldBackgroundColor: AppColors.bgPrimary,
+              textTheme: chosenDark,
+              navigationBarTheme: NavigationBarThemeData(
+                backgroundColor: AppColors.bgPrimary,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return IconThemeData(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.95)
+                        : Colors.white.withValues(alpha: 0.70),
+                  );
+                }),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                backgroundColor: Colors.white,
+                contentTextStyle: const TextStyle(
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                actionTextColor: Colors.black,
+                elevation: 3,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              extensions: const <ThemeExtension<dynamic>>[ AppGradients.dark ],
+            );
+
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'IALFM',
@@ -259,17 +274,16 @@ class BootstrapApp extends StatelessWidget {
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
 
-              // ---- Localization ----
-              locale: appLocale, // null => system; Locale('ar') => Arabic; Locale('en') => English
-              supportedLocales: const [
-                Locale('en'),
-                Locale('ar'),
-              ],
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
+              // Localization (keep both locales)
+              locale: appLocale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+
+              // 🔒 GLOBAL LTR: prevents any page or bottom bar from mirroring
+              builder: (context, child) => Directionality(
+                textDirection: TextDirection.ltr,
+                child: child!,
+              ),
 
               home: const _BootstrapScreen(),
             );
@@ -279,6 +293,7 @@ class BootstrapApp extends StatelessWidget {
     );
   }
 }
+
 
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
@@ -360,7 +375,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         alert: true, badge: true, sound: true, provisional: false,
       );
       debugPrint('FCM permission: ${settings.authorizationStatus}');
-      // Consider gating iOS topic sub until APNS exists; keeping as-is per your current flow.
       await FirebaseMessaging.instance.subscribeToTopic('allUsers');
     } catch (e, st) {
       debugPrint('FCM setup error: $e\n$st');
@@ -575,7 +589,6 @@ class _HomeTabsState extends State<HomeTabs> {
           });
         },
         destinations: [
-          // PRAYER — FA clock
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
@@ -589,7 +602,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-          // ALERTS — FA bullhorn + badge
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaBadgeIcon(
@@ -605,7 +617,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-          // SOCIAL — FA hashtag
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
@@ -619,7 +630,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-          // DIRECTORY — FA address-book
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
@@ -633,7 +643,6 @@ class _HomeTabsState extends State<HomeTabs> {
               size: kNavIconSize + 2,
             ),
           ),
-          // MORE — FA ellipsis
           NavigationDestination(
             label: '',
             icon: _NavUnderlineFaIcon(
