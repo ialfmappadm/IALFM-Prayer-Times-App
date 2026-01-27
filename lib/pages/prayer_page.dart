@@ -1,34 +1,38 @@
-
 // lib/pages/prayer_page.dart
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
-
 import '../utils/time_utils.dart';
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
 import '../models.dart';
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
-
-// NEW: labels helper for Arabic/English strings (no layout changes)
+// Localization helper
 import '../localization/prayer_labels.dart';
 
-// ---- Cool Light constants ----
-const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
-const _kLightTextMuted   = Color(0xFF4A6273);
-const _kLightRowAlt      = Color(0xFFE5ECF2);
-const _kLightCard        = Color(0xFFFFFFFF);
-const _kLightDivider     = Color(0xFF7B90A0);
-const _kLightHighlight   = Color(0xFFFFF0C9);
+// Stealth DST pill (your replacement for dst_badge.dart)
+import '../widgets/dst_pill_stealth.dart';
 
-// Cool-blue countdown panel
-const _kLightPanel       = Color(0xFFE9F2F9);
-const _kLightPanelTop    = Color(0xFFDDEAF3);
+// ---- Light Theme Constants ----
+const _kLightTextPrimary = Color(0xFF0F2432);
+const _kLightTextMuted = Color(0xFF4A6273);
+const _kLightRowAlt = Color(0xFFE5ECF2);
+const _kLightCard = Color(0xFFFFFFFF);
+const _kLightDivider = Color(0xFF7B90A0);
+const _kLightHighlight = Color(0xFFFFF0C9);
+
+// Light countdown panel
+const _kLightPanel = Color(0xFFE9F2F9);
+const _kLightPanelTop = Color(0xFFDDEAF3);
 const _kLightPanelBottom = Color(0xFFCBDCE8);
-const _kLightGoldDigits  = Color(0xFF9C7C2C); // darker gold for legibility
+const _kLightGoldDigits = Color(0xFF9C7C2C);
 
 const double kTempFallbackF = 72.0;
+
+// Enable = show DST preview UI. Disable = production mode.
+const bool enableDstPreviewToggle = false;
 
 class PrayerPage extends StatefulWidget {
   final tz.Location location;
@@ -56,6 +60,11 @@ class _PrayerPageState extends State<PrayerPage> {
   Duration _remaining = Duration.zero;
   NextPrayer? _next;
 
+  /// null = Auto DST (system)
+  /// true = force ON
+  /// false = force OFF
+  bool? _dstPreview;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +78,7 @@ class _PrayerPageState extends State<PrayerPage> {
       today: widget.today,
       tomorrow: widget.tomorrow,
     );
+
     _next = _tracker.current;
     _remaining = _tracker.tick(DateTime.now());
 
@@ -88,10 +98,11 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   void didUpdateWidget(covariant PrayerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final dayChanged =
-        oldWidget.today.date != widget.today.date ||
-            oldWidget.tomorrow?.date != widget.tomorrow?.date;
+
+    final dayChanged = oldWidget.today.date != widget.today.date ||
+        oldWidget.tomorrow?.date != widget.tomorrow?.date;
     final locChanged = oldWidget.location.name != widget.location.name;
+
     if (dayChanged || locChanged) _initTrackerAndTicker();
   }
 
@@ -101,21 +112,28 @@ class _PrayerPageState extends State<PrayerPage> {
     super.dispose();
   }
 
-  // Safe title casing including Jummua'h variants (used for highlight)
   String _titleCase(String s) {
     final x = s.toLowerCase();
     switch (x) {
-      case 'fajr':     return 'Fajr';
-      case 'sunrise':  return 'Sunrise';
-      case 'dhuhr':    return 'Dhuhr';
-      case 'asr':      return 'Asr';
-      case 'maghrib':  return 'Maghrib';
-      case 'isha':     return 'Isha';
+      case 'fajr':
+        return 'Fajr';
+      case 'sunrise':
+        return 'Sunrise';
+      case 'dhuhr':
+        return 'Dhuhr';
+      case 'asr':
+        return 'Asr';
+      case 'maghrib':
+        return 'Maghrib';
+      case 'isha':
+        return 'Isha';
       case "jummua'h":
       case "jummu'ah":
       case 'jummuah':
-      case 'jumuah':   return "Jumu'ah";
-      default:         return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
+      case 'jumuah':
+        return "Jumu'ah";
+      default:
+        return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
     }
   }
 
@@ -127,18 +145,20 @@ class _PrayerPageState extends State<PrayerPage> {
       return Container(
         color: Colors.red.shade900,
         padding: const EdgeInsets.all(16),
-        child: Text('Error building widget:\n$e',
-            style: const TextStyle(color: Colors.white)),
+        child: const Text(
+          'Error building widget.',
+          style: TextStyle(color: Colors.white),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLight   = Theme.of(context).brightness == Brightness.light;
-    final bgGradient =
-        Theme.of(context).extension<AppGradients>()?.page ??
-            AppColors.pageGradient;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    final bgGradient = Theme.of(context).extension<AppGradients>()?.page ??
+        AppColors.pageGradient;
 
     final next = _next;
     final remaining = _remaining.isNegative ? Duration.zero : _remaining;
@@ -150,51 +170,106 @@ class _PrayerPageState extends State<PrayerPage> {
       );
     }
 
-    // Table styles
+    // Table style
     final headerTextStyle = TextStyle(
       color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
-      fontSize: 16, fontWeight: FontWeight.w600,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
     );
+
     final nameTextStyle = TextStyle(
       color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
-      fontSize: 16, fontWeight: FontWeight.w500,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
     );
+
     final valueTextStyle = TextStyle(
       color: isLight ? _kLightTextPrimary : AppColors.textPrimary,
-      fontSize: 16, fontWeight: FontWeight.w600,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
     );
 
-    // Countdown banner title (driven by tracker)
     final bannerTitle = PrayerLabels.countdownHeader(context, next.name);
 
-    // Build data maps: keep English keys for glyph/ordering; labels change in SalahTable
+    // DST detection
+    final bool sysIsDst = widget.location
+        .timeZone(widget.nowLocal.millisecondsSinceEpoch)
+        .isDst;
+
+    final bool effectiveIsDst = _dstPreview ?? sysIsDst;
+
+    //------------------ Build Prayer Maps --------------------
     final adhanByName = <String, String>{
-      'Fajr'    : widget.today.prayers['fajr']?.begin    ?? '',
-      'Sunrise' : widget.today.sunrise                   ?? '',
-      'Dhuhr'   : widget.today.prayers['dhuhr']?.begin   ?? '',
-      'Asr'     : widget.today.prayers['asr']?.begin     ?? '',
-      'Maghrib' : widget.today.prayers['maghrib']?.begin ?? '',
-      'Isha'    : widget.today.prayers['isha']?.begin    ?? '',
+      'Fajr': widget.today.prayers['fajr']?.begin ?? '',
+      'Sunrise': widget.today.sunrise ?? '',
+      'Dhuhr': widget.today.prayers['dhuhr']?.begin ?? '',
+      'Asr': widget.today.prayers['asr']?.begin ?? '',
+      'Maghrib': widget.today.prayers['maghrib']?.begin ?? '',
+      'Isha': widget.today.prayers['isha']?.begin ?? '',
       "Jumu'ah": '13:30',
+      if (effectiveIsDst) "Youth Jumu'ah": '16:00',
     };
 
     final iqamahByName = <String, String>{
-      'Fajr'    : widget.today.prayers['fajr']?.iqamah    ?? '',
-      'Sunrise' : '',
-      'Dhuhr'   : widget.today.prayers['dhuhr']?.iqamah   ?? '',
-      'Asr'     : widget.today.prayers['asr']?.iqamah     ?? '',
-      'Maghrib' : widget.today.prayers['maghrib']?.iqamah ?? '',
-      'Isha'    : widget.today.prayers['isha']?.iqamah    ?? '',
+      'Fajr': widget.today.prayers['fajr']?.iqamah ?? '',
+      'Sunrise': '',
+      'Dhuhr': widget.today.prayers['dhuhr']?.iqamah ?? '',
+      'Asr': widget.today.prayers['asr']?.iqamah ?? '',
+      'Maghrib': widget.today.prayers['maghrib']?.iqamah ?? '',
+      'Isha': widget.today.prayers['isha']?.iqamah ?? '',
       "Jumu'ah": '14:00',
+      if (effectiveIsDst) "Youth Jumu'ah": '16:15',
     };
 
-    // Countdown section
+    final iqamahWidgetByName = <String, Widget>{
+      'Sunrise': GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enableDstPreviewToggle
+            ? () {
+          setState(() {
+            _dstPreview = _dstPreview == null
+                ? true
+                : (_dstPreview == true ? false : null);
+          });
+
+          final mode = _dstPreview == null
+              ? 'Auto (System)'
+              : (_dstPreview! ? 'Forced ON (Preview)' : 'Forced OFF (Preview)');
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('DST mode: $mode'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+            : null,
+        child: DstPillStealth(
+          isDst: effectiveIsDst,
+          isLight: isLight,
+        ),
+      ),
+    };
+
+    final order = <String>[
+      'Fajr',
+      'Sunrise',
+      'Dhuhr',
+      'Asr',
+      'Maghrib',
+      'Isha',
+      "Jumu'ah",
+      if (effectiveIsDst) "Youth Jumu'ah",
+    ];
+
+    // Countdown UI
     final Widget countdownSection = isLight
         ? Container(
       decoration: BoxDecoration(
         color: _kLightPanel,
         border: Border(
-          top:    BorderSide(color: _kLightPanelTop,    width: 1),
+          top: BorderSide(color: _kLightPanelTop, width: 1),
           bottom: BorderSide(color: _kLightPanelBottom, width: 1),
         ),
       ),
@@ -249,63 +324,121 @@ class _PrayerPageState extends State<PrayerPage> {
       ),
     );
 
+    // ---------------- PAGE CONTENT ----------------
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Top header (white in Light, navy in Dark)
-        _guarded(() => TopHeader(
-          location: widget.location,
-          nowLocal: DateTime.now(),
-          today: widget.today,
-          tomorrow: widget.tomorrow,
-          temperatureF: widget.temperatureF ?? kTempFallbackF,
-        )),
+        // Top Header
+        _guarded(
+              () => TopHeader(
+            location: widget.location,
+            nowLocal: DateTime.now(),
+            today: widget.today,
+            tomorrow: widget.tomorrow,
+            temperatureF: widget.temperatureF ?? kTempFallbackF,
+          ),
+        ),
 
-        // Thin gold underline
+        // Gold divider
         Container(height: 1, color: AppColors.goldDivider),
+
+        // ==========================
+        // DST SWITCH ROW (requested)
+        // ==========================
+        if (enableDstPreviewToggle)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.access_time_filled,
+                  size: 18,
+                  color: effectiveIsDst
+                      ? const Color(0xFFC7A447)
+                      : (isLight ? Colors.black : Colors.white),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Daylight Saving Time',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color:
+                      isLight ? _kLightTextPrimary : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: _dstPreview ?? sysIsDst,
+                  onChanged: (val) {
+                    setState(() {
+                      _dstPreview = val ? true : false;
+                    });
+
+                    final mode = _dstPreview == null
+                        ? 'Auto (System)'
+                        : (_dstPreview!
+                        ? 'Forced ON (Preview)'
+                        : 'Forced OFF (Preview)');
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('DST mode: $mode'),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  activeColor: const Color(0xFFC7A447),
+                ),
+              ],
+            ),
+          ),
 
         // Countdown
         countdownSection,
 
-        // Salah table
+        // Salah Table
         Expanded(
           child: _guarded(
                 () => SalahTable(
               adhanByName: adhanByName,
               iqamahByName: iqamahByName,
-              highlightName: _titleCase(next.name), // English key for row highlight
+              iqamahWidgetByName: iqamahWidgetByName,
+              highlightName: _titleCase(next.name),
               expandRowsToFill: true,
 
-              // Header row: white in Light; navy gradient in Dark
+              // Header: white in Light, gradient in dark
               headerGreen: false,
-              headerBackgroundGradient: isLight ? null : AppColors.headerGradient,
-              headerBackgroundColor:   isLight ? Colors.white : null,
+              headerBackgroundGradient:
+              isLight ? null : AppColors.headerGradient,
+              headerBackgroundColor: isLight ? Colors.white : null,
 
               // Rows
-              rowOddColor:  isLight ? _kLightCard  : AppColors.bgSecondary,
-              rowEvenColor: isLight ? _kLightRowAlt: AppColors.bgSecondary,
+              rowOddColor: isLight ? _kLightCard : AppColors.bgSecondary,
+              rowEvenColor: isLight ? _kLightRowAlt : AppColors.bgSecondary,
 
-              // Highlight
-              highlightColor:      AppColors.rowHighlight, // Dark brand
-              highlightColorLight: _kLightHighlight,       // Light soft gold
+              // Highlights
+              highlightColor: AppColors.rowHighlight,
+              highlightColorLight: _kLightHighlight,
 
-              // Subtle dividers in Light
+              // Divider
               rowDividerColorLight: _kLightDivider.withValues(alpha: 0.16),
 
-              // Text styles
+              // Styles
               headerStyle: headerTextStyle,
-              nameStyle:   nameTextStyle,
-              adhanStyle:  valueTextStyle,
+              nameStyle: nameTextStyle,
+              adhanStyle: valueTextStyle,
               iqamahStyle: valueTextStyle,
 
-              order: const ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jumu'ah"],
+              order: order,
             ),
           ),
         ),
       ],
     );
 
-    // FORCE LTR on this page so nothing mirrors in Arabic
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(

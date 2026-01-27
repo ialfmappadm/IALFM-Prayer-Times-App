@@ -1,4 +1,3 @@
-
 // lib/widgets/salah_table.dart
 import 'package:flutter/material.dart';
 import 'prayer_glyphs.dart';
@@ -9,6 +8,10 @@ import '../localization/prayer_labels.dart';
 class SalahTable extends StatelessWidget {
   final Map<String, String> adhanByName;
   final Map<String, String>? iqamahByName;
+
+  /// Optional widget overrides for the Iqamah column, per prayer name.
+  final Map<String, Widget>? iqamahWidgetByName;
+
   final List<String> order;
   final String? highlightName;
 
@@ -44,6 +47,7 @@ class SalahTable extends StatelessWidget {
     super.key,
     required this.adhanByName,
     this.iqamahByName,
+    this.iqamahWidgetByName,
     this.order = const ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha',"Jumu'ah"],
     this.highlightName,
     this.headerStyle,
@@ -101,10 +105,12 @@ class SalahTable extends StatelessWidget {
         : const BoxDecoration(gradient: AppColors.headerGradient)));
 
     Widget buildRow(String name, int i) {
-      final adhanRaw  = adhanByName[name]!;
-      final adhan12   = format12h(adhanRaw);  // 12h English AM/PM
+      final adhanRaw = adhanByName[name]!;
+      final adhan12 = format12h(adhanRaw); // 12h English AM/PM
+
       final iqamahRaw = iqamahByName != null ? (iqamahByName![name] ?? '') : '';
-      final iqamah12  = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
+      final iqamah12 = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
+
       final isHighlight = (highlightName != null && highlightName == name);
 
       // Background per theme
@@ -124,6 +130,16 @@ class SalahTable extends StatelessWidget {
 
       // Arabic (display) name; glyph still uses English key
       final displayName = PrayerLabels.prayerName(context, name);
+
+      // Iqamah cell: widget override > text
+      final Widget iqamahCell = (iqamahWidgetByName != null && iqamahWidgetByName!.containsKey(name))
+          ? iqamahWidgetByName![name]!
+          : Text(
+        iqamah12,
+        style: isHighlight
+            ? iqamahTextStyle.copyWith(fontWeight: FontWeight.w700)
+            : iqamahTextStyle,
+      );
 
       final content = Container(
         decoration: BoxDecoration(color: bg, border: border),
@@ -158,18 +174,12 @@ class SalahTable extends StatelessWidget {
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Text(
-                  iqamah12,
-                  style: isHighlight
-                      ? iqamahTextStyle.copyWith(fontWeight: FontWeight.w700)
-                      : iqamahTextStyle,
-                ),
+                child: iqamahCell,
               ),
             ),
           ],
         ),
       );
-
       return expandRowsToFill ? Expanded(child: content) : content;
     }
 
@@ -182,8 +192,8 @@ class SalahTable extends StatelessWidget {
           child: Row(
             children: [
               const SizedBox(width: 4),
-              Expanded(child: Text(PrayerLabels.colSalah(context),  style: headerTextStyle)),
-              Expanded(child: Center(child: Text(PrayerLabels.colAdhan(context),  style: headerTextStyle))),
+              Expanded(child: Text(PrayerLabels.colSalah(context), style: headerTextStyle)),
+              Expanded(child: Center(child: Text(PrayerLabels.colAdhan(context), style: headerTextStyle))),
               Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,

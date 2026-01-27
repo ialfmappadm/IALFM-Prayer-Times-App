@@ -1,56 +1,91 @@
-
 // lib/localization/prayer_labels.dart
 import 'package:flutter/widgets.dart';
 
 /// Returns Arabic labels when the current app locale is 'ar',
-/// otherwise returns the original English labels.
-/// No layout/direction changes here—just strings.
+/// otherwise returns the original English labels. No layout changes—just strings.
 class PrayerLabels {
   static bool _isArabic(BuildContext context) =>
       Localizations.localeOf(context).languageCode == 'ar';
 
-  // Column headers
-  static String colSalah(BuildContext c)  => _isArabic(c) ? 'الصلاة'  : 'Salah';
-  static String colAdhan(BuildContext c)  => _isArabic(c) ? 'الأذان'   : 'Adhan';
-  static String colIqamah(BuildContext c) => _isArabic(c) ? 'الإقامة'  : 'Iqamah';
+  static String colSalah(BuildContext c) => _isArabic(c) ? 'الصلاة' : 'Salah';
+  static String colAdhan(BuildContext c) => _isArabic(c) ? 'الأذان' : 'Adhan';
+  static String colIqamah(BuildContext c) => _isArabic(c) ? 'الإقامة' : 'Iqamah';
 
-  // Individual prayer names (case-insensitive)
-  static String prayerName(BuildContext c, String englishName) {
-    if (!_isArabic(c)) return englishName;
-    switch (englishName.toLowerCase()) {
-      case 'fajr':     return 'الفجر';
-      case 'sunrise':  return 'الشروق';
-      case 'dhuhr':    return 'الظهر';
-      case 'asr':      return 'العصر';
-      case 'maghrib':  return 'المغرب';
-      case 'isha':     return 'العشاء';
+  /// Accepts many spellings; returns a canonical token for display mapping.
+  static String _normalizeKey(String name) {
+    final k = name.trim().toLowerCase();
+
+    switch (k) {
+      case 'fajr': return 'fajr';
+      case 'sunrise': return 'sunrise';
+      case 'dhuhr': return 'dhuhr';
+      case 'asr': return 'asr';
+      case 'maghrib': return 'maghrib';
+      case 'isha': return 'isha';
+
+    // Jumu'ah variants
       case "jumu'ah":
       case 'jumuah':
+      case 'jummah':
+      case "jummu'ah":
+      case "jummuah":
       case "jummua'h":
-      case 'jummah':   return 'الجمعة';
-      default:         return englishName;
+        return "jumu'ah";
+
+    // Youth Jumu'ah (variants)
+      case "youth jumu'ah":
+      case 'youth jumuah':
+      case 'youth jummah':
+      case 'youth-jumuah':
+      case 'youth_jumuah':
+        return "youth jumu'ah";
+
+      default:
+        return k;
     }
   }
 
-  /// Countdown header, driven by the *actual* next prayer key:
-  ///   en -> "Maghrib Adhan in"
-  ///   ar -> "اذان المغرب في"
-  ///
-  /// Accepts 'fajr','dhuhr','asr','maghrib','isha' (any case).
+  /// Display name mapping (EN/AR). Unknown names fall back to input.
+  static String prayerName(BuildContext c, String englishName) {
+    final canon = _normalizeKey(englishName);
+
+    if (!_isArabic(c)) {
+      // English display casing
+      if (canon == "jumu'ah") return "Jumu'ah";
+      if (canon == "youth jumu'ah") return "Youth Jumu'ah";
+      return englishName;
+    }
+
+    // Arabic display mapping
+    switch (canon) {
+      case 'fajr': return 'الفجر';
+      case 'sunrise': return 'الشروق';
+      case 'dhuhr': return 'الظهر';
+      case 'asr': return 'العصر';
+      case 'maghrib': return 'المغرب';
+      case 'isha': return 'العشاء';
+      case "jumu'ah": return 'الجمعة';
+      case "youth jumu'ah": return 'جمعة الشباب';
+      default: return englishName;
+    }
+  }
+
+  /// Banner header; unchanged, but left here for completeness.
   static String countdownHeader(BuildContext c, String nextPrayerKey) {
     final isAr = _isArabic(c);
-    final key = nextPrayerKey.toLowerCase();
+    final key = _normalizeKey(nextPrayerKey);
     if (isAr) {
       switch (key) {
-        case 'fajr':     return 'اذان الفجر في';
-        case 'dhuhr':    return 'اذان الظهر في';
-        case 'asr':      return 'اذان العصر في';
-        case 'maghrib':  return 'اذان المغرب في';
-        case 'isha':     return 'اذان العشاء في';
-        default:         return 'الاذان في';
+        case 'fajr': return 'اذان الفجر في';
+        case 'dhuhr': return 'اذان الظهر في';
+        case 'asr': return 'اذان العصر في';
+        case 'maghrib': return 'اذان المغرب في';
+        case 'isha': return 'اذان العشاء في';
+        default: return 'الأذان في';
       }
     }
-    final cap = key.isEmpty ? '' : key[0].toUpperCase() + key.substring(1);
-    return '$cap Adhan in';
+    String cap(String s) => s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1);
+    final display = cap(key);
+    return '$display Adhan in';
   }
 }
