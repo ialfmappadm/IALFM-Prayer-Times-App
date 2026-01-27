@@ -1,0 +1,58 @@
+
+{
+  "@@locale": "ar",
+
+  "tab_more": "المزيد",
+  "tab_directory": "الدليل",
+
+  "more_accessibility": "إمكانية الوصول",
+  "more_notifications": "الإشعارات",
+  "more_time": "الوقت",
+  "more_language": "اللغة",
+  "more_data_storage": "البيانات والتخزين",
+  "more_dark_mode": "الوضع الداكن",
+  "more_haptics": "الاستجابة اللمسية",
+  "more_text_size": "حجم الخط",
+  "more_time_format": "تنسيق الوقت",
+  "more_language_label": "لغة التطبيق",
+  "more_enable_notifications": "تفعيل الإشعارات",
+  "more_refresh_data": "تحديث البيانات الآن",
+  "more_last_sync": "آخر مزامنة",
+
+  "btn_cancel": "إلغاء",
+  "btn_save": "حفظ",
+  "lang_english": "English",
+  "lang_arabic": "العربية",
+
+  "dir_section_contact": "التواصل",
+  "dir_section_management": "الإدارة",
+  "dir_section_programs": "البرامج",
+  "dir_section_resources": "الموارد",
+
+  "dir_contact_us": "تواصل معنا",
+  "dir_imam": "إمامنا",
+  "dir_board": "مجلس الإدارة",
+  "dir_committees": "اللجان",
+  "dir_sunday_school": "مدرسة الأحد",
+  "dir_pillars": "أكاديمية بيـلارز",
+  "dir_quran_school": "مدرسة القرآن",
+  "dir_membership": "العضوية",
+  "dir_signup_individual": "تسجيل – فرد",
+  "dir_signup_family": "تسجيل – عائلة",
+  "dir_renew": "تجديد (تسجيل دخول الأعضاء)",
+  "dir_newsletter": "النشرة البريدية",
+  "dir_open_latest_newsletter": "فتح أحدث نشرة",
+  "dir_view_all_newsletters": "استعراض جميع النشرات السابقة",
+  "dir_link_tree": "روابط IALFM",
+  "dir_link_tree_youth": "روابط شباب IALFM",
+  "dir_calendar": "التقويم السنوي",
+  "dir_erf": "صندوق الإغاثة الطارئة",
+  "dir_docs": "مستندات IALFM",
+  "dir_volunteer": "كن متطوعًا",
+
+  "notifications_title": "الإشعارات",
+  "social_follow_us": "تابعنا…",
+  "ann_default_title": "إعلان",
+  "ann_empty_title": "لا توجد إعلانات حالياً",
+  "ann_empty_body": "يرجى التحقق لاحقًا."
+}

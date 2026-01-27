@@ -1,0 +1,58 @@
+
+{
+  "@@locale": "en",
+
+  "tab_more": "More",
+  "tab_directory": "Directory",
+
+  "more_accessibility": "Accessibility",
+  "more_notifications": "Notifications",
+  "more_time": "Time",
+  "more_language": "Language",
+  "more_data_storage": "Data & Storage",
+  "more_dark_mode": "Dark Mode",
+  "more_haptics": "Haptic Feedback",
+  "more_text_size": "Text Size",
+  "more_time_format": "Time Format",
+  "more_language_label": "App Language",
+  "more_enable_notifications": "Enable Notifications",
+  "more_refresh_data": "Refresh Data Now",
+  "more_last_sync": "Last Sync",
+
+  "btn_cancel": "Cancel",
+  "btn_save": "Save",
+  "lang_english": "English",
+  "lang_arabic": "العربية",
+
+  "dir_section_contact": "Contact",
+  "dir_section_management": "Management",
+  "dir_section_programs": "Programs",
+  "dir_section_resources": "Resources",
+
+  "dir_contact_us": "Contact Us",
+  "dir_imam": "Our Imam",
+  "dir_board": "Board of Directors",
+  "dir_committees": "Committees",
+  "dir_sunday_school": "Sunday School",
+  "dir_pillars": "Pillars Academy",
+  "dir_quran_school": "Quran School",
+  "dir_membership": "Membership",
+  "dir_signup_individual": "Signup – Individual",
+  "dir_signup_family": "Signup – Family",
+  "dir_renew": "Renew (Member Login)",
+  "dir_newsletter": "Newsletter",
+  "dir_open_latest_newsletter": "Open Latest Newsletter",
+  "dir_view_all_newsletters": "View All Past Newsletters",
+  "dir_link_tree": "Link Tree - IALFM",
+  "dir_link_tree_youth": "Link Tree - IALFM Youth",
+  "dir_calendar": "Annual Calendar",
+  "dir_erf": "Emergency Relief Fund",
+  "dir_docs": "IALFM Documents",
+  "dir_volunteer": "Become a Volunteer",
+
+  "notifications_title": "Notifications",
+  "social_follow_us": "Follow Us…",
+  "ann_default_title": "Announcement",
+  "ann_empty_title": "No active announcement",
+  "ann_empty_body": "Please check back later."
+}

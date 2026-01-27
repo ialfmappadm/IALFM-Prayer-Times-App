@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   # UI/time utilities
   google_fonts: ^7.0.0
   # Use canonical package instead of a fork
@@ -45,7 +46,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,6 +55,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Required for gen_l10n (generated localizations)
+  generate: true
   assets:
     # Shipped assets (seed/offline fallback)
     #- assets/data/prayer_times_2026.json
