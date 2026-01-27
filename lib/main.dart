@@ -1,4 +1,3 @@
-
 // lib/main.dart
 // - Initializes bindings & runApp in the SAME zone.
 // - Uses generated AppLocalizations (gen_l10n).
@@ -7,8 +6,12 @@
 
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
+
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -30,18 +33,16 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'models.dart';
 import 'pages/prayer_page.dart';
 import 'utils/time_utils.dart';
-import 'widgets/announcements_tab.dart'; // If your file is named announcement.dart, adjust this import
+import 'widgets/announcements_tab.dart';
 import 'prayer_times_firebase.dart';
 import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'app_colors.dart';
-import 'theme_controller.dart';
-
-// NEW: UX preferences (text size + haptics)
+import 'theme_controller.dart'; // <-- IMPORTANT
 import 'ux_prefs.dart';
 
-// NEW: generated localizations (gen_l10n)
+// New: generated localizations (gen_l10n)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 // ---- NAV TUNING ----
@@ -51,12 +52,15 @@ const double kNavBarHeight = 50.0;
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
+// Background message handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
+
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
+
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
@@ -67,11 +71,15 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
   final year = (yearStr != null) ? int.tryParse(yearStr) : null;
+
   if (shouldRefresh) {
     await repo.refreshFromFirebase(year: year);
   }
 }
 
+// --------------------------------------------------------------
+// >>>>>>>>>> FIX APPLIED HERE <<<<<<<<<<
+// --------------------------------------------------------------
 Future<void> main() async {
   // Keep init and runApp in the SAME zone to prevent zone mismatch.
   runZonedGuarded(() async {
@@ -80,15 +88,18 @@ Future<void> main() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+    // Firebase
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     await FirebaseAppCheck.instance.activate(
       providerAndroid:
       kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-      providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+      providerApple:
+      kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
-    // Route Flutter framework errors into this zone too.
+    // Route framework errors into this zone too.
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       Zone.current.handleUncaughtError(
@@ -97,8 +108,18 @@ Future<void> main() async {
       );
     };
 
-    // NEW: Initialize UX preferences (haptics OFF by default, text scale default 1.0)
+    // UX prefs (haptics, text scale)
     await UXPrefs.init();
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // ** REQUIRED FIX **
+    // Initialize theme so ThemeController.themeMode
+    // contains the correct value BEFORE the first frame.
+    //
+    // This FIXES Android dark-mode toggle mismatch.
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    await ThemeController.init();
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
@@ -106,7 +127,10 @@ Future<void> main() async {
   });
 }
 
-// ------------------------ Light (Cool) ColorScheme ------------------------
+// --------------------------------------------------------------
+// ------------ LIGHT COLOR SCHEME (unchanged) ------------------
+// --------------------------------------------------------------
+
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42), // Navy
@@ -138,14 +162,18 @@ const LinearGradient pageGradientLight = LinearGradient(
   colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
 );
 
-// ---- ThemeExtension to carry a page gradient via Theme ----
+// --------------------------------------------------------------
+// ---- ThemeExtension used across Light/Dark themes ------------
+// --------------------------------------------------------------
+
 @immutable
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
 
   @override
-  AppGradients copyWith({Gradient? page}) => AppGradients(page: page ?? this.page);
+  AppGradients copyWith({Gradient? page}) =>
+      AppGradients(page: page ?? this.page);
 
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
@@ -157,159 +185,193 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
+// --------------------------------------------------------------
+// ------------------------ BOOTSTRAP APP ------------------------
+// --------------------------------------------------------------
+
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // React to Settings: Theme + Locale
+    // React to Theme + Locale settings
     return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.themeMode,
-      builder: (context, mode, _) {
-        return ValueListenableBuilder<Locale?>(
-          valueListenable: LocaleController.locale,
-          builder: (context, appLocale, __) {
-            // ---- Base UI text: Manrope always (protect English) ----
-            final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
-              titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
-              bodyMedium:  GoogleFonts.manrope(),
-              bodyLarge:   GoogleFonts.manrope(),
-            );
-
-            // ---- Arabic glyph fallback chain ----
-            const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
-
-            TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall:      t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium:     t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge:      t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall:     t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:    t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge:     t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall:     t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:    t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge:     t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall:   t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium:  t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge:   t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall:  t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium: t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge:  t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
-            );
-
-            final TextTheme chosenLight = addFallbacks(baseLatin);
-            final TextTheme chosenDark  = addFallbacks(baseLatin);
-
-            // ---- Light theme ----
-            final ThemeData baseLight = ThemeData(
-              useMaterial3: true,
-              colorScheme: lightColorScheme,
-              scaffoldBackgroundColor: lightColorScheme.surface,
-              textTheme: chosenLight,
-              navigationBarTheme: NavigationBarThemeData(
-                backgroundColor: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                indicatorColor: Colors.transparent,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-                  final selected = states.contains(WidgetState.selected);
-                  return IconThemeData(
-                    color: selected
-                        ? lightColorScheme.primary.withValues(alpha: 0.95)
-                        : const Color(0xFF556978).withValues(alpha: 0.75),
-                  );
-                }),
-              ),
-              snackBarTheme: SnackBarThemeData(
-                backgroundColor: Colors.white,
-                contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
-                actionTextColor: Colors.black,
-                elevation: 3,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              extensions: const <ThemeExtension<dynamic>>[
-                AppGradients.light,
-              ],
-            );
-
-            // ---- Dark theme ----
-            final ThemeData baseDark = ThemeData(
-              brightness: Brightness.dark,
-              useMaterial3: true,
-              scaffoldBackgroundColor: AppColors.bgPrimary,
-              textTheme: chosenDark,
-              navigationBarTheme: NavigationBarThemeData(
-                backgroundColor: AppColors.bgPrimary,
-                surfaceTintColor: Colors.transparent,
-                indicatorColor: Colors.transparent,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-                  final selected = states.contains(WidgetState.selected);
-                  return IconThemeData(
-                    color: selected
-                        ? Colors.white.withValues(alpha: 0.95)
-                        : Colors.white.withValues(alpha: 0.70),
-                  );
-                }),
-              ),
-              snackBarTheme: SnackBarThemeData(
-                backgroundColor: Colors.white,
-                contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
-                actionTextColor: Colors.black,
-                elevation: 3,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              extensions: const <ThemeExtension<dynamic>>[
-                AppGradients.dark,
-              ],
-            );
-
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              title: 'IALFM',
-              themeMode: mode,
-              theme: baseLight,
-              darkTheme: baseDark,
-              scaffoldMessengerKey: messengerKey,
-
-              // ---- Localization: generated delegates + supported locales ----
-              locale: appLocale, // Locale('ar') or Locale('en') from LocaleController
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-
-              // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
-              builder: (context, child) {
-                return ValueListenableBuilder<double>(
-                  valueListenable: UXPrefs.textScale,
-                  builder: (context, scale, _) {
-                    final mq = MediaQuery.of(context);
-                    return Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: MediaQuery(
-                        data: mq.copyWith(textScaler: TextScaler.linear(scale)),
-                        child: child!,
-                      ),
-                    );
-                  },
+        valueListenable: ThemeController.themeMode,
+        builder: (context, mode, _) {
+          return ValueListenableBuilder<Locale?>(
+              valueListenable: LocaleController.locale,
+              builder: (context, appLocale, __) {
+                // Base text theme
+                final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
+                  titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+                  titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+                  bodyMedium: GoogleFonts.manrope(),
+                  bodyLarge: GoogleFonts.manrope(),
                 );
-              },
 
-              home: const _BootstrapScreen(),
+                // Arabic fallback chain
+                const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
+
+                TextTheme addFallbacks(TextTheme t) => t.copyWith(
+                  bodySmall: t.bodySmall?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  bodyMedium: t.bodyMedium?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  bodyLarge:
+                  t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+                  titleSmall:
+                  t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+                  titleMedium: t.titleMedium?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  titleLarge:
+                  t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+                  labelSmall:
+                  t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+                  labelMedium: t.labelMedium?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  labelLarge:
+                  t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+                  displaySmall: t.displaySmall?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  displayMedium: t.displayMedium?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  displayLarge: t.displayLarge?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  headlineSmall: t.headlineSmall?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  headlineMedium: t.headlineMedium?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                  headlineLarge: t.headlineLarge?.copyWith(
+                      fontFamilyFallback: arabicFallback),
+                );
+
+                final TextTheme chosenLight = addFallbacks(baseLatin);
+                final TextTheme chosenDark = addFallbacks(baseLatin);
+
+// ------- Light Theme ----------
+                final ThemeData baseLight = ThemeData(
+                  useMaterial3: true,
+                  colorScheme: lightColorScheme,
+                  scaffoldBackgroundColor: lightColorScheme.surface,
+                  textTheme: chosenLight,
+                  navigationBarTheme: NavigationBarThemeData(
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.transparent,
+                    indicatorColor: Colors.transparent,
+                    labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                    iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                            (states) {
+                          final selected = states.contains(WidgetState.selected);
+                          return IconThemeData(
+                            color: selected
+                                ? lightColorScheme.primary.withValues(alpha: 0.95)
+                                : const Color(0xFF556978).withValues(alpha: 0.75),
+                          );
+                        }),
+                  ),
+                  snackBarTheme: SnackBarThemeData(
+                    backgroundColor: Colors.white,
+                    contentTextStyle: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                    actionTextColor: Colors.black,
+                    elevation: 3,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  extensions: const <ThemeExtension<dynamic>>[
+                    AppGradients.light,
+                  ],
+                );
+
+// ------- Dark Theme ----------
+                final ThemeData baseDark = ThemeData(
+                  brightness: Brightness.dark,
+                  useMaterial3: true,
+                  scaffoldBackgroundColor: AppColors.bgPrimary,
+                  textTheme: chosenDark,
+                  navigationBarTheme: NavigationBarThemeData(
+                    backgroundColor: AppColors.bgPrimary,
+                    surfaceTintColor: Colors.transparent,
+                    indicatorColor: Colors.transparent,
+                    labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                    iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                            (states) {
+                          final selected = states.contains(WidgetState.selected);
+                          return IconThemeData(
+                            color: selected
+                                ? Colors.white.withValues(alpha: 0.95)
+                                : Colors.white.withValues(alpha: 0.70),
+                          );
+                        }),
+                  ),
+                  snackBarTheme: SnackBarThemeData(
+                    backgroundColor: Colors.white,
+                    contentTextStyle: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                    actionTextColor: Colors.black,
+                    elevation: 3,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  extensions: const <ThemeExtension<dynamic>>[
+                    AppGradients.dark,
+                  ],
+                );
+
+                return MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    title: 'IALFM',
+                    themeMode: mode,
+                    theme: baseLight,
+                    darkTheme: baseDark,
+                    scaffoldMessengerKey: messengerKey,
+
+                    // ---- Localization ----
+                    locale: appLocale,
+                    localizationsDelegates: AppLocalizations.localizationsDelegates,
+                    supportedLocales: AppLocalizations.supportedLocales,
+
+                    // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
+                    builder: (context, child) {
+                      return ValueListenableBuilder<double>(
+                        valueListenable: UXPrefs.textScale,
+                        builder: (context, scale, _) {
+                          final mq = MediaQuery.of(context);
+                          return Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: MediaQuery(
+                              data: mq.copyWith(
+                                textScaler: TextScaler.linear(scale),
+                              ),
+                              child: child!,
+                            ),
+                          );
+                        },
+                      );
+                    },
+
+                    home: const _BootstrapScreen(),
+                  );
+                },
             );
           },
-        );
-      },
-    );
+      );
+    }
   }
-}
+
+// --------------------------------------------------------------
+// ----------------------- Bootstrap Screen ----------------------
+// --------------------------------------------------------------
 
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
+
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -337,6 +399,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
+
     _midnightTimer?.cancel();
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
@@ -368,6 +431,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
             temperatureF: r.temperatureF,
           );
         }
+
         if (snap.hasError) {
           FlutterNativeSplash.remove();
           return _SplashScaffold(
@@ -377,6 +441,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
+
         return const SizedBox.shrink();
       },
     );
@@ -385,7 +450,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   Future<_InitResult> _initializeAll() async {
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true, badge: true, sound: true, provisional: false,
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
       );
       debugPrint('FCM permission: ${settings.authorizationStatus}');
       await FirebaseMessaging.instance.subscribeToTopic('allUsers');
@@ -401,13 +469,16 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     }
 
     try {
-      final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
-      debugPrint('Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+      final ok =
+      await _repo.refreshFromFirebase(year: DateTime.now().year);
+      debugPrint(
+          'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
 
     final nowLocal = DateTime.now();
+
     List<PrayerDay> days;
     try {
       days = await loadPrayerDays(year: nowLocal.year);
@@ -416,13 +487,18 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       days = <PrayerDay>[];
     }
 
-    final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
+    final todayDate =
+    DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
+
     final PrayerDay today =
-        _findByDate(days, todayDate) ?? (days.isNotEmpty ? days.first : _dummyDay(todayDate));
+        _findByDate(days, todayDate) ??
+            (days.isNotEmpty ? days.first : _dummyDay(todayDate));
+
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
     final coords = _coordsForLocation(location);
+
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
@@ -451,7 +527,9 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   PrayerDay _dummyDay(DateTime date) {
     String fmt(DateTime d) =>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
     final begin = fmt(date);
+
     final Map<String, PrayerTime> prayers = {
       'fajr': PrayerTime(begin: begin, iqamah: ''),
       'dhuhr': PrayerTime(begin: begin, iqamah: ''),
@@ -459,6 +537,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
       'isha': PrayerTime(begin: begin, iqamah: ''),
     };
+
     return PrayerDay(
       date: date,
       prayers: prayers,
@@ -469,12 +548,17 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 }
 
+// --------------------------------------------------------------
+// ------------------------ RESULT WRAPPER -----------------------
+// --------------------------------------------------------------
+
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
+
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -484,11 +568,21 @@ class _InitResult {
   });
 }
 
+// --------------------------------------------------------------
+// --------------------------- SPLASH ----------------------------
+// --------------------------------------------------------------
+
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback? onRetry;
-  const _SplashScaffold({super.key, required this.title, this.subtitle, this.onRetry});
+
+  const _SplashScaffold({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -500,7 +594,8 @@ class _SplashScaffold extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.access_time, size: 56, color: Color(0xFF2E7D32)),
+              const Icon(Icons.access_time,
+                  size: 56, color: Color(0xFF2E7D32)),
               const SizedBox(height: 16),
               Text(title, style: Theme.of(context).textTheme.titleLarge),
               if (subtitle != null) ...[
@@ -525,13 +620,17 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ------------------------ NAVIGATION BAR ------------------------
+// --------------------------------------------------------------
+// -------------------------- NAVIGATION -------------------------
+// --------------------------------------------------------------
+
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
+
   const HomeTabs({
     super.key,
     required this.location,
@@ -552,11 +651,13 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   void initState() {
     super.initState();
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
         setState(() => hasNewAnnouncement = true);
       }
     });
+
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -565,6 +666,7 @@ class _HomeTabsState extends State<HomeTabs> {
         });
       }
     });
+
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -678,11 +780,15 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// ---- Underline helpers (subtle) ----
+// --------------------------------------------------------------
+// ------------------------- ICON HELPERS -------------------------
+// --------------------------------------------------------------
+
 class _NavUnderlineFaIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
   final double size;
+
   const _NavUnderlineFaIcon({
     required this.icon,
     required this.active,
@@ -693,6 +799,7 @@ class _NavUnderlineFaIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color lineColor =
         IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -718,6 +825,7 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
   final bool active;
   final bool showBadge;
   final double size;
+
   const _NavUnderlineFaBadgeIcon({
     required this.icon,
     required this.active,
@@ -729,6 +837,7 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color lineColor =
         IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -768,7 +877,10 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
   }
 }
 
-// ---- HELPERS (coords & weather) ----
+// --------------------------------------------------------------
+// ------------------------ HELPERS (coords & weather) -----------
+// --------------------------------------------------------------
+
 class LatLon {
   final double lat;
   final double lon;
@@ -795,7 +907,9 @@ Future<double?> _fetchTemperatureF({
       'temperature_unit': 'fahrenheit',
       'timezone': 'auto',
     });
+
     final resp = await http.get(uri);
+
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final cw = data['current_weather'] as Map<String, dynamic>?;
@@ -807,5 +921,6 @@ Future<double?> _fetchTemperatureF({
   } catch (e, st) {
     debugPrint('Weather fetch error: $e\n$st');
   }
+
   return null;
 }

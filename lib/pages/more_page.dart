@@ -99,7 +99,7 @@ class _MorePageState extends State<MorePage> {
                             value: isDark,
                             onChanged: (v) {
                               ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
-                              UXPrefs.maybeHaptic(); // only if enabled
+                              UXPrefs.maybeHaptic();
                             },
                           );
                         },
