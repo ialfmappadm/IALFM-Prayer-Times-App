@@ -26,6 +26,7 @@ class PrayerLabels {
       case 'isha':     return 'العشاء';
       case "jumu'ah":
       case 'jumuah':
+      case "jummua'h":
       case 'jummah':   return 'الجمعة';
       default:         return englishName;
     }

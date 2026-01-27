@@ -114,7 +114,7 @@ class _PrayerPageState extends State<PrayerPage> {
       case "jummua'h":
       case "jummu'ah":
       case 'jummuah':
-      case 'jumuah':   return "Jummua'h";
+      case 'jumuah':   return "Jumu'ah";
       default:         return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
     }
   }
@@ -175,7 +175,7 @@ class _PrayerPageState extends State<PrayerPage> {
       'Asr'     : widget.today.prayers['asr']?.begin     ?? '',
       'Maghrib' : widget.today.prayers['maghrib']?.begin ?? '',
       'Isha'    : widget.today.prayers['isha']?.begin    ?? '',
-      "Jummua'h": '13:30',
+      "Jumu'ah": '13:30',
     };
 
     final iqamahByName = <String, String>{
@@ -185,7 +185,7 @@ class _PrayerPageState extends State<PrayerPage> {
       'Asr'     : widget.today.prayers['asr']?.iqamah     ?? '',
       'Maghrib' : widget.today.prayers['maghrib']?.iqamah ?? '',
       'Isha'    : widget.today.prayers['isha']?.iqamah    ?? '',
-      "Jummua'h": '14:00',
+      "Jumu'ah": '14:00',
     };
 
     // Countdown section
@@ -298,7 +298,7 @@ class _PrayerPageState extends State<PrayerPage> {
               adhanStyle:  valueTextStyle,
               iqamahStyle: valueTextStyle,
 
-              order: const ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jummua'h"],
+              order: const ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jumu'ah"],
             ),
           ),
         ),

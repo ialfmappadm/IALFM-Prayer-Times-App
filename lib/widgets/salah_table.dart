@@ -44,7 +44,7 @@ class SalahTable extends StatelessWidget {
     super.key,
     required this.adhanByName,
     this.iqamahByName,
-    this.order = const ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha',"Jummua'h"],
+    this.order = const ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha',"Jumu'ah"],
     this.highlightName,
     this.headerStyle,
     this.nameStyle,
