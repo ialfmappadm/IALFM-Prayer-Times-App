@@ -18,6 +18,11 @@
   "more_enable_notifications": "تفعيل الإشعارات",
   "more_refresh_data": "تحديث البيانات الآن",
   "more_last_sync": "آخر مزامنة",
+  "more_date_time": "التاريخ والوقت",
+  "more_hijri_offset_label": "تعديل التاريخ الهجري",
+  "more_hijri_offset_minus1": "يوم −1",
+  "more_hijri_offset_zero": "0",
+  "more_hijri_offset_plus1": "يوم +1",
 
   "btn_cancel": "إلغاء",
   "btn_save": "حفظ",

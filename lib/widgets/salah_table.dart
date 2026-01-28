@@ -4,6 +4,7 @@ import 'prayer_glyphs.dart';
 import '../utils/time_utils.dart';
 import '../app_colors.dart';
 import '../localization/prayer_labels.dart';
+import '../ux_prefs.dart'; // <-- for 12/24h
 
 class SalahTable extends StatelessWidget {
   final Map<String, String> adhanByName;
@@ -70,10 +71,9 @@ class SalahTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    // Read current text scale & decide if rows can expand to fill.
-    // For large text sizes, stop forcing rows to fill the height to prevent vertical overflow.
+    // Text scale guard → avoid vertical overflow at very large sizes
     final media = MediaQuery.of(context);
-    final textScale = media.textScaler.scale(1.0); // Flutter 3.13+ TextScaler
+    final textScale = media.textScaler.scale(1.0);
     const fillRowsMaxScale = 1.15;
     final useExpandedRows = expandRowsToFill && textScale <= fillRowsMaxScale;
 
@@ -125,11 +125,16 @@ class SalahTable extends StatelessWidget {
         : const BoxDecoration(gradient: AppColors.headerGradient)));
 
     Widget buildRow(String name, int i) {
-      final adhanRaw = adhanByName[name]!;
-      final adhan12 = format12h(adhanRaw); // 12h English AM/PM
+      final is24h = UXPrefs.use24h.value;
 
+      final adhanRaw = adhanByName[name]!;
       final iqamahRaw = iqamahByName != null ? (iqamahByName![name] ?? '') : '';
-      final iqamah12 = iqamahRaw.isNotEmpty ? format12h(iqamahRaw) : '';
+
+      // Choose display per pref (adhan/iqamah)
+      final adhanText = is24h ? adhanRaw : format12h(adhanRaw);
+      final iqamahText = (iqamahRaw.isEmpty)
+          ? ''
+          : (is24h ? iqamahRaw : format12h(iqamahRaw));
 
       final isHighlight = (highlightName != null && highlightName == name);
 
@@ -152,12 +157,12 @@ class SalahTable extends StatelessWidget {
       // Localized (display) name; glyph still uses English key
       final displayName = PrayerLabels.prayerName(context, name);
 
-      // ----- Iqamah (right) — scale-down guard to avoid overflow -----
+      // Iqamah (right) — scale-down guard
       final Widget iqamahTextOrWidget =
       (iqamahWidgetByName != null && iqamahWidgetByName!.containsKey(name))
           ? iqamahWidgetByName![name]!
           : Text(
-        iqamah12,
+        iqamahText,
         softWrap: false,
         overflow: TextOverflow.ellipsis,
         style: isHighlight
@@ -171,7 +176,6 @@ class SalahTable extends StatelessWidget {
         child: iqamahTextOrWidget,
       );
 
-      // ----- Row content -----
       final content = Container(
         decoration: BoxDecoration(color: bg, border: border),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -182,8 +186,7 @@ class SalahTable extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Limit text scaling ONLY for the name to keep it single-line
-                  // and avoid visible cropping at very large text sizes.
+                  // keep single-line; local cap + scale-down to avoid cropping
                   Expanded(
                     child: MediaQuery(
                       data: MediaQuery.of(context).copyWith(
@@ -199,9 +202,9 @@ class SalahTable extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           displayName,
-                          maxLines: 1, // single line only
+                          maxLines: 1,
                           softWrap: false,
-                          overflow: TextOverflow.ellipsis, // graceful truncation
+                          overflow: TextOverflow.ellipsis,
                           style: isHighlight
                               ? nameTextStyle.copyWith(fontWeight: FontWeight.w700)
                               : nameTextStyle,
@@ -209,9 +212,7 @@ class SalahTable extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  // Only show the prayer glyph for non-Isha prayers to avoid misplacement
-                  // under large text settings. Re-enable later after layout revisit.
+                  // TEMP: hide Isha moon glyph to avoid misplacement at large text
                   if (name != 'Isha') ...[
                     const SizedBox(width: 6),
                     Align(
@@ -227,7 +228,7 @@ class SalahTable extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  adhan12,
+                  adhanText,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: isHighlight
@@ -248,7 +249,6 @@ class SalahTable extends StatelessWidget {
         ),
       );
 
-      // Use Expanded rows only when text is not too large.
       return useExpandedRows ? Expanded(child: content) : content;
     }
 
