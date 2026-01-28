@@ -8,8 +8,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,9 +40,12 @@ import 'theme_controller.dart';
 import 'ux_prefs.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
-// NEW: Hijri override bootstrap
+// Hijri override bootstrap
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
+
+// NEW: app-wide haptics
+import 'utils/haptics.dart';
 
 // ---- NAV TUNING ----
 const double kNavIconSize = 18.0;
@@ -112,9 +113,7 @@ Future<void> main() async {
     // Theme controller (loads/picks system)
     await ThemeController.init();
 
-    // NEW: Apply Hijri override if cloud file exists.
-    // Uses a resolver that returns a placeholder Hijri (y,m,d = Gregorian y,m,d) so you can test wiring.
-    // To use your real Hijri conversion, replace `_appHijri` with your true converter.
+    // Apply Hijri override if cloud file exists (uses real Hijri resolver)
     await HijriOverrideService.applyIfPresent(resolveAppHijri: _appHijri);
 
     runApp(const BootstrapApp());
@@ -200,36 +199,36 @@ class BootstrapApp extends StatelessWidget {
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall: t.bodySmall?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              bodyMedium: t.bodyMedium?.copyWith(
-                  fontFamilyFallback: arabicFallback),
+              bodySmall:
+              t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:
+              t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
               bodyLarge:
               t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
               titleSmall:
               t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium: t.titleMedium?.copyWith(
-                  fontFamilyFallback: arabicFallback),
+              titleMedium:
+              t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
               titleLarge:
               t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
               labelSmall:
               t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium: t.labelMedium?.copyWith(
-                  fontFamilyFallback: arabicFallback),
+              labelMedium:
+              t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
               labelLarge:
               t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall: t.displaySmall?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              displayMedium: t.displayMedium?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              displayLarge: t.displayLarge?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              headlineSmall: t.headlineSmall?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              headlineMedium: t.headlineMedium?.copyWith(
-                  fontFamilyFallback: arabicFallback),
-              headlineLarge: t.headlineLarge?.copyWith(
-                  fontFamilyFallback: arabicFallback),
+              displaySmall:
+              t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium:
+              t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge:
+              t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall:
+              t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium:
+              t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge:
+              t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
@@ -246,27 +245,23 @@ class BootstrapApp extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-                        (states) {
-                      final selected = states.contains(WidgetState.selected);
-                      return IconThemeData(
-                        color: selected
-                            ? lightColorScheme.primary.withValues(alpha: 0.95)
-                            : const Color(0xFF556978).withValues(alpha: 0.75),
-                      );
-                    }),
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return IconThemeData(
+                    color: selected
+                        ? lightColorScheme.primary.withValues(alpha: 0.95)
+                        : const Color(0xFF556978).withValues(alpha: 0.75),
+                  );
+                }),
               ),
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600),
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.light,
@@ -284,27 +279,23 @@ class BootstrapApp extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-                        (states) {
-                      final selected = states.contains(WidgetState.selected);
-                      return IconThemeData(
-                        color: selected
-                            ? Colors.white.withValues(alpha: 0.95)
-                            : Colors.white.withValues(alpha: 0.70),
-                      );
-                    }),
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return IconThemeData(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.95)
+                        : Colors.white.withValues(alpha: 0.70),
+                  );
+                }),
               ),
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600),
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
@@ -318,6 +309,9 @@ class BootstrapApp extends StatelessWidget {
               theme: baseLight,
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
+
+              // NEW: app-wide haptic feedback on route transitions
+              navigatorObservers:  [HapticNavigatorObserver()],
 
               // ---- Localization ----
               locale: appLocale,
@@ -453,8 +447,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     }
 
     try {
-      final ok =
-      await _repo.refreshFromFirebase(year: DateTime.now().year);
+      final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
       debugPrint(
           'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
     } catch (e, st) {
@@ -471,8 +464,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       days = <PrayerDay>[];
     }
 
-    final todayDate =
-    DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
+    final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
     final PrayerDay today =
         _findByDate(days, todayDate) ??
@@ -572,8 +564,7 @@ class _SplashScaffold extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.access_time,
-                  size: 56, color: Color(0xFF2E7D32)),
+              const Icon(Icons.access_time, size: 56, color: Color(0xFF2E7D32)),
               const SizedBox(height: 16),
               Text(title, style: Theme.of(context).textTheme.titleLarge),
               if (subtitle != null) ...[
@@ -680,6 +671,8 @@ class _HomeTabsState extends State<HomeTabs> {
             _index = i;
             if (i == 1) hasNewAnnouncement = false;
           });
+          // Optional: add a light haptic on tab switch
+          Haptics.tap();
         },
         destinations: [
           NavigationDestination(
@@ -894,13 +887,8 @@ Future<double?> _fetchTemperatureF({
   return null;
 }
 
-// ------------------- Hijri resolver-----------------
-// final String iso = formatHijriYMD(g); // e.g., "1447-08-08"
-// final parts = iso.split('-');
-// return HijriYMD(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
 // ------------------- Hijri resolver -------------------
-  Future<HijriYMD> _appHijri(DateTime g) async {
-    final h = HijriCalendar.fromDate(g);
-    return HijriYMD(h.hYear, h.hMonth, h.hDay);
-  }
-
+Future<HijriYMD> _appHijri(DateTime g) async {
+  final h = HijriCalendar.fromDate(g);
+  return HijriYMD(h.hYear, h.hMonth, h.hDay);
+}
