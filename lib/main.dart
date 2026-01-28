@@ -6,7 +6,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -39,11 +38,13 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'app_colors.dart';
-import 'theme_controller.dart'; // <-- IMPORTANT
+import 'theme_controller.dart';
 import 'ux_prefs.dart';
-
-// New: generated localizations (gen_l10n)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
+// NEW: Hijri override bootstrap
+import 'services/hijri_override_service.dart';
+import 'package:hijri/hijri_calendar.dart';
 
 // ---- NAV TUNING ----
 const double kNavIconSize = 18.0;
@@ -77,9 +78,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
-// --------------------------------------------------------------
-// >>>>>>>>>> FIX APPLIED HERE <<<<<<<<<<
-// --------------------------------------------------------------
 Future<void> main() async {
   // Keep init and runApp in the SAME zone to prevent zone mismatch.
   runZonedGuarded(() async {
@@ -108,18 +106,16 @@ Future<void> main() async {
       );
     };
 
-    // UX prefs (haptics, text scale)
+    // UX prefs (haptics, text scale, 12/24h, hijri offsets)
     await UXPrefs.init();
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // ** REQUIRED FIX **
-    // Initialize theme so ThemeController.themeMode
-    // contains the correct value BEFORE the first frame.
-    //
-    // This FIXES Android dark-mode toggle mismatch.
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Theme controller (loads/picks system)
     await ThemeController.init();
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    // NEW: Apply Hijri override if cloud file exists.
+    // Uses a resolver that returns a placeholder Hijri (y,m,d = Gregorian y,m,d) so you can test wiring.
+    // To use your real Hijri conversion, replace `_appHijri` with your true converter.
+    await HijriOverrideService.applyIfPresent(resolveAppHijri: _appHijri);
 
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
@@ -127,10 +123,7 @@ Future<void> main() async {
   });
 }
 
-// --------------------------------------------------------------
-// ------------ LIGHT COLOR SCHEME (unchanged) ------------------
-// --------------------------------------------------------------
-
+// ---------------- LIGHT (Cool) ColorScheme ----------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42), // Navy
@@ -162,10 +155,7 @@ const LinearGradient pageGradientLight = LinearGradient(
   colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
 );
 
-// --------------------------------------------------------------
-// ---- ThemeExtension used across Light/Dark themes ------------
-// --------------------------------------------------------------
-
+// ---- ThemeExtension to carry a page gradient via Theme ----
 @immutable
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
@@ -185,10 +175,7 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// --------------------------------------------------------------
 // ------------------------ BOOTSTRAP APP ------------------------
-// --------------------------------------------------------------
-
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
 
@@ -196,179 +183,176 @@ class BootstrapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // React to Theme + Locale settings
     return ValueListenableBuilder<ThemeMode>(
-        valueListenable: ThemeController.themeMode,
-        builder: (context, mode, _) {
-          return ValueListenableBuilder<Locale?>(
-              valueListenable: LocaleController.locale,
-              builder: (context, appLocale, __) {
-                // Base text theme
-                final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
-                  titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-                  titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-                  bodyMedium: GoogleFonts.manrope(),
-                  bodyLarge: GoogleFonts.manrope(),
-                );
+      valueListenable: ThemeController.themeMode,
+      builder: (context, mode, _) {
+        return ValueListenableBuilder<Locale?>(
+          valueListenable: LocaleController.locale,
+          builder: (context, appLocale, __) {
+            // Base text theme
+            final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
+              titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+              titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              bodyMedium: GoogleFonts.manrope(),
+              bodyLarge: GoogleFonts.manrope(),
+            );
 
-                // Arabic fallback chain
-                const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
+            // Arabic fallback chain
+            const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
-                TextTheme addFallbacks(TextTheme t) => t.copyWith(
-                  bodySmall: t.bodySmall?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  bodyMedium: t.bodyMedium?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  bodyLarge:
-                  t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-                  titleSmall:
-                  t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-                  titleMedium: t.titleMedium?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  titleLarge:
-                  t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
-                  labelSmall:
-                  t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-                  labelMedium: t.labelMedium?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  labelLarge:
-                  t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-                  displaySmall: t.displaySmall?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  displayMedium: t.displayMedium?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  displayLarge: t.displayLarge?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  headlineSmall: t.headlineSmall?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  headlineMedium: t.headlineMedium?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                  headlineLarge: t.headlineLarge?.copyWith(
-                      fontFamilyFallback: arabicFallback),
-                );
+            TextTheme addFallbacks(TextTheme t) => t.copyWith(
+              bodySmall: t.bodySmall?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              bodyMedium: t.bodyMedium?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              bodyLarge:
+              t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:
+              t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium: t.titleMedium?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              titleLarge:
+              t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:
+              t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium: t.labelMedium?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              labelLarge:
+              t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall: t.displaySmall?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              displayMedium: t.displayMedium?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              displayLarge: t.displayLarge?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              headlineSmall: t.headlineSmall?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              headlineMedium: t.headlineMedium?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+              headlineLarge: t.headlineLarge?.copyWith(
+                  fontFamilyFallback: arabicFallback),
+            );
 
-                final TextTheme chosenLight = addFallbacks(baseLatin);
-                final TextTheme chosenDark = addFallbacks(baseLatin);
+            final TextTheme chosenLight = addFallbacks(baseLatin);
+            final TextTheme chosenDark = addFallbacks(baseLatin);
 
-// ------- Light Theme ----------
-                final ThemeData baseLight = ThemeData(
-                  useMaterial3: true,
-                  colorScheme: lightColorScheme,
-                  scaffoldBackgroundColor: lightColorScheme.surface,
-                  textTheme: chosenLight,
-                  navigationBarTheme: NavigationBarThemeData(
-                    backgroundColor: Colors.white,
-                    surfaceTintColor: Colors.transparent,
-                    indicatorColor: Colors.transparent,
-                    labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                    iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-                            (states) {
-                          final selected = states.contains(WidgetState.selected);
-                          return IconThemeData(
-                            color: selected
-                                ? lightColorScheme.primary.withValues(alpha: 0.95)
-                                : const Color(0xFF556978).withValues(alpha: 0.75),
-                          );
-                        }),
-                  ),
-                  snackBarTheme: SnackBarThemeData(
-                    backgroundColor: Colors.white,
-                    contentTextStyle: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600),
-                    actionTextColor: Colors.black,
-                    elevation: 3,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  extensions: const <ThemeExtension<dynamic>>[
-                    AppGradients.light,
-                  ],
-                );
-
-// ------- Dark Theme ----------
-                final ThemeData baseDark = ThemeData(
-                  brightness: Brightness.dark,
-                  useMaterial3: true,
-                  scaffoldBackgroundColor: AppColors.bgPrimary,
-                  textTheme: chosenDark,
-                  navigationBarTheme: NavigationBarThemeData(
-                    backgroundColor: AppColors.bgPrimary,
-                    surfaceTintColor: Colors.transparent,
-                    indicatorColor: Colors.transparent,
-                    labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                    iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-                            (states) {
-                          final selected = states.contains(WidgetState.selected);
-                          return IconThemeData(
-                            color: selected
-                                ? Colors.white.withValues(alpha: 0.95)
-                                : Colors.white.withValues(alpha: 0.70),
-                          );
-                        }),
-                  ),
-                  snackBarTheme: SnackBarThemeData(
-                    backgroundColor: Colors.white,
-                    contentTextStyle: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600),
-                    actionTextColor: Colors.black,
-                    elevation: 3,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  extensions: const <ThemeExtension<dynamic>>[
-                    AppGradients.dark,
-                  ],
-                );
-
-                return MaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    title: 'IALFM',
-                    themeMode: mode,
-                    theme: baseLight,
-                    darkTheme: baseDark,
-                    scaffoldMessengerKey: messengerKey,
-
-                    // ---- Localization ----
-                    locale: appLocale,
-                    localizationsDelegates: AppLocalizations.localizationsDelegates,
-                    supportedLocales: AppLocalizations.supportedLocales,
-
-                    // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
-                    builder: (context, child) {
-                      return ValueListenableBuilder<double>(
-                        valueListenable: UXPrefs.textScale,
-                        builder: (context, scale, _) {
-                          final mq = MediaQuery.of(context);
-                          return Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: MediaQuery(
-                              data: mq.copyWith(
-                                textScaler: TextScaler.linear(scale),
-                              ),
-                              child: child!,
-                            ),
-                          );
-                        },
+            // ------- Light Theme ----------
+            final ThemeData baseLight = ThemeData(
+              useMaterial3: true,
+              colorScheme: lightColorScheme,
+              scaffoldBackgroundColor: lightColorScheme.surface,
+              textTheme: chosenLight,
+              navigationBarTheme: NavigationBarThemeData(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                        (states) {
+                      final selected = states.contains(WidgetState.selected);
+                      return IconThemeData(
+                        color: selected
+                            ? lightColorScheme.primary.withValues(alpha: 0.95)
+                            : const Color(0xFF556978).withValues(alpha: 0.75),
                       );
-                    },
+                    }),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                backgroundColor: Colors.white,
+                contentTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
+                actionTextColor: Colors.black,
+                elevation: 3,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              extensions: const <ThemeExtension<dynamic>>[
+                AppGradients.light,
+              ],
+            );
 
-                    home: const _BootstrapScreen(),
-                  );
-                },
+            // ------- Dark Theme ----------
+            final ThemeData baseDark = ThemeData(
+              brightness: Brightness.dark,
+              useMaterial3: true,
+              scaffoldBackgroundColor: AppColors.bgPrimary,
+              textTheme: chosenDark,
+              navigationBarTheme: NavigationBarThemeData(
+                backgroundColor: AppColors.bgPrimary,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                        (states) {
+                      final selected = states.contains(WidgetState.selected);
+                      return IconThemeData(
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.95)
+                            : Colors.white.withValues(alpha: 0.70),
+                      );
+                    }),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                backgroundColor: Colors.white,
+                contentTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
+                actionTextColor: Colors.black,
+                elevation: 3,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              extensions: const <ThemeExtension<dynamic>>[
+                AppGradients.dark,
+              ],
+            );
+
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'IALFM',
+              themeMode: mode,
+              theme: baseLight,
+              darkTheme: baseDark,
+              scaffoldMessengerKey: messengerKey,
+
+              // ---- Localization ----
+              locale: appLocale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+
+              // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
+              builder: (context, child) {
+                return ValueListenableBuilder<double>(
+                  valueListenable: UXPrefs.textScale,
+                  builder: (context, scale, _) {
+                    final mq = MediaQuery.of(context);
+                    return Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: MediaQuery(
+                        data: mq.copyWith(
+                          textScaler: TextScaler.linear(scale),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                  },
+                );
+              },
+
+              home: const _BootstrapScreen(),
             );
           },
-      );
-    }
+        );
+      },
+    );
   }
+}
 
-// --------------------------------------------------------------
 // ----------------------- Bootstrap Screen ----------------------
-// --------------------------------------------------------------
-
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
 
@@ -548,10 +532,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 }
 
-// --------------------------------------------------------------
 // ------------------------ RESULT WRAPPER -----------------------
-// --------------------------------------------------------------
-
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
@@ -568,10 +549,7 @@ class _InitResult {
   });
 }
 
-// --------------------------------------------------------------
 // --------------------------- SPLASH ----------------------------
-// --------------------------------------------------------------
-
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -620,10 +598,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// --------------------------------------------------------------
 // -------------------------- NAVIGATION -------------------------
-// --------------------------------------------------------------
-
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -780,10 +755,7 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// --------------------------------------------------------------
 // ------------------------- ICON HELPERS -------------------------
-// --------------------------------------------------------------
-
 class _NavUnderlineFaIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
@@ -877,10 +849,7 @@ class _NavUnderlineFaBadgeIcon extends StatelessWidget {
   }
 }
 
-// --------------------------------------------------------------
 // ------------------------ HELPERS (coords & weather) -----------
-// --------------------------------------------------------------
-
 class LatLon {
   final double lat;
   final double lon;
@@ -924,3 +893,14 @@ Future<double?> _fetchTemperatureF({
 
   return null;
 }
+
+// ------------------- Hijri resolver-----------------
+// final String iso = formatHijriYMD(g); // e.g., "1447-08-08"
+// final parts = iso.split('-');
+// return HijriYMD(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+// ------------------- Hijri resolver -------------------
+  Future<HijriYMD> _appHijri(DateTime g) async {
+    final h = HijriCalendar.fromDate(g);
+    return HijriYMD(h.hYear, h.hMonth, h.hDay);
+  }
+

@@ -1,0 +1,4 @@
+# .github/secret-scanning/allowlist.yml
+allowlist:
+  paths:
+    - "lib/firebase_options.dart"

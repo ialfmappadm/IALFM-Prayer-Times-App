@@ -18,6 +18,12 @@
   "more_enable_notifications": "Enable Notifications",
   "more_refresh_data": "Refresh Data Now",
   "more_last_sync": "Last Sync",
+  "more_date_time": "Date & Time",
+  "more_hijri_offset_label": "Hijri Date Offset",
+  "more_hijri_offset_minus1": "-1 day",
+  "more_hijri_offset_zero": "0",
+  "more_hijri_offset_plus1": "+1 day",
+
 
   "btn_cancel": "Cancel",
   "btn_save": "Save",

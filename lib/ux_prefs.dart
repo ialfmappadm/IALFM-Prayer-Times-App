@@ -1,126 +1,111 @@
 // lib/ux_prefs.dart
-
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UXPrefs {
   static SharedPreferences? _sp;
 
-  // -----------------------
-  // EXISTING PREF KEYS
-  // -----------------------
+  // Keys
   static const _kHaptics = 'ux.haptics';
   static const _kTextScale = 'ux.textScale';
-
-  // -----------------------
-  // NEW THEME PREF KEY
-  // -----------------------
   static const _kThemeMode = 'ux.themeMode';
+  static const _kUse24h = 'ux.use24h';
+  static const _kHijriOffset = 'ux.hijriOffset';
+  static const _kHijriBaseAdjust = 'ux.hijriBaseAdjust';
 
-  /// Haptics is OFF by default until the user enables it.
-  static final ValueNotifier<bool> hapticsEnabled =
-  ValueNotifier<bool>(false);
+  // Notifiers
+  static final ValueNotifier<bool> hapticsEnabled = ValueNotifier<bool>(false);
+  static final ValueNotifier<double> textScale = ValueNotifier<double>(1.0);
+  static final ValueNotifier<bool> use24h = ValueNotifier<bool>(false);
 
-  /// Global text scale (1.0 default).
-  static final ValueNotifier<double> textScale =
-  ValueNotifier<double>(1.0);
+  /// User-controlled offset (−1..+1)
+  static final ValueNotifier<int> hijriOffset = ValueNotifier<int>(0);
 
-  // --------------------------------------------------------------
-  // INIT
-  // --------------------------------------------------------------
+  /// Internal base adjustment set by override service (e.g., −1..+1)
+  static final ValueNotifier<int> hijriBaseAdjust = ValueNotifier<int>(0);
+
   static Future<void> init() async {
     _sp ??= await SharedPreferences.getInstance();
-
-    // Load existing prefs
-    final he = _sp!.getBool(_kHaptics) ?? false;
-    final ts = _sp!.getDouble(_kTextScale) ?? 1.0;
-
-    hapticsEnabled.value = he;
-    textScale.value = ts;
+    hapticsEnabled.value = _sp!.getBool(_kHaptics) ?? false;
+    textScale.value = _sp!.getDouble(_kTextScale) ?? 1.0;
+    use24h.value = _sp!.getBool(_kUse24h) ?? false;
+    hijriOffset.value = _sp!.getInt(_kHijriOffset) ?? 0;
+    hijriBaseAdjust.value = _sp!.getInt(_kHijriBaseAdjust) ?? 0;
   }
 
-  // --------------------------------------------------------------
-  // HAPTICS
-  // --------------------------------------------------------------
   static Future<void> setHapticsEnabled(bool v) async {
     hapticsEnabled.value = v;
     await _sp?.setBool(_kHaptics, v);
-
-    if (v) {
-      // Play a subtle tap only if user turned it ON
-      HapticFeedback.lightImpact();
-    }
+    if (v) HapticFeedback.lightImpact();
   }
 
-  // --------------------------------------------------------------
-  // TEXT SCALE
-  // --------------------------------------------------------------
   static Future<void> setTextScale(double scale) async {
     textScale.value = scale;
     await _sp?.setDouble(_kTextScale, scale);
   }
 
-  /// One safe place to call a haptic, guarded by the toggle.
   static void maybeHaptic() {
     if (hapticsEnabled.value) HapticFeedback.lightImpact();
   }
 
-  /// Map label → scale
   static double scaleForLabel(String label) {
     switch (label.toLowerCase()) {
-      case 'small':
-        return 0.92;
-      case 'large':
-        return 1.12;
-      default:
-        return 1.0; // 'Default'
+      case 'small': return 0.92;
+      case 'large': return 1.12;
+      default: return 1.0;
     }
   }
 
-  /// Map scale → label
   static String labelForScale(double scale) {
     if (scale <= 0.95) return 'Small';
     if (scale >= 1.08) return 'Large';
     return 'Default';
   }
 
-  // --------------------------------------------------------------
-  // NEW THEME MODE PERSISTENCE
-  // --------------------------------------------------------------
-
-  /// Load saved theme mode.
-  ///
-  /// Returns:
-  ///   - ThemeMode.light
-  ///   - ThemeMode.dark
-  ///   - ThemeMode.system
-  ///   - null  → no saved choice (first launch)
+  // Theme mode persistence
   static Future<ThemeMode?> loadThemeMode() async {
     _sp ??= await SharedPreferences.getInstance();
     final raw = _sp!.getString(_kThemeMode);
-
     switch (raw) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      case 'system':
-        return ThemeMode.system;
-      default:
-        return null;
+      case 'light': return ThemeMode.light;
+      case 'dark': return ThemeMode.dark;
+      case 'system': return ThemeMode.system;
+      default: return null;
     }
   }
 
-  /// Save theme mode selection persistently.
   static Future<void> saveThemeMode(ThemeMode mode) async {
     _sp ??= await SharedPreferences.getInstance();
-    String value = switch (mode) {
-      ThemeMode.light => 'light',
-      ThemeMode.dark => 'dark',
-      ThemeMode.system => 'system',
-    };
-    await _sp!.setString(_kThemeMode, value);
+    late final String raw;
+    switch (mode) {
+      case ThemeMode.light: raw = 'light'; break;
+      case ThemeMode.dark: raw = 'dark'; break;
+      case ThemeMode.system: raw = 'system'; break;
+    }
+    await _sp!.setString(_kThemeMode, raw);
   }
+
+  // 12/24h
+  static Future<void> setUse24h(bool v) async {
+    use24h.value = v;
+    await _sp?.setBool(_kUse24h, v);
+  }
+
+  // Hijri offsets
+  static Future<void> setHijriOffset(int days) async {
+    final clamped = days.clamp(-1, 1);
+    hijriOffset.value = clamped;
+    await _sp?.setInt(_kHijriOffset, clamped);
+  }
+
+  static Future<void> setHijriBaseAdjust(int days) async {
+    final clamped = days.clamp(-2, 2);
+    hijriBaseAdjust.value = clamped;
+    await _sp?.setInt(_kHijriBaseAdjust, clamped);
+  }
+
+  /// Effective total offset (base from override + user choice)
+  static int get hijriEffectiveOffset => hijriBaseAdjust.value + hijriOffset.value;
 }

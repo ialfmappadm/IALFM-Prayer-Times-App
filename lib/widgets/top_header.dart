@@ -1,18 +1,17 @@
-
 // lib/widgets/top_header.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:hijri/hijri_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../app_colors.dart';
 import '../models.dart';
+// NEW: read user+base offset
+import '../ux_prefs.dart';
 
 // Cool Light palette bits
 const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
-const _kLightTextMuted   = Color(0xFF4A6273); // secondary text
-
+const _kLightTextMuted = Color(0xFF4A6273); // secondary text
 const double donateTopPx = 16.0;
 
 class TopHeader extends StatelessWidget {
@@ -35,8 +34,15 @@ class TopHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
+    // Gregorian (left side of the center line)
     final greg = DateFormat('EEE, MMM d yyyy').format(nowLocal);
-    final h = HijriCalendar.fromDate(nowLocal);
+
+    // ----- NEW: apply effective offset BEFORE converting to Hijri -----
+    final int effOffsetDays = UXPrefs.hijriEffectiveOffset; // base + user
+    final DateTime adjustedForHijri = nowLocal.add(Duration(days: effOffsetDays));
+    final h = HijriCalendar.fromDate(adjustedForHijri);
+    // -----------------------------------------------------------------
+
     const hijriMonths = [
       'Muharram','Safar','Rabi-al-Awwal','Rabi-al-Thani',
       'Jumada-al-awwal','Jumada-al-Thani','Rajab','Shaban',
@@ -51,9 +57,9 @@ class TopHeader extends StatelessWidget {
         ? const BoxDecoration(color: Colors.white)
         : const BoxDecoration(gradient: AppColors.headerGradient);
 
-    final titleColor  = isLight ? _kLightTextPrimary : AppColors.textSecondary;
-    final dateColor   = isLight ? _kLightTextPrimary : AppColors.textPrimary;
-    final bulletColor = isLight ? _kLightTextMuted   : AppColors.textSecondary;
+    final titleColor = isLight ? _kLightTextPrimary : AppColors.textSecondary;
+    final dateColor = isLight ? _kLightTextPrimary : AppColors.textPrimary;
+    final bulletColor = isLight ? _kLightTextMuted : AppColors.textSecondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -79,7 +85,6 @@ class TopHeader extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 6),
-
               // Temp (left) + dates (center); right reserved for donate icon
               Row(
                 children: [
