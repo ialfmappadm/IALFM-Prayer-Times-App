@@ -223,12 +223,12 @@ class _DirectoryPageState extends State<DirectoryPage> {
                     initiallyExpanded: _contactExpanded,
                     onExpansionChanged: (v) => setState(() => _contactExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.phone),
-                    title: _secTitle(context, l10n.dir_contact_us),
+                    title: _secTitle(context, l10n.dir_contact_us_feedback),
                     children: [
                       _navRow(
                         context: context,
                         icon: FontAwesomeIcons.envelope,
-                        label: l10n.dir_contact_us,
+                        label: l10n.dir_contact_us_feedback,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
                         ),
