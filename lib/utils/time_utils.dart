@@ -62,7 +62,7 @@ class _DayTimeCache {
   _DayTimeCache(this.loc, this.day);
 
   tz.TZDateTime get(String name, String hmStr) {
-    final key = '$name';
+    final key = name;
     final cached = _cache[key];
     if (cached != null) return cached;
 

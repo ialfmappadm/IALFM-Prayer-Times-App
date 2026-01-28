@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Use a relative import so we don't depend on pubspec name.
-import '../lib/main.dart';
+import 'package:ialfm_prayer_times/main.dart';
 
 void main() {
   testWidgets('BootstrapApp renders without crashing', (WidgetTester tester) async {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // for kReleaseMode & debugPrint
 import '../ux_prefs.dart';
 
 class HijriYMD {
@@ -31,7 +32,7 @@ class HijriOverrideResult {
       'HijriOverrideResult(success=$success, delta=$appliedDelta, target=$targetHijri, bucket=$bucketUsed, "$message")';
 }
 
-/// Reads: gs://<bucket>/hijri_date/hijri_override.json
+/// Reads: gs://bucket/hijri_date/hijri_override.json
 /// File formats accepted (either key is fine):
 ///   { "hijri": "DD/MM/YYYY" }            // e.g., "08/08/1447"
 ///   { "hijri_iso": "YYYY-MM-DD" }        // e.g., "1447-08-08"
@@ -164,5 +165,8 @@ class HijriOverrideService {
     return HijriYMD(yy, mm, dd);
   }
 
-  static void _d(String s) => print('[HijriOverride] $s');
+  static void _d(String s) {
+    if (!kReleaseMode) debugPrint('[HijriOverride] $s');
+  }
+
 }

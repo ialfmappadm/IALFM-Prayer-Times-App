@@ -55,7 +55,7 @@ class SocialPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // <-- localized strings
+    final l10n = AppLocalizations.of(context); // <-- localized strings
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final cs = theme.colorScheme;

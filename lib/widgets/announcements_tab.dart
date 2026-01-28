@@ -200,7 +200,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // <-- generated l10n
+    final l10n = AppLocalizations.of(context); // <-- generated l10n
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     // Theme-adaptive page gradient with Light fallback if extension not present
@@ -304,7 +304,7 @@ class _AnnouncementCard extends StatelessWidget {
       color: cardColor,
       elevation: 3,
       surfaceTintColor: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.12),
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),

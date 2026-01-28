@@ -26,19 +26,19 @@ class _MorePageState extends State<MorePage> {
 
   // collapsed by default
   bool _accExpanded = false;
-  bool _notifExpanded = false;
+  //final bool _notifExpanded = false;
   bool _dateTimeExpanded = false;
   bool _langExpanded = false;
   bool _dataExpanded = false;
 
   String _currentLanguageLabel(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final code = LocaleController.locale.value?.languageCode;
     return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
   }
 
   void _applyLanguageChoice(String choice, BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (choice == l10n.lang_arabic) {
       LocaleController.setLocale(const Locale('ar'));
     } else {
@@ -46,11 +46,9 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
-  String _currentTextSizeLabel() => UXPrefs.labelForScale(UXPrefs.textScale.value);
-
   // --- Confirmation for Hijri offset selection (no new l10n keys used) ---
   Future<bool> _confirmHijriChange(String selectionLabel) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -141,7 +139,7 @@ class _MorePageState extends State<MorePage> {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
@@ -234,8 +232,10 @@ class _MorePageState extends State<MorePage> {
                                 options: options,
                                 selected: UXPrefs.labelForScale(UXPrefs.textScale.value),
                               );
+                              if (!context.mounted) return; // <= guard after await
                               if (choice == null) return;
                               await UXPrefs.setTextScale(UXPrefs.scaleForLabel(choice));
+                              if (!context.mounted) return; // <= guard after await
                               UXPrefs.maybeHaptic();
                               setState(() {});
                             },
@@ -276,6 +276,7 @@ class _MorePageState extends State<MorePage> {
                             index: selectedIndex,
                             onChanged: (i) async {
                               await UXPrefs.setUse24h(i == 1);
+                              if (!context.mounted) return; // <= guard after await
                               UXPrefs.maybeHaptic();
                               _toast('${l10n.more_time_format}: ${segments[i]}');
                               setState(() {});
@@ -304,8 +305,10 @@ class _MorePageState extends State<MorePage> {
                             onChanged: (i) async {
                               final newOffset = i - 1;
                               final ok = await _confirmHijriChange(segments[i]);
+                              if (!context.mounted) return; // <= guard after await
                               if (!ok) return;
                               await UXPrefs.setHijriOffset(newOffset);
+                              if (!context.mounted) return; // <= guard after await
                               UXPrefs.maybeHaptic();
                               _toast('${l10n.more_hijri_offset_label}: ${segments[i]}');
                               setState(() {});
@@ -326,10 +329,12 @@ class _MorePageState extends State<MorePage> {
 
                           // 1) PIN required
                           final pinOk = await _promptAdminPin();
+                          if (!context.mounted) return; // <= guard after await
                           if (!pinOk) return;
 
                           // 2) Confirmation
                           final sure = await _confirmRunOverride();
+                          if (!context.mounted) return; // <= guard after await
                           if (!sure) return;
 
                           // 3) Run override
@@ -338,12 +343,11 @@ class _MorePageState extends State<MorePage> {
                               final h = HijriCalendar.fromDate(g);
                               return HijriYMD(h.hYear, h.hMonth, h.hDay);
                             },
-                            // If your default Storage bucket isn't configured, set your GS bucket here:
                             // bucketOverride: 'gs://ialfm-prayer-times.firebasestorage.app',
                             log: true,
                           );
 
-                          if (!mounted) return;
+                          if (!context.mounted) return; // <= guard after await
                           _toast(result.toString());
                           setState(() {}); // reflect any changes immediately
                         },
@@ -382,6 +386,7 @@ class _MorePageState extends State<MorePage> {
                             options: options,
                             selected: selectedNow,
                           );
+                          if (!context.mounted) return; // <= guard after await
                           if (choice == null) return;
                           _applyLanguageChoice(choice, context);
                           UXPrefs.maybeHaptic();
@@ -611,14 +616,16 @@ class _MorePageState extends State<MorePage> {
         required List<String> options,
         required String selected,
       }) async {
-    String temp = selected;
+    // Replace deprecated RadioListTile with SegmentedButton
+    int tempIndex = options.indexOf(selected);
+
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = AppLocalizations.of(context);
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return SafeArea(
@@ -631,14 +638,16 @@ class _MorePageState extends State<MorePage> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     ),
-                    for (final opt in options)
-                      RadioListTile<String>(
-                        value: opt,
-                        groupValue: temp,
-                        onChanged: (v) => setModalState(() => temp = v ?? selected),
-                        title: Text(opt, style: TextStyle(color: cs.onSurface)),
+                    // SegmentedButton to pick one option
+                    SegmentedButton<int>(
+                      segments: List.generate(
+                        options.length,
+                            (i) => ButtonSegment<int>(value: i, label: Text(options[i])),
                       ),
-                    const SizedBox(height: 8),
+                      selected: {tempIndex},
+                      onSelectionChanged: (s) => setModalState(() => tempIndex = s.first),
+                    ),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -650,7 +659,7 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            onPressed: () => Navigator.pop(ctx, temp),
+                            onPressed: () => Navigator.pop(ctx, options[tempIndex]),
                             child: Text(l10n.btn_save),
                           ),
                         ),

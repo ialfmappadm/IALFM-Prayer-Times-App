@@ -27,7 +27,7 @@ class DstPillStealth extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: fg.withOpacity(0.10),      // soft tint, subtle
+        color: fg.withValues(alpha: 0.10),      // soft tint, subtle
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(

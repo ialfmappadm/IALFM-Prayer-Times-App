@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 // Optional: if you want to try the string helper fallback
@@ -14,14 +13,14 @@ class IalfmButton extends StatelessWidget {
 
     // 1) Check if there is a handler
     final can = await canLaunchUrl(_ialfmUrl);
+    if (!context.mounted) return; // <-- guard right after await
+
     debugPrint('[IalfmButton] canLaunchUrl = $can');
     if (!can) {
       // Emulator/devices without a browser commonly cause this
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No app found to open https://www.ialfm.org')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No app found to open https://www.ialfm.org')),
+      );
       return;
     }
 
@@ -31,6 +30,7 @@ class IalfmButton extends StatelessWidget {
         _ialfmUrl,
         mode: LaunchMode.externalApplication,
       );
+      if (!context.mounted) return; // <-- guard after await
       debugPrint('[IalfmButton] launchUrl(external) returned = $launchedExternal');
 
       // 3) Fallback to platform default if external didn’t work
@@ -39,11 +39,13 @@ class IalfmButton extends StatelessWidget {
           _ialfmUrl,
           mode: LaunchMode.platformDefault,
         );
+        if (!context.mounted) return; // <-- guard after await
         debugPrint('[IalfmButton] launchUrl(platformDefault) returned = $launchedDefault');
 
-        if (!launchedDefault && context.mounted) {
+        if (!launchedDefault) {
           // 4) Optional: last-resort string helper (web sometimes prefers this)
           final launchedStr = await launchUrlString('https://www.ialfm.org');
+          if (!context.mounted) return; // <-- guard after await
           debugPrint('[IalfmButton] launchUrlString returned = $launchedStr');
 
           if (!launchedStr) {
@@ -55,11 +57,10 @@ class IalfmButton extends StatelessWidget {
       }
     } catch (e, st) {
       debugPrint('[IalfmButton] Exception: $e\n$st');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Launch failed: $e')),
-        );
-      }
+      if (!context.mounted) return; // <-- guard after async try block
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Launch failed: $e')),
+      );
     }
   }
 

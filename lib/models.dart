@@ -56,7 +56,7 @@ class PrayerDay {
 
 /// Loads prayer days from local storage if available; otherwise falls back to asset.
 /// Pass `year` so the asset fallback matches the current year.
-/// Local path: /data/data/<pkg>/app_flutter/prayer_times_local.json
+/// Local path: /data/data/pkg/app_flutter/prayer_times_local.json
 Future<List<PrayerDay>> loadPrayerDays({int? year}) async {
   // 1) Try local override first.
   try {

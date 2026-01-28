@@ -36,6 +36,7 @@ class DirectoryContactPage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  // ---------- Private helpers (now referenced) ----------
   Widget _row({
     required BuildContext context,
     required IconData icon,
@@ -65,7 +66,7 @@ class DirectoryContactPage extends StatelessWidget {
                 maxLines: 2,
               ),
             ),
-            FaIcon(FontAwesomeIcons.chevronRight, size: 14, color: textColor),
+            const FaIcon(FontAwesomeIcons.chevronRight, size: 14),
           ],
         ),
       ),
@@ -77,8 +78,9 @@ class DirectoryContactPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Divider(
       height: 1,
-      color:
-      isDark ? Colors.white.withOpacity(0.08) : cs.outline.withOpacity(0.30),
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : cs.outline.withValues(alpha: 0.30),
       indent: 14,
       endIndent: 14,
     );
@@ -92,7 +94,7 @@ class DirectoryContactPage extends StatelessWidget {
       fit: BoxFit.cover,
       errorBuilder: (c, _, __) => _MapPlaceholder(onTap: () async {
         final ok = await _open(_mapsUri);
-        if (!ok && c.mounted) {
+        if (c.mounted && !ok) {
           ScaffoldMessenger.of(c)
               .showSnackBar(const SnackBar(content: Text('Could not open Maps')));
         }
@@ -105,14 +107,17 @@ class DirectoryContactPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () async {
           final ok = await _open(_mapsUri);
-          if (!ok && context.mounted) _toast(context, 'Could not open Maps');
+          if (!context.mounted) return;
+          if (!ok) _toast(context, 'Could not open Maps');
         },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Stack(
             alignment: Alignment.center,
             children: [
+              // Local map image (16:9)
               AspectRatio(aspectRatio: 16 / 9, child: image),
+              // Bottom scrim with caption + CTA
               Positioned(
                 left: 0,
                 right: 0,
@@ -141,14 +146,16 @@ class DirectoryContactPage extends StatelessWidget {
                           _address,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                          const TextStyle(color: Colors.white, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC7A447),
+                          color: const Color(0xFFC7A447), // gold CTA
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Padding(
@@ -181,6 +188,7 @@ class DirectoryContactPage extends StatelessWidget {
       ),
     );
 
+    // Address line + copy affordance
     final addressLine = Row(
       children: [
         Expanded(
@@ -197,10 +205,10 @@ class DirectoryContactPage extends StatelessWidget {
           tooltip: 'Copy address',
           onPressed: () async {
             await Clipboard.setData(const ClipboardData(text: _address));
-            if (context.mounted) _toast(context, 'Address copied');
+            if (!context.mounted) return;
+            _toast(context, 'Address copied');
           },
-          icon:
-          FaIcon(FontAwesomeIcons.copy, size: 16, color: cs.onSurface),
+          icon: FaIcon(FontAwesomeIcons.copy, size: 16, color: cs.onSurface),
         ),
       ],
     );
@@ -228,9 +236,10 @@ class DirectoryContactPage extends StatelessWidget {
     final overlay =
     isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
+    // ✅ Apply this color to the contact card so it's not an unused local.
     final Color cardFill = isLight
-        ? Color.alphaBlend(cs.primary.withOpacity(0.05), cs.surface)
-        : Color.alphaBlend(AppColors.bgPrimary.withOpacity(0.25), Colors.black);
+        ? Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface)
+        : Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black);
 
     return Scaffold(
       appBar: AppBar(
@@ -238,7 +247,7 @@ class DirectoryContactPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Contact Us',
+          'Contact Us & Feedback',
           style: TextStyle(
             color: titleColor,
             fontSize: 20,
@@ -263,7 +272,7 @@ class DirectoryContactPage extends StatelessWidget {
                     // --- CONTACT CARD ---
                     Container(
                       decoration: BoxDecoration(
-                        color: cardFill,
+                        color: cardFill, // ✅ use the computed fill
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -274,6 +283,7 @@ class DirectoryContactPage extends StatelessWidget {
                             label: _displayPhone,
                             onTap: () async {
                               final ok = await _open(_telUri);
+                              if (!context.mounted) return;
                               if (!ok) _toast(context, 'Could not start call');
                             },
                           ),
@@ -285,6 +295,7 @@ class DirectoryContactPage extends StatelessWidget {
                             _webUri.toString().replaceFirst('https://', ''),
                             onTap: () async {
                               final ok = await _open(_webUri);
+                              if (!context.mounted) return;
                               if (!ok) _toast(context, 'Could not open website');
                             },
                           ),
@@ -295,6 +306,7 @@ class DirectoryContactPage extends StatelessWidget {
                             label: _mailUri.path,
                             onTap: () async {
                               final ok = await _open(_mailUri);
+                              if (!context.mounted) return;
                               if (!ok) _toast(context, 'Could not open email');
                             },
                           ),
@@ -311,11 +323,19 @@ class DirectoryContactPage extends StatelessWidget {
 
                     // --- FEEDBACK HEADER ---
                     Text(
-                      "Feedback form for Masjid related issues,\nemail will be sent to IALFM Board of Directors.",
+                      "Contact Us & Feedback",
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
                         color: cs.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Email will be sent to the IALFM Board of Directors.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: cs.onSurface.withValues(alpha: 0.75),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -369,12 +389,6 @@ class _FeedbackFormState extends State<FeedbackForm>
     }
   }
 
-  String _membershipStatusLine() {
-    return isMember
-        ? "Membership Status: IALFM Member"
-        : "Membership Status: Not a Member";
-  }
-
   Future<void> _showSuccessDialog() async {
     return showDialog<void>(
       context: context,
@@ -386,41 +400,37 @@ class _FeedbackFormState extends State<FeedbackForm>
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Subject
-    final String subject = Uri.encodeComponent(subjectCtrl.text.trim());
-
-    // Body per your format
-    final String bodyPlain = [
+    final subject = Uri.encodeComponent(subjectCtrl.text.trim());
+    final bodyPlain = [
       "Feedback form submitted using IALFM Mobile App (${_platformString()})",
       "",
-      _membershipStatusLine(),
+      isMember
+          ? "Membership Status: I'm a member"
+          : "Membership Status: I'm currently not a member",
       "",
       "--------------------",
       "Assalam Alaikum IALFM Board,",
       detailsCtrl.text.trim(),
     ].join("\n");
+    final body = Uri.encodeComponent(bodyPlain);
 
-    final String body = Uri.encodeComponent(bodyPlain);
+    // TEST
+    final to = "syed@ialfm.org";
+    // PROD: final to = "bod@ialfm.org";
 
-    // ---------- TESTING ----------
-    final String to = "syed@ialfm.org";
-    // ---------- PRODUCTION ----------
-    // final String to = "bod@ialfm.org";
-
-    final Uri uri = Uri.parse("mailto:$to?subject=$subject&body=$body");
+    final uri = Uri.parse("mailto:$to?subject=$subject&body=$body");
 
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted) return;
     if (!ok) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Could not open email app")),
       );
       return;
     }
 
-    if (!mounted) return;
     await _showSuccessDialog();
-
+    if (!mounted) return;
     setState(() {
       subjectCtrl.clear();
       detailsCtrl.clear();
@@ -437,7 +447,7 @@ class _FeedbackFormState extends State<FeedbackForm>
       borderRadius: BorderRadius.circular(10),
     );
 
-    final bool valid =
+    final valid =
         subjectCtrl.text.trim().isNotEmpty && detailsCtrl.text.trim().isNotEmpty;
 
     return Form(
@@ -445,9 +455,9 @@ class _FeedbackFormState extends State<FeedbackForm>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cs.surface.withOpacity(0.8),
+          color: cs.surface.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cs.outline.withOpacity(0.3)),
+          border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,21 +480,17 @@ class _FeedbackFormState extends State<FeedbackForm>
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
                 focusedBorder: fieldBorder.copyWith(
-                  borderSide: BorderSide(color: onSurface.withOpacity(0.5)),
+                  borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5)),
                 ),
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Please enter a subject';
-                }
-                return null;
-              },
+              validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Please enter a subject' : null,
               onChanged: (_) => setState(() {}),
             ),
 
             const SizedBox(height: 16),
 
-            // Membership toggle (SegmentedButton for zero ambiguity)
+            // Membership toggle (SegmentedButton)
             Text(
               "Membership Status",
               style: TextStyle(
@@ -498,19 +504,19 @@ class _FeedbackFormState extends State<FeedbackForm>
               segments: const [
                 ButtonSegment<bool>(
                   value: true,
-                  label: Text("IALFM Member"),
+                  label: Text("I'm a member"),
                   icon: Icon(Icons.verified_user_outlined),
                 ),
                 ButtonSegment<bool>(
                   value: false,
-                  label: Text("Not a Member"),
+                  label: Text("I'm not a member"),
                   icon: Icon(Icons.person_outline),
                 ),
               ],
               selected: {isMember},
               onSelectionChanged: (s) => setState(() => isMember = s.first),
-              style: ButtonStyle(
-                visualDensity: const VisualDensity(horizontal: -1, vertical: -2),
+              style: const ButtonStyle(
+                visualDensity: VisualDensity(horizontal: -1, vertical: -2),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
@@ -535,15 +541,11 @@ class _FeedbackFormState extends State<FeedbackForm>
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
                 focusedBorder: fieldBorder.copyWith(
-                  borderSide: BorderSide(color: onSurface.withOpacity(0.5)),
+                  borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5)),
                 ),
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Please enter details';
-                }
-                return null;
-              },
+              validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Please enter details' : null,
               onChanged: (_) => setState(() {}),
             ),
 
@@ -556,7 +558,7 @@ class _FeedbackFormState extends State<FeedbackForm>
                 style: FilledButton.styleFrom(
                   backgroundColor: valid
                       ? const Color(0xFFC7A447)
-                      : const Color(0xFFC7A447).withOpacity(0.45),
+                      : const Color(0xFFC7A447).withValues(alpha: 0.45),
                   foregroundColor: Colors.black,
                   padding:
                   const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -581,7 +583,6 @@ class _FeedbackFormState extends State<FeedbackForm>
 // -------- Animated success checkmark dialog (no extra packages) --------
 class _SuccessCheckDialog extends StatefulWidget {
   const _SuccessCheckDialog();
-
   @override
   State<_SuccessCheckDialog> createState() => _SuccessCheckDialogState();
 }
@@ -630,7 +631,7 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -643,18 +644,12 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
                 SizedBox(height: 12),
                 Text(
                   'Email app opened',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 6),
                 Text(
                   "You can send your feedback now.",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 13),
                 ),
               ],
             ),
@@ -676,7 +671,7 @@ class _MapPlaceholder extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          color: Colors.white.withOpacity(0.06),
+          color: Colors.white.withValues(alpha: 0.06),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [

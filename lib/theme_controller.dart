@@ -1,19 +1,25 @@
 // lib/theme_controller.dart
-import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'ux_prefs.dart';
 
+/// A ValueNotifier that exposes a safe instance method to force a rebuild.
+class ThemeModeNotifier extends ValueNotifier<ThemeMode> {
+  ThemeModeNotifier(super.value);
+  void nudge() => notifyListeners(); // legal: called from instance method
+}
+
 /// Central controller for app theming.
+///
 /// - Restores saved theme mode (if any)
-/// - Otherwise uses system brightness at first launch
+/// - Otherwise adopts system brightness on first launch
 /// - Reacts to platform brightness changes when in ThemeMode.system
 class ThemeController {
   /// Single source of truth for current theme mode.
-  static final ValueNotifier<ThemeMode> themeMode =
-  ValueNotifier<ThemeMode>(ThemeMode.system);
+  static final ThemeModeNotifier themeMode =
+  ThemeModeNotifier(ThemeMode.system);
 
-  /// Tracks current platform brightness so widgets can compute effective theme.
+  /// Latest OS brightness (useful for "effective" theme computations).
   static final ValueNotifier<Brightness> platformBrightness =
   ValueNotifier<Brightness>(
     SchedulerBinding.instance.platformDispatcher.platformBrightness,
@@ -27,38 +33,39 @@ class ThemeController {
   static Future<void> init() async {
     if (_initialized) return;
 
-    // 1) Load saved theme, if the app persisted one.
+    // 1) Load saved theme, if any
     final ThemeMode? saved = await UXPrefs.loadThemeMode();
-
     if (saved != null) {
       themeMode.value = saved;
     } else {
-      // 2) No saved preference: adopt the OS at first launch
-      final sys = SchedulerBinding.instance.platformDispatcher.platformBrightness;
-      themeMode.value = (sys == Brightness.dark) ? ThemeMode.dark : ThemeMode.light;
+      // 2) No saved pref: adopt the OS at first launch
+      final sys =
+          SchedulerBinding.instance.platformDispatcher.platformBrightness;
+      themeMode.value = (sys == Brightness.dark)
+          ? ThemeMode.dark
+          : ThemeMode.light;
     }
 
-    // 3) Keep track of platform brightness for System mode + UI that needs it
+    // 3) Track platform brightness and propagate rebuilds in system mode
     platformBrightness.value =
         SchedulerBinding.instance.platformDispatcher.platformBrightness;
 
-    // Attach a listener so we react to OS theme changes when in system mode
     _platformListener ??= () {
-      final now = SchedulerBinding.instance.platformDispatcher.platformBrightness;
+      final now =
+          SchedulerBinding.instance.platformDispatcher.platformBrightness;
       if (platformBrightness.value != now) {
         platformBrightness.value = now;
 
-        // Only propagate a rebuild when following the system.
+        // If following system, force listeners to rebuild even if the enum
+        // value (ThemeMode.system) itself didn't change.
         if (themeMode.value == ThemeMode.system) {
-          // Nudge listeners by re-setting same mode (causes rebuilds that depend on it)
-          themeMode.notifyListeners();
+          themeMode.nudge(); // ✅ legal, instance method
         }
       }
     };
 
-    SchedulerBinding.instance.platformDispatcher.onPlatformBrightnessChanged
-    = _platformListener!;
-
+    SchedulerBinding.instance.platformDispatcher.onPlatformBrightnessChanged =
+    _platformListener!;
     _initialized = true;
   }
 
@@ -69,7 +76,7 @@ class ThemeController {
     await UXPrefs.saveThemeMode(mode);
   }
 
-  /// Convenience helpers
+  /// Helpers
   static bool get isDarkEffective {
     final mode = themeMode.value;
     if (mode == ThemeMode.dark) return true;

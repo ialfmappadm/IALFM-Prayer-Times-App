@@ -25,7 +25,6 @@ class _SunWithArrow extends StatelessWidget {
   final bool up;
 
   const _SunWithArrow({
-    super.key,
     required this.color,
     required this.size,
     required this.up,

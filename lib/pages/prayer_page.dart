@@ -390,7 +390,7 @@ class _PrayerPageState extends State<PrayerPage> {
                       ),
                     );
                   },
-                  activeColor: const Color(0xFFC7A447),
+                  activeThumbColor: const Color(0xFFC7A447),
                 ),
               ],
             ),

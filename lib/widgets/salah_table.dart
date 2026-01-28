@@ -110,7 +110,7 @@ class SalahTable extends StatelessWidget {
     }).toList();
 
     // Header background
-    final BoxDecoration? headerDecoration = headerGreen
+    final BoxDecoration headerDecoration = headerGreen
         ? const BoxDecoration(
       gradient: LinearGradient(
         colors: [Color(0xFF2E7D32), Color(0xFF388E3C)],
