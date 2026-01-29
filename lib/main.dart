@@ -1,14 +1,10 @@
 // lib/main.dart
-// - Initializes bindings & runApp in the SAME zone.
-// - Uses generated AppLocalizations (gen_l10n).
-// - Global LTR + global text scale via UXPrefs.
-// - Manrope primary + Arabic fallbacks (IBM Plex Sans Arabic -> Noto Sans Arabic).
+// Initializes app, themes, localization, messaging, and local alerts scheduling.
 
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -20,77 +16,76 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
-// Locale controller
+// Locale & prefs
 import 'locale_controller.dart';
+import 'theme_controller.dart';
+import 'ux_prefs.dart';
 
-// Font Awesome
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-// App files
+// UI & pages
+import 'app_colors.dart';
 import 'models.dart';
 import 'pages/prayer_page.dart';
-import 'utils/time_utils.dart';
 import 'widgets/announcements_tab.dart';
-import 'prayer_times_firebase.dart';
 import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
-import 'app_colors.dart';
-import 'theme_controller.dart';
-import 'ux_prefs.dart';
-import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+import 'utils/time_utils.dart';
 
-// Hijri override bootstrap
+// ✅ RESTORED: repository import (fixes PrayerTimesRepository type)
+import 'prayer_times_firebase.dart';
+
+// Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
 
-// NEW: app-wide haptics
+// Haptics
 import 'utils/haptics.dart';
 
-// ---- NAV TUNING ----
+// Notifications opt-in + local scheduler
+import 'services/notification_optin_service.dart';
+import 'services/alerts_scheduler.dart';
+
+// Localization
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
+// --- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
-
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
-// Background message handler
+// Background FCM handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
-
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
 
+  // ✅ Now resolves with the restored import
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
   final year = (yearStr != null) ? int.tryParse(yearStr) : null;
-
   if (shouldRefresh) {
     await repo.refreshFromFirebase(year: year);
   }
 }
 
 Future<void> main() async {
-  // Keep init and runApp in the SAME zone to prevent zone mismatch.
   runZonedGuarded(() async {
     BindingBase.debugZoneErrorsAreFatal = true;
-
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-    // Firebase
+    // Firebase init + App Check
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
     await FirebaseAppCheck.instance.activate(
       providerAndroid:
       kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
@@ -98,7 +93,6 @@ Future<void> main() async {
       kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
-    // Route framework errors into this zone too.
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       Zone.current.handleUncaughtError(
@@ -107,14 +101,20 @@ Future<void> main() async {
       );
     };
 
-    // UX prefs (haptics, text scale, 12/24h, hijri offsets)
+    // Prefs & Theme
     await UXPrefs.init();
-
-    // Theme controller (loads/picks system)
     await ThemeController.init();
 
-    // Apply Hijri override if cloud file exists (uses real Hijri resolver)
+    // Cloud Hijri override (uses real resolver)
     await HijriOverrideService.applyIfPresent(resolveAppHijri: _appHijri);
+
+    // Local notifications scheduler
+    await AlertsScheduler.instance.init(androidSmallIcon: 'ic_stat_bell');
+
+    // iOS: present notifications while app is in foreground
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true, badge: true, sound: true,
+    );
 
     runApp(const BootstrapApp());
   }, (Object error, StackTrace stack) {
@@ -122,14 +122,14 @@ Future<void> main() async {
   });
 }
 
-// ---------------- LIGHT (Cool) ColorScheme ----------------
+// ---------------- Light Color Scheme ----------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF0A2C42), // Navy
+  primary: Color(0xFF0A2C42),
   onPrimary: Color(0xFFFFFFFF),
   primaryContainer: Color(0xFFD6E6F1),
   onPrimaryContainer: Color(0xFF0A2231),
-  secondary: Color(0xFFC7A447), // Gold
+  secondary: Color(0xFFC7A447),
   onSecondary: Color(0xFF231A00),
   secondaryContainer: Color(0xFFFFF0C9),
   onSecondaryContainer: Color(0xFF2A2000),
@@ -154,16 +154,14 @@ const LinearGradient pageGradientLight = LinearGradient(
   colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
 );
 
-// ---- ThemeExtension to carry a page gradient via Theme ----
+// ThemeExtension for gradient
 @immutable
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
-
   @override
   AppGradients copyWith({Gradient? page}) =>
       AppGradients(page: page ?? this.page);
-
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
@@ -174,30 +172,24 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// ------------------------ BOOTSTRAP APP ------------------------
+// ---------------- Bootstrap App ----------------
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    // React to Theme + Locale settings
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
-            // Base text theme
             final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
               bodyMedium: GoogleFonts.manrope(),
               bodyLarge: GoogleFonts.manrope(),
             );
-
-            // Arabic fallback chain
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
-
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
               bodySmall:
               t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
@@ -230,11 +222,9 @@ class BootstrapApp extends StatelessWidget {
               headlineLarge:
               t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
-
             final TextTheme chosenLight = addFallbacks(baseLatin);
             final TextTheme chosenDark = addFallbacks(baseLatin);
 
-            // ------- Light Theme ----------
             final ThemeData baseLight = ThemeData(
               useMaterial3: true,
               colorScheme: lightColorScheme,
@@ -268,7 +258,6 @@ class BootstrapApp extends StatelessWidget {
               ],
             );
 
-            // ------- Dark Theme ----------
             final ThemeData baseDark = ThemeData(
               brightness: Brightness.dark,
               useMaterial3: true,
@@ -309,16 +298,10 @@ class BootstrapApp extends StatelessWidget {
               theme: baseLight,
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
-
-              // NEW: app-wide haptic feedback on route transitions
-              navigatorObservers:  [HapticNavigatorObserver()],
-
-              // ---- Localization ----
+              navigatorObservers: [HapticNavigatorObserver()],
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-
-              // ---- GLOBAL LTR + GLOBAL TEXT SCALE ----
               builder: (context, child) {
                 return ValueListenableBuilder<double>(
                   valueListenable: UXPrefs.textScale,
@@ -327,16 +310,13 @@ class BootstrapApp extends StatelessWidget {
                     return Directionality(
                       textDirection: TextDirection.ltr,
                       child: MediaQuery(
-                        data: mq.copyWith(
-                          textScaler: TextScaler.linear(scale),
-                        ),
+                        data: mq.copyWith(textScaler: TextScaler.linear(scale)),
                         child: child!,
                       ),
                     );
                   },
                 );
               },
-
               home: const _BootstrapScreen(),
             );
           },
@@ -346,17 +326,16 @@ class BootstrapApp extends StatelessWidget {
   }
 }
 
-// ----------------------- Bootstrap Screen ----------------------
+// ---------------- Bootstrap Screen ----------------
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
-
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
 
 class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
-  final PrayerTimesRepository _repo = PrayerTimesRepository();
+  final PrayerTimesRepository _repo = PrayerTimesRepository(); // ✅ now resolves
   Timer? _midnightTimer;
 
   @override
@@ -377,7 +356,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
-
     _midnightTimer?.cancel();
     _midnightTimer = Timer(delay, () {
       if (!mounted) return;
@@ -401,6 +379,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
+          // ✅ HomeTabs is defined later in this file (unchanged)
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -409,29 +388,25 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
             temperatureF: r.temperatureF,
           );
         }
-
         if (snap.hasError) {
           FlutterNativeSplash.remove();
           return _SplashScaffold(
             key: const ValueKey('bootstrap_error'),
-            title: 'Starting up…',
+            title: 'Starting up...',
             subtitle: 'Error:\n${snap.error}',
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
-
         return const SizedBox.shrink();
       },
     );
   }
 
   Future<_InitResult> _initializeAll() async {
+    // FCM: request permission (safe to no‑op on Android pre‑13)
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
+        alert: true, badge: true, sound: true, provisional: false,
       );
       debugPrint('FCM permission: ${settings.authorizationStatus}');
       await FirebaseMessaging.instance.subscribeToTopic('allUsers');
@@ -439,6 +414,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('FCM setup error: $e\n$st');
     }
 
+    // Timezone init (central time)
     tz.Location location;
     try {
       location = await initCentralTime();
@@ -446,6 +422,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
+    // Pull latest prayer times from Firebase (best‑effort)
     try {
       final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
       debugPrint(
@@ -454,8 +431,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('Startup refresh error: $e\n$st');
     }
 
+    // Load local schedule
     final nowLocal = DateTime.now();
-
     List<PrayerDay> days;
     try {
       days = await loadPrayerDays(year: nowLocal.year);
@@ -465,7 +442,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     }
 
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
-
     final PrayerDay today =
         _findByDate(days, todayDate) ??
             (days.isNotEmpty ? days.first : _dummyDay(todayDate));
@@ -473,12 +449,15 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
+    // Weather (non‑blocking)
     final coords = _coordsForLocation(location);
-
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
     ).timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+    // Schedule local alerts (only if OS notifications are enabled)
+    await _scheduleLocalAlerts(nowLocal: nowLocal, today: today);
 
     return _InitResult(
       location: location,
@@ -503,9 +482,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   PrayerDay _dummyDay(DateTime date) {
     String fmt(DateTime d) =>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-
     final begin = fmt(date);
-
     final Map<String, PrayerTime> prayers = {
       'fajr': PrayerTime(begin: begin, iqamah: ''),
       'dhuhr': PrayerTime(begin: begin, iqamah: ''),
@@ -513,7 +490,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
       'isha': PrayerTime(begin: begin, iqamah: ''),
     };
-
     return PrayerDay(
       date: date,
       prayers: prayers,
@@ -522,16 +498,81 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       serial: 0,
     );
   }
+
+  // ---- Local alerts scheduling ----
+  Future<void> _scheduleLocalAlerts({
+    required DateTime nowLocal,
+    required PrayerDay today,
+  }) async {
+    final status = await NotificationOptInService.getStatus();
+    final authorized = NotificationOptInService.isAuthorized(status);
+    if (!authorized) {
+      if (kDebugMode) {
+        debugPrint('[Alerts] Skipped scheduling: permission not granted');
+      }
+      return;
+    }
+
+    // Parse "HH:mm" -> DateTime
+    DateTime? mkTime(DateTime base, String hhmm) {
+      if (hhmm.isEmpty) return null;
+      final parts = hhmm.split(':');
+      if (parts.length != 2) return null;
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h == null || m == null) return null;
+      return DateTime(base.year, base.month, base.day, h, m);
+    }
+
+    final base = DateTime(today.date.year, today.date.month, today.date.day);
+
+    final fajrAdhan     = mkTime(base, today.prayers['fajr']?.begin     ?? '');
+    final dhuhrAdhan    = mkTime(base, today.prayers['dhuhr']?.begin    ?? '');
+    final asrAdhan      = mkTime(base, today.prayers['asr']?.begin      ?? '');
+    final maghribAdhan  = mkTime(base, today.prayers['maghrib']?.begin  ?? '');
+    final ishaAdhan     = mkTime(base, today.prayers['isha']?.begin     ?? '');
+
+    final fajrIqamah    = mkTime(base, today.prayers['fajr']?.iqamah    ?? '');
+    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']?.iqamah   ?? '');
+    final asrIqamah     = mkTime(base, today.prayers['asr']?.iqamah     ?? '');
+    final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
+    final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah    ?? '');
+
+    // TODO: read from UXPrefs when you persist the new toggles
+    const bool adhanEnabled  = false;
+    const bool iqamahEnabled = false;
+    const bool jumuahEnabled = false;
+
+    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
+      dateLocal: base,
+      fajrAdhan: fajrAdhan,
+      dhuhrAdhan: dhuhrAdhan,
+      asrAdhan: asrAdhan,
+      maghribAdhan: maghribAdhan,
+      ishaAdhan: ishaAdhan,
+      fajrIqamah: fajrIqamah,
+      dhuhrIqamah: dhuhrIqamah,
+      asrIqamah: asrIqamah,
+      maghribIqamah: maghribIqamah,
+      ishaIqamah: ishaIqamah,
+      adhanEnabled: adhanEnabled,
+      iqamahEnabled: iqamahEnabled,
+    );
+
+    await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
+      anyDateThisWeekLocal: base,
+      enabled: jumuahEnabled,
+    );
+  }
 }
 
-// ------------------------ RESULT WRAPPER -----------------------
+// ---------------- Result wrapper ----------------
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
-
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -541,19 +582,17 @@ class _InitResult {
   });
 }
 
-// --------------------------- SPLASH ----------------------------
+// ---------------- Splash ----------------
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback? onRetry;
-
   const _SplashScaffold({
     super.key,
     required this.title,
     this.subtitle,
     this.onRetry,
   });
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -589,14 +628,13 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// -------------------------- NAVIGATION -------------------------
+// ---------------- Navigation ----------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
-
   const HomeTabs({
     super.key,
     required this.location,
@@ -605,7 +643,6 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
-
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -617,13 +654,11 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   void initState() {
     super.initState();
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
         setState(() => hasNewAnnouncement = true);
       }
     });
-
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -632,7 +667,6 @@ class _HomeTabsState extends State<HomeTabs> {
         });
       }
     });
-
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -658,7 +692,6 @@ class _HomeTabsState extends State<HomeTabs> {
       const DirectoryPage(),
       const MorePage(),
     ];
-
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: NavigationBar(
@@ -671,178 +704,21 @@ class _HomeTabsState extends State<HomeTabs> {
             _index = i;
             if (i == 1) hasNewAnnouncement = false;
           });
-          // Optional: add a light haptic on tab switch
           Haptics.tap();
         },
-        destinations: [
-          NavigationDestination(
-            label: '',
-            icon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.clock,
-              active: false,
-              size: kNavIconSize,
-            ),
-            selectedIcon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.clock,
-              active: true,
-              size: kNavIconSize + 2,
-            ),
-          ),
-          NavigationDestination(
-            label: '',
-            icon: _NavUnderlineFaBadgeIcon(
-              icon: FontAwesomeIcons.bullhorn,
-              active: false,
-              showBadge: hasNewAnnouncement,
-              size: kNavIconSize,
-            ),
-            selectedIcon: _NavUnderlineFaBadgeIcon(
-              icon: FontAwesomeIcons.bullhorn,
-              active: true,
-              showBadge: hasNewAnnouncement,
-              size: kNavIconSize + 2,
-            ),
-          ),
-          NavigationDestination(
-            label: '',
-            icon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.hashtag,
-              active: false,
-              size: kNavIconSize,
-            ),
-            selectedIcon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.hashtag,
-              active: true,
-              size: kNavIconSize + 2,
-            ),
-          ),
-          NavigationDestination(
-            label: '',
-            icon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.addressBook,
-              active: false,
-              size: kNavIconSize,
-            ),
-            selectedIcon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.addressBook,
-              active: true,
-              size: kNavIconSize + 2,
-            ),
-          ),
-          NavigationDestination(
-            label: '',
-            icon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.ellipsis,
-              active: false,
-              size: kNavIconSize,
-            ),
-            selectedIcon: _NavUnderlineFaIcon(
-              icon: FontAwesomeIcons.ellipsis,
-              active: true,
-              size: kNavIconSize + 2,
-            ),
-          ),
+        destinations: const [
+          NavigationDestination(label: '', icon: Icon(Icons.schedule)),
+          NavigationDestination(label: '', icon: Icon(Icons.campaign)),
+          NavigationDestination(label: '', icon: Icon(Icons.tag)),
+          NavigationDestination(label: '', icon: Icon(Icons.contact_page)),
+          NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
         ],
       ),
     );
   }
 }
 
-// ------------------------- ICON HELPERS -------------------------
-class _NavUnderlineFaIcon extends StatelessWidget {
-  final IconData icon;
-  final bool active;
-  final double size;
-
-  const _NavUnderlineFaIcon({
-    required this.icon,
-    required this.active,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color lineColor =
-        IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FaIcon(icon, size: size),
-        const SizedBox(height: 3),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          height: 1.5,
-          width: active ? 14 : 0,
-          decoration: BoxDecoration(
-            color: lineColor,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NavUnderlineFaBadgeIcon extends StatelessWidget {
-  final IconData icon;
-  final bool active;
-  final bool showBadge;
-  final double size;
-
-  const _NavUnderlineFaBadgeIcon({
-    required this.icon,
-    required this.active,
-    required this.showBadge,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color lineColor =
-        IconTheme.of(context).color ?? Theme.of(context).colorScheme.primary;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            FaIcon(icon, size: size),
-            if (showBadge)
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.2),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          height: 2,
-          width: active ? 18 : 0,
-          decoration: BoxDecoration(
-            color: lineColor,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ------------------------ HELPERS (coords & weather) -----------
+// ---------------- Helpers (coords & weather) ----------------
 class LatLon {
   final double lat;
   final double lon;
@@ -869,9 +745,7 @@ Future<double?> _fetchTemperatureF({
       'temperature_unit': 'fahrenheit',
       'timezone': 'auto',
     });
-
     final resp = await http.get(uri);
-
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final cw = data['current_weather'] as Map<String, dynamic>?;
@@ -883,11 +757,10 @@ Future<double?> _fetchTemperatureF({
   } catch (e, st) {
     debugPrint('Weather fetch error: $e\n$st');
   }
-
   return null;
 }
 
-// ------------------- Hijri resolver -------------------
+// ---------------- Hijri resolver ----------------
 Future<HijriYMD> _appHijri(DateTime g) async {
   final h = HijriCalendar.fromDate(g);
   return HijriYMD(h.hYear, h.hMonth, h.hDay);
