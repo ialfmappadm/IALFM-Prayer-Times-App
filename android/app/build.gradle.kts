@@ -1,4 +1,3 @@
-
 // android/app/build.gradle.kts
 
 import java.util.Properties
@@ -25,7 +24,7 @@ val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "
 
 // Kotlin DSL at top-level (outside android { ... })
 kotlin {
-    // Ensure Kotlin uses JDK 17 toolchain (AGP 8.13 expects JDK 17)
+    // Ensure Kotlin uses JDK 17 toolchain (AGP 8.x expects JDK 17)
     jvmToolchain(17)
     // Align Kotlin bytecode target with Java 17
     compilerOptions {
@@ -36,7 +35,7 @@ kotlin {
 android {
     namespace = "org.ialfm.prayertimes"
 
-    // AGP 8.13 supports API 36; use the latest for builds
+    // AGP 8.x supports API 36; use the latest for builds
     compileSdk = 36
 
     defaultConfig {
@@ -57,6 +56,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
+        // ✅ Required by flutter_local_notifications and other Java 8+ APIs on older Android
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildTypes {
@@ -64,6 +66,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
         }
+        // Profile inherits debug’s proguard/shrink settings by default (Flutter injects profile)
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -89,6 +92,10 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.android.material:material:1.13.0") // Material 3 dependency
+
+    // ✅ Add the desugar runtime for core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     // Add others if you call them natively:
     // implementation("com.google.firebase:firebase-auth")
     // implementation("com.google.firebase:firebase-firestore")
@@ -96,35 +103,62 @@ dependencies {
     // implementation("com.google.firebase:firebase-storage")
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Mirror AGP's debug APK to Flutter’s expected path (project-root/build/...).
- * Flutter looks for: <root>/build/app/outputs/flutter-apk/app-debug.apk
- * AGP writes to:     android/app/build/outputs/apk/debug/app-debug.apk
- * ---------------------------------------------------------------------------
- */
+/* ---------------------------------------------------------------------------
+   Copy tasks that mirror AGP outputs to the paths Flutter expects.
+   Works across AGP 7/8 (no Variant API required).
+   --------------------------------------------------------------------------- */
+
+// DEBUG → <root>/build/app/outputs/flutter-apk/app-debug.apk
 val copyDebugApkToFlutter by tasks.registering(Copy::class) {
-    // Source: AGP output (this app module)
-    from(layout.projectDirectory.file("build/outputs/apk/debug/app-debug.apk"))
-
-    // Destination: **project root** build folder (note the two-level ..)
+    val src = layout.projectDirectory.file("build/outputs/apk/debug/app-debug.apk").asFile
+    onlyIf { src.exists() }
+    from(src)
     into(layout.projectDirectory.dir("../../build/app/outputs/flutter-apk"))
-
-    // Ensure destination filename is exactly what Flutter expects
     rename { _ -> "app-debug.apk" }
-
-    // Create destination directory if missing
     doFirst {
         layout.projectDirectory.dir("../../build/app/outputs/flutter-apk").asFile.mkdirs()
     }
 }
 
-/**
- * Attach the copy task only if `assembleDebug` exists.
- * Using `afterEvaluate` avoids failures when the task isn't registered yet.
- */
-afterEvaluate {
-    tasks.findByName("assembleDebug")?.let { assemble ->
-        assemble.finalizedBy(copyDebugApkToFlutter)
+// PROFILE → <root>/build/app/outputs/flutter-apk/app-profile.apk
+val copyProfileApkToFlutter by tasks.registering(Copy::class) {
+    val profileDir = layout.projectDirectory.dir("build/outputs/apk/profile").asFile
+    // Defer candidate discovery until execution time
+    val candidates = project.provider {
+        // Prefer universal profile APK; fallback to first split profile APK (e.g. arm64-v8a)
+        val universal = File(profileDir, "app-profile.apk")
+        if (universal.exists()) listOf(universal)
+        else profileDir.walkTopDown()
+            .filter { it.isFile && it.name.endsWith("-profile.apk") }
+            .toList()
     }
+
+    onlyIf { candidates.get().isNotEmpty() }
+    from({ candidates.get().first() })
+    into(layout.projectDirectory.dir("../../build/app/outputs/flutter-apk"))
+    rename { _ -> "app-profile.apk" }
+    doFirst {
+        layout.projectDirectory.dir("../../build/app/outputs/flutter-apk").asFile.mkdirs()
+    }
+}
+
+// RELEASE AAB → <root>/build/app/outputs/bundle/release/app-release.aab
+val copyReleaseAabToFlutter by tasks.registering(Copy::class) {
+    val aab = layout.projectDirectory.file("build/outputs/bundle/release/app-release.aab").asFile
+    onlyIf { aab.exists() }
+    from(aab)
+    into(layout.projectDirectory.dir("../../build/app/outputs/bundle/release"))
+    rename { _ -> "app-release.aab" }
+    doFirst {
+        layout.projectDirectory.dir("../../build/app/outputs/bundle/release").asFile.mkdirs()
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   Hook the copy tasks to run *after* the corresponding assemble/bundle tasks.
+   --------------------------------------------------------------------------- */
+afterEvaluate {
+    tasks.findByName("assembleDebug")?.finalizedBy(copyDebugApkToFlutter)
+    tasks.findByName("assembleProfile")?.finalizedBy(copyProfileApkToFlutter)
+    tasks.findByName("bundleRelease")?.finalizedBy(copyReleaseAabToFlutter)
 }

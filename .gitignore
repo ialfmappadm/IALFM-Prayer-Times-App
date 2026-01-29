@@ -59,3 +59,12 @@ functions/
 
 # l10 generated files
 lib/l10n/generated/
+
+
+# === build and analysis artifacts ===
+app.apks
+arm64.json
+armv7.json
+device.json
+devtools_options.yaml
+tools/size_report.txt
