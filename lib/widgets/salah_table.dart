@@ -73,11 +73,11 @@ class SalahTable extends StatelessWidget {
 
     // Text scale guard → avoid vertical overflow at very large sizes
     final media = MediaQuery.of(context);
-    final textScale = media.textScaler.scale(1.0);
+    final effectiveScale = media.textScaler.scale(1.0);
     const fillRowsMaxScale = 1.15;
-    final useExpandedRows = expandRowsToFill && textScale <= fillRowsMaxScale;
+    final useExpandedRows = expandRowsToFill && effectiveScale <= fillRowsMaxScale;
 
-    // Fallback text styles
+    // Fallback text styles (honor injected styles if provided)
     final headerTextStyle = headerStyle ??
         const TextStyle(
           color: AppColors.textSecondary,
@@ -124,21 +124,39 @@ class SalahTable extends StatelessWidget {
         ? BoxDecoration(color: headerBackgroundColor)
         : const BoxDecoration(gradient: AppColors.headerGradient)));
 
+    // ----- Glyph cache reused across rows this build (no behavior change) -----
+    final Map<String, Widget> _glyphCache = {
+      'Fajr': prayerGlyph('Fajr', color: AppColors.goldSoft),
+      'Sunrise': prayerGlyph('Sunrise', color: AppColors.goldSoft),
+      'Dhuhr': prayerGlyph('Dhuhr', color: AppColors.goldSoft),
+      'Asr': prayerGlyph('Asr', color: AppColors.goldSoft),
+      'Maghrib': prayerGlyph('Maghrib', color: AppColors.goldSoft),
+      // You intentionally omit Isha’s moon glyph to avoid misplacement at very large scales.
+      // 'Isha': prayerGlyph('Isha', color: AppColors.goldSoft),
+      "Jumu'ah": prayerGlyph("Jumu'ah", color: AppColors.goldSoft),
+      "Youth Jumu'ah": prayerGlyph("Youth Jumu'ah", color: AppColors.goldSoft),
+    };
+
+    // ----- Pre-format times once per build (avoid repeated work in every row) -----
+    final is24h = UXPrefs.use24h.value;
+    String _fmt(String s) => s.isEmpty ? '' : (is24h ? s : format12h(s));
+
+    final Map<String, String> _adhanFmt = {
+      for (final n in entries) n: _fmt(adhanByName[n] ?? ''),
+    };
+    final Map<String, String> _iqamahFmt = {
+      for (final n in entries) n: _fmt((iqamahByName ?? const {})[n] ?? ''),
+    };
+
+    // Reuse a single const row padding (micro allocation win)
+    const _rowPad = EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+
     Widget buildRow(String name, int i) {
-      final is24h = UXPrefs.use24h.value;
-
-      final adhanRaw = adhanByName[name]!;
-      final iqamahRaw = iqamahByName != null ? (iqamahByName![name] ?? '') : '';
-
-      // Choose display per pref (adhan/iqamah)
-      final adhanText = is24h ? adhanRaw : format12h(adhanRaw);
-      final iqamahText = (iqamahRaw.isEmpty)
-          ? ''
-          : (is24h ? iqamahRaw : format12h(iqamahRaw));
-
+      final adhanText = _adhanFmt[name] ?? '';
+      final iqamahText = _iqamahFmt[name] ?? '';
       final isHighlight = (highlightName != null && highlightName == name);
 
-      // Background per theme
+      // Opaque row background per theme (ensures cheap composition)
       final Color bg = isHighlight
           ? (isLight ? (highlightColorLight ?? highlightColor) : highlightColor)
           : (i.isEven ? rowEvenColor : rowOddColor);
@@ -147,8 +165,7 @@ class SalahTable extends StatelessWidget {
       final BoxBorder? border = isLight
           ? Border(
         bottom: BorderSide(
-          color: (rowDividerColorLight ??
-              const Color(0xFF7B90A0).withValues(alpha: 0.16)),
+          color: (rowDividerColorLight ?? const Color(0xFF7B90A0).withValues(alpha: 0.16)),
           width: rowDividerThickness,
         ),
       )
@@ -157,7 +174,7 @@ class SalahTable extends StatelessWidget {
       // Localized (display) name; glyph still uses English key
       final displayName = PrayerLabels.prayerName(context, name);
 
-      // Iqamah (right) — scale-down guard
+      // Right cell: prefer widget override when provided (e.g., Sunrise DST pill)
       final Widget iqamahTextOrWidget =
       (iqamahWidgetByName != null && iqamahWidgetByName!.containsKey(name))
           ? iqamahWidgetByName![name]!
@@ -176,80 +193,82 @@ class SalahTable extends StatelessWidget {
         child: iqamahTextOrWidget,
       );
 
-      final content = Container(
-        decoration: BoxDecoration(color: bg, border: border),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      // LEFT: name + glyph
+      final left = Expanded(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // LEFT: Salah name + glyph (glyph omitted for Isha)
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // keep single-line; local cap + scale-down to avoid cropping
-                  Expanded(
-                    child: MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        textScaler: TextScaler.linear(
-                          MediaQuery.of(context)
-                              .textScaler
-                              .scale(1.0)
-                              .clamp(0.8, 1.05),
-                        ),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          displayName,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                          style: isHighlight
-                              ? nameTextStyle.copyWith(fontWeight: FontWeight.w700)
-                              : nameTextStyle,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // TEMP: hide Isha moon glyph to avoid misplacement at large text
-                  if (name != 'Isha') ...[
-                    const SizedBox(width: 6),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: prayerGlyph(name, color: AppColors.goldSoft),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // MIDDLE: Adhan time (centered)
-            Expanded(
-              child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
                 child: Text(
-                  adhanText,
+                  displayName,
+                  maxLines: 1,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: isHighlight
-                      ? adhanTextStyle.copyWith(fontWeight: FontWeight.w700)
-                      : adhanTextStyle,
+                      ? nameTextStyle.copyWith(fontWeight: FontWeight.w700)
+                      : nameTextStyle,
                 ),
               ),
             ),
-
-            // RIGHT: Iqamah (align right)
-            Expanded(
-              child: Align(
+            if (name != 'Isha') ...[
+              const SizedBox(width: 6),
+              Align(
                 alignment: Alignment.centerRight,
-                child: iqamahCell,
+                child: _glyphCache[name] ?? prayerGlyph(name, color: AppColors.goldSoft),
               ),
-            ),
+            ],
           ],
         ),
       );
 
-      return useExpandedRows ? Expanded(child: content) : content;
+      // MIDDLE: Adhan
+      final middle = Expanded(
+        child: Center(
+          child: Text(
+            adhanText,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: isHighlight
+                ? adhanTextStyle.copyWith(fontWeight: FontWeight.w700)
+                : adhanTextStyle,
+          ),
+        ),
+      );
+
+      // RIGHT: Iqamah
+      final right = Expanded(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: iqamahCell,
+        ),
+      );
+
+      // ---- One MediaQuery clamp for the **entire row** (0.8–1.05), not per cell ----
+      final rowScale = media.textScaler.scale(1.0).clamp(0.8, 1.05);
+
+      Widget rowCore = MediaQuery(
+        data: media.copyWith(textScaler: TextScaler.linear(rowScale)),
+        child: Padding(
+          padding: _rowPad,
+          child: Row(children: [left, middle, right]),
+        ),
+      );
+
+      // Optional hairline border on top of the opaque background
+      if (border != null) {
+        rowCore = DecoratedBox(
+          decoration: BoxDecoration(border: border),
+          child: rowCore,
+        );
+      }
+
+      // Paint row with an opaque background (cheaper than translucent compositing)
+      final rowWithBg = Material(color: bg, child: rowCore);
+
+      return useExpandedRows ? Expanded(child: rowWithBg) : rowWithBg;
     }
 
     return Column(

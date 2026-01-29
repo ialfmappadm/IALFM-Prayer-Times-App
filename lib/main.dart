@@ -1,6 +1,5 @@
 // lib/main.dart
 // Initializes app, themes, localization, messaging, and local alerts scheduling.
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -9,18 +8,15 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
-
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
-
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -30,29 +26,34 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-
-// ✅ RESTORED: repository import (fixes PrayerTimesRepository type)
+// RESTORED: repository import (fixes PrayerTimesRepository type)
 import 'prayer_times_firebase.dart';
-
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
-
 // Haptics
 import 'utils/haptics.dart';
-
 // Notifications opt-in + local scheduler
 import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
-
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
+// NEW: warm-ups (images + glyphs)
+import 'warm_up.dart';
+
+// For PaintingBinding.imageCache bump
+import 'package:flutter/painting.dart' show PaintingBinding;
 
 // --- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
+
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
+
+// NEW: navigator key for a safe top-level BuildContext after first frame
+final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
 // Background FCM handler
 @pragma('vm:entry-point')
@@ -66,7 +67,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
-
   // ✅ Now resolves with the restored import
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
@@ -117,6 +117,33 @@ Future<void> main() async {
     );
 
     runApp(const BootstrapApp());
+
+    // 🔹 Warm-ups AFTER the first frame (does NOT block first paint)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final ctx = navKey.currentContext;
+      if (ctx != null) {
+        await warmUpAboveTheFold(ctx);
+      }
+
+      // 🔹 Slightly increase image cache to avoid early evictions of small assets
+      //    used across top header / nav during first interactions.
+      final cache = PaintingBinding.instance.imageCache;
+      cache.maximumSize = (cache.maximumSize * 1.3).round();
+
+      // 🔹 Defer FCM permission + topic subscription ~1.2s after first paint
+      unawaited(Future<void>(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+        try {
+          final settings = await FirebaseMessaging.instance.requestPermission(
+            alert: true, badge: true, sound: true, provisional: false,
+          );
+          debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
+          await FirebaseMessaging.instance.subscribeToTopic('allUsers');
+        } catch (e, st) {
+          debugPrint('Deferred FCM setup error: $e\n$st');
+        }
+      }));
+    });
   }, (Object error, StackTrace stack) {
     debugPrint('Uncaught async error: $error\n$stack');
   });
@@ -167,7 +194,6 @@ class AppGradients extends ThemeExtension<AppGradients> {
     if (other is! AppGradients) return this;
     return t < 0.5 ? this : other;
   }
-
   static const light = AppGradients(page: pageGradientLight);
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
@@ -185,45 +211,31 @@ class BootstrapApp extends StatelessWidget {
           builder: (context, appLocale, __) {
             final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-              titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-              bodyMedium: GoogleFonts.manrope(),
-              bodyLarge: GoogleFonts.manrope(),
+              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              bodyMedium:  GoogleFonts.manrope(),
+              bodyLarge:   GoogleFonts.manrope(),
             );
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall:
-              t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium:
-              t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge:
-              t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall:
-              t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:
-              t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge:
-              t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall:
-              t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:
-              t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge:
-              t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall:
-              t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium:
-              t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge:
-              t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall:
-              t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium:
-              t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge:
-              t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall:    t.bodySmall   ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:   t.bodyMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge:    t.bodyLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:   t.titleSmall  ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium:  t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge:   t.titleLarge  ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:   t.labelSmall  ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium:  t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge:   t.labelLarge  ?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium:t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
+
             final TextTheme chosenLight = addFallbacks(baseLatin);
-            final TextTheme chosenDark = addFallbacks(baseLatin);
+            final TextTheme chosenDark  = addFallbacks(baseLatin);
 
             final ThemeData baseLight = ThemeData(
               useMaterial3: true,
@@ -251,7 +263,8 @@ class BootstrapApp extends StatelessWidget {
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.light,
@@ -284,7 +297,8 @@ class BootstrapApp extends StatelessWidget {
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
@@ -298,6 +312,8 @@ class BootstrapApp extends StatelessWidget {
               theme: baseLight,
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
+              // NEW: navigator key (so we can grab a context post-frame)
+              navigatorKey: navKey,
               navigatorObservers: [HapticNavigatorObserver()],
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -346,7 +362,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       if (mounted) FlutterNativeSplash.remove();
     });
     _scheduleMidnightRefresh();
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Badge handled in HomeTabs
     });
@@ -379,7 +394,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
-          // ✅ HomeTabs is defined later in this file (unchanged)
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -403,16 +417,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 
   Future<_InitResult> _initializeAll() async {
-    // FCM: request permission (safe to no‑op on Android pre‑13)
-    try {
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true, badge: true, sound: true, provisional: false,
-      );
-      debugPrint('FCM permission: ${settings.authorizationStatus}');
-      await FirebaseMessaging.instance.subscribeToTopic('allUsers');
-    } catch (e, st) {
-      debugPrint('FCM setup error: $e\n$st');
-    }
+    // (kept as-is; FCM prompt now deferred post-frame)
 
     // Timezone init (central time)
     tz.Location location;
@@ -440,12 +445,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
-
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ??
             (days.isNotEmpty ? days.first : _dummyDay(todayDate));
-
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
@@ -484,11 +487,11 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     final begin = fmt(date);
     final Map<String, PrayerTime> prayers = {
-      'fajr': PrayerTime(begin: begin, iqamah: ''),
-      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
-      'asr': PrayerTime(begin: begin, iqamah: ''),
+      'fajr':    PrayerTime(begin: begin, iqamah: ''),
+      'dhuhr':   PrayerTime(begin: begin, iqamah: ''),
+      'asr':     PrayerTime(begin: begin, iqamah: ''),
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
-      'isha': PrayerTime(begin: begin, iqamah: ''),
+      'isha':    PrayerTime(begin: begin, iqamah: ''),
     };
     return PrayerDay(
       date: date,
@@ -526,17 +529,17 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
 
-    final fajrAdhan     = mkTime(base, today.prayers['fajr']?.begin     ?? '');
-    final dhuhrAdhan    = mkTime(base, today.prayers['dhuhr']?.begin    ?? '');
-    final asrAdhan      = mkTime(base, today.prayers['asr']?.begin      ?? '');
-    final maghribAdhan  = mkTime(base, today.prayers['maghrib']?.begin  ?? '');
-    final ishaAdhan     = mkTime(base, today.prayers['isha']?.begin     ?? '');
+    final fajrAdhan    = mkTime(base, today.prayers['fajr']?.begin ?? '');
+    final dhuhrAdhan   = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
+    final asrAdhan     = mkTime(base, today.prayers['asr']?.begin ?? '');
+    final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
+    final ishaAdhan    = mkTime(base, today.prayers['isha']?.begin ?? '');
 
-    final fajrIqamah    = mkTime(base, today.prayers['fajr']?.iqamah    ?? '');
-    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']?.iqamah   ?? '');
-    final asrIqamah     = mkTime(base, today.prayers['asr']?.iqamah     ?? '');
+    final fajrIqamah    = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
+    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
+    final asrIqamah     = mkTime(base, today.prayers['asr']?.iqamah ?? '');
     final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
-    final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah    ?? '');
+    final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah ?? '');
 
     // TODO: read from UXPrefs when you persist the new toggles
     const bool adhanEnabled  = false;
@@ -668,7 +671,7 @@ class _HomeTabsState extends State<HomeTabs> {
       }
     });
     FirebaseMessaging.instance.getInitialMessage().then((m) {
-      if (m?.data['newAnnouncement'] == 'true') {
+      if (m?.data['newAnnouncement' ]== 'true') {
         setState(() {
           _index = 1;
           hasNewAnnouncement = false;
@@ -694,25 +697,28 @@ class _HomeTabsState extends State<HomeTabs> {
     ];
     return Scaffold(
       body: pages[_index],
-      bottomNavigationBar: NavigationBar(
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        height: kNavBarHeight,
-        selectedIndex: _index,
-        onDestinationSelected: (i) {
-          setState(() {
-            _index = i;
-            if (i == 1) hasNewAnnouncement = false;
-          });
-          Haptics.tap();
-        },
-        destinations: const [
-          NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-          NavigationDestination(label: '', icon: Icon(Icons.campaign)),
-          NavigationDestination(label: '', icon: Icon(Icons.tag)),
-          NavigationDestination(label: '', icon: Icon(Icons.contact_page)),
-          NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
-        ],
+      // Isolate bottom navigation from body repaints
+      bottomNavigationBar: RepaintBoundary(
+        child: NavigationBar(
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          height: kNavBarHeight,
+          selectedIndex: _index,
+          onDestinationSelected: (i) {
+            setState(() {
+              _index = i;
+              if (i == 1) hasNewAnnouncement = false;
+            });
+            Haptics.tap();
+          },
+          destinations: const [
+            NavigationDestination(label: '', icon: Icon(Icons.schedule)),
+            NavigationDestination(label: '', icon: Icon(Icons.campaign)),
+            NavigationDestination(label: '', icon: Icon(Icons.tag)),
+            NavigationDestination(label: '', icon: Icon(Icons.contact_page)),
+            NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
+          ],
+        ),
       ),
     );
   }
