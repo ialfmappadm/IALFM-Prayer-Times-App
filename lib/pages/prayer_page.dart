@@ -1,6 +1,6 @@
 // lib/pages/prayer_page.dart
 import 'dart:async';
-import 'dart:ui' show FontFeature; // NEW: for tabular figures
+import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -10,32 +10,32 @@ import '../widgets/salah_table.dart';
 import '../models.dart';
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
-// Localization helper
 import '../localization/prayer_labels.dart';
-// Stealth DST pill (your replacement for dst_badge.dart)
 import '../widgets/dst_pill_stealth.dart';
-// Warm-up helpers
 import '../warm_up.dart';
 
-// ---- Light Theme Constants ----
+// ─────────────────────────────────────────────────────────────────────────────
+// LIGHT THEME CONSTANTS (unchanged)
 const _kLightTextPrimary = Color(0xFF0F2432);
 const _kLightTextMuted   = Color(0xFF4A6273);
 const _kLightRowAlt      = Color(0xFFE5ECF2);
 const _kLightCard        = Color(0xFFFFFFFF);
 const _kLightDivider     = Color(0xFF7B90A0);
 const _kLightHighlight   = Color(0xFFFFF0C9);
-
-// Light countdown panel
 const _kLightPanel       = Color(0xFFE9F2F9);
 const _kLightPanelTop    = Color(0xFFDDEAF3);
 const _kLightPanelBottom = Color(0xFFCBDCE8);
 const _kLightGoldDigits  = Color(0xFF9C7C2C);
 
 const double kTempFallbackF = 72.0;
-// Fixed header height to avoid relayouts when body changes
 const double _kHeaderHeight = 116.0;
-// Enable = show DST preview UI. Disable = production mode.
 const bool enableDstPreviewToggle = false;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ✨ EDIT THESE to change the countdown digit sizes (light & dark)
+const double kCountdownDigitSizeLight = 56; // default was 40
+const double kCountdownDigitSizeDark  = 56; // default was 42
+// ─────────────────────────────────────────────────────────────────────────────
 
 class PrayerPage extends StatefulWidget {
   final tz.Location location;
@@ -58,17 +58,16 @@ class PrayerPage extends StatefulWidget {
 }
 
 class _PrayerPageState extends State<PrayerPage> {
-  // CountdownBanner owns the 1-second ticking; this page only rebuilds when next prayer changes.
   late NextPrayerTracker _tracker;
   NextPrayer? _next;
-  bool? _dstPreview; // null=auto, true=force ON, false=force OFF
+  bool? _dstPreview;
 
   @override
   void initState() {
     super.initState();
     _initTracker();
 
-    // Post-frame warm-up (images/glyphs + one offstage Salah row)
+    // Post-frame warm-ups
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         await warmUpAboveTheFold(context);
@@ -87,7 +86,7 @@ class _PrayerPageState extends State<PrayerPage> {
       today: widget.today,
       tomorrow: widget.tomorrow,
     );
-    _next = _tracker.current; // initial highlight
+    _next = _tracker.current;
   }
 
   @override
@@ -151,7 +150,7 @@ class _PrayerPageState extends State<PrayerPage> {
       );
     }
 
-    // Table style
+    // Table styles (unchanged)
     final headerTextStyle = TextStyle(
       color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
       fontSize: 16, fontWeight: FontWeight.w600,
@@ -167,13 +166,13 @@ class _PrayerPageState extends State<PrayerPage> {
 
     final bannerTitle = PrayerLabels.countdownHeader(context, next.name);
 
-    // DST detection
+    // DST / schedule
     final bool sysIsDst = widget.location
         .timeZone(widget.nowLocal.millisecondsSinceEpoch)
         .isDst;
     final bool effectiveIsDst = _dstPreview ?? sysIsDst;
 
-    // ---------- Build Prayer Maps ----------
+    // Build data maps
     final adhanByName = <String, String>{
       'Fajr'     : widget.today.prayers['fajr']?.begin     ?? '',
       'Sunrise'  : widget.today.sunrise                    ?? '',
@@ -230,13 +229,11 @@ class _PrayerPageState extends State<PrayerPage> {
       if (effectiveIsDst) "Youth Jumu'ah",
     ];
 
-    // COUNTDOWN (isolated repaint, still ticks EVERY SECOND)
     final countdownSection = CountdownBanner(
-      tracker: _tracker,                 // uses your same logic internally
+      tracker: _tracker,
       isLight: isLight,
       title: bannerTitle,
       onNextChanged: (newName) {
-        // Rebuild page ONLY when the next prayer flips (rare)
         if (_next?.name != newName && mounted) {
           setState(() {
             _next = _tracker.current;
@@ -245,11 +242,9 @@ class _PrayerPageState extends State<PrayerPage> {
       },
     );
 
-    // ---------- PAGE CONTENT ----------
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Top Header: isolated + fixed height to avoid relayouts.
         _guarded(
               () => RepaintBoundary(
             child: SizedBox(
@@ -264,11 +259,8 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
-
-        // Gold divider
         Container(height: 1, color: AppColors.goldDivider),
 
-        // (Optional) DST switch row
         if (enableDstPreviewToggle)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
@@ -317,12 +309,10 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
 
-        // Countdown (isolated repaint)
-        // NOTE: If your tab host wraps inactive tabs with TickerMode(enabled: false),
-        // the banner will auto-pause its timer (see CountdownBanner below).
+        // Countdown (isolated)
         countdownSection,
 
-        // Salah Table (isolated; never repaints on every tick)
+        // Salah Table (isolated)
         Expanded(
           child: _guarded(
                 () => RepaintBoundary(
@@ -334,19 +324,14 @@ class _PrayerPageState extends State<PrayerPage> {
                   iqamahWidgetByName: iqamahWidgetByName,
                   highlightName: _titleCase(next.name),
                   expandRowsToFill: true,
-                  // Header: white in Light, gradient in dark
                   headerGreen: false,
                   headerBackgroundGradient: isLight ? null : AppColors.headerGradient,
                   headerBackgroundColor: isLight ? Colors.white : null,
-                  // Rows
                   rowOddColor:  isLight ? _kLightCard : AppColors.bgSecondary,
                   rowEvenColor: isLight ? _kLightRowAlt : AppColors.bgSecondary,
-                  // Highlights
                   highlightColor: AppColors.rowHighlight,
                   highlightColorLight: _kLightHighlight,
-                  // Divider
                   rowDividerColorLight: _kLightDivider.withValues(alpha: 0.16),
-                  // Styles
                   headerStyle: headerTextStyle,
                   nameStyle: nameTextStyle,
                   adhanStyle: valueTextStyle,
@@ -365,7 +350,6 @@ class _PrayerPageState extends State<PrayerPage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          // Background gradient also isolated so the digits repaint doesn't repaint the BG
           child: RepaintBoundary(
             child: Container(
               decoration: BoxDecoration(gradient: bgGradient),
@@ -379,11 +363,11 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner — ticks every second on-screen, pauses when off-screen
-//   • Option A: App lifecycle aware (pause in background)
-//   • Option B: Tab aware via TickerMode.of(context) (pause when hidden tab)
-//   • NEW: align first periodic tick to the next wall-second
-//   • NEW: tabular figures + textWidthBasis for stable layout
+// CountdownBanner
+//   • Lifecycle-aware + Tab-aware (TickerMode) pause
+//   • Aligns first 1‑sec tick to the next wall‑second
+//   • Uses tabular digits + textWidthBasis for stable layout
+//   • ✨ Styles const‑hoisted; font size editable at the constants above
 // ─────────────────────────────────────────────────────────────────────────────
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
@@ -399,6 +383,35 @@ class CountdownBanner extends StatefulWidget {
     this.onNextChanged,
   });
 
+  // ── CONST‑HOISTED TEXT STYLES (use size constants at the top) ──────────────
+  static const TextStyle kTitleLight = TextStyle(
+    color: _kLightTextMuted,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle kTitleDark = TextStyle(
+    color: AppColors.textSecondary,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle kDigitsLight = TextStyle(
+    color: _kLightGoldDigits,
+    fontSize: kCountdownDigitSizeLight,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
+    fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
+  );
+
+  static const TextStyle kDigitsDark = TextStyle(
+    color: AppColors.countdownText,
+    fontSize: kCountdownDigitSizeDark,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 1.0,
+    fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
+  );
+
   @override
   State<CountdownBanner> createState() => _CountdownBannerState();
 }
@@ -409,11 +422,8 @@ class _CountdownBannerState extends State<CountdownBanner>
   String _digits = '--:--';
   String? _lastNextName;
 
-  // lifecycle + TickerMode tracking
   AppLifecycleState _life = AppLifecycleState.resumed;
   bool _tickerModeEnabled = true;
-
-  // first-start alignment flag
   bool _firstStart = true;
 
   bool get _shouldTick =>
@@ -423,18 +433,16 @@ class _CountdownBannerState extends State<CountdownBanner>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _tickOnce(); // initialize immediately
-    _ensureTicker(); // start aligned / immediate based on first start
+    _tickOnce();     // initialize display
+    _ensureTicker(); // start aligned/immediate as needed
   }
 
-  // Option A: app lifecycle pause/resume
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _life = state;
     _ensureTicker();
   }
 
-  // Option B: respond to parent TickerMode (e.g., hidden tab)
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -446,7 +454,6 @@ class _CountdownBannerState extends State<CountdownBanner>
   }
 
   void _startTickerAligned() {
-    // Align to next wall-second only on the very first start.
     final now = DateTime.now();
     final msToNextSecond = 1000 - now.millisecond;
     Timer(Duration(milliseconds: msToNextSecond), () {
@@ -481,13 +488,11 @@ class _CountdownBannerState extends State<CountdownBanner>
     final newDigits = formatCountdown(safe);
     final name = widget.tracker.current?.name ?? '';
 
-    // Notify parent ONLY when the next prayer flips (rare)
     if (name != _lastNextName) {
       _lastNextName = name;
       widget.onNextChanged?.call(name);
     }
 
-    // Repaint ONLY if digits actually changed
     if (newDigits != _digits) {
       if (!mounted) return;
       setState(() => _digits = newDigits);
@@ -514,29 +519,15 @@ class _CountdownBannerState extends State<CountdownBanner>
           bottom: BorderSide(color: _kLightPanelBottom, width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 2), //previously 16
       child: Column(
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: _kLightTextMuted,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          // NEW: stable layout for digits
+          Text(title, style: CountdownBanner.kTitleLight),
+          const SizedBox(height: 1), //previously 6
           Text(
             _digits,
             textWidthBasis: TextWidthBasis.longestLine,
-            style: TextStyle(
-              color: _kLightGoldDigits,
-              fontSize: 40,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style: CountdownBanner.kDigitsLight,
           ),
         ],
       ),
@@ -544,35 +535,20 @@ class _CountdownBannerState extends State<CountdownBanner>
 
     final dark = Container(
       color: AppColors.bgPrimary,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 2), //previously 12
       child: Column(
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          // NEW: stable layout for digits
+          Text(title, style: CountdownBanner.kTitleDark),
+          const SizedBox(height: 1), //previously 6
           Text(
             _digits,
             textWidthBasis: TextWidthBasis.longestLine,
-            style: TextStyle(
-              color: AppColors.countdownText,
-              fontSize: 42,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 1.0,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style: CountdownBanner.kDigitsDark,
           ),
         ],
       ),
     );
 
-    // Isolate the countdown from the rest of the page’s repaints.
     return RepaintBoundary(child: isLight ? light : dark);
   }
 }
