@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 Future<void> warmUpAboveTheFold(BuildContext context) async {
   // 1) Pre-cache first-screen images (use ResizeImage to decode at on-screen size)
   final images = <ImageProvider>[
-    const ResizeImage(AssetImage('assets/images/ialfm_logo.webp'), width: 160),
+    const ResizeImage(AssetImage('assets/branding/ialfm_logo.png'), width: 160),
     // Add any hero/header image that is visible on the first screen(s)
     // const ResizeImage(AssetImage('assets/images/home_hero.webp'), width: 1080),
   ];
