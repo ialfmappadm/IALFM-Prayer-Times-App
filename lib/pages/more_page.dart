@@ -16,11 +16,11 @@ import '../services/notification_optin_service.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-// NEW: for scheduling local notifications using your scheduler
-import '../services/alerts_scheduler.dart';           // ← scheduler API
-// NEW: to load & parse today’s prayer times for scheduling
-//import '../utils/time_utils.dart';                    // ← loadPrayerDays()  
-import '../models.dart';                              // ← PrayerDay model
+// Scheduling local notifications
+import '../services/alerts_scheduler.dart';            // Alerts scheduler (local notifications)
+// Load & parse today’s prayer times for scheduling
+//import '../utils/time_utils.dart';                     // loadPrayerDays()
+import '../models.dart';                               // PrayerDay model
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -54,17 +54,16 @@ class _MorePageState extends State<MorePage> {
   void initState() {
     super.initState();
     _loadVersion();
-    // Load persisted toggles from UXPrefs on open
-    _adhanAlert      = UXPrefs.adhanAlertEnabled.value;
-    _iqamahAlert     = UXPrefs.iqamahAlertEnabled.value;
-    _jumuahReminder  = UXPrefs.jumuahReminderEnabled.value;
+    // Load persisted toggles on open
+    _adhanAlert     = UXPrefs.adhanAlertEnabled.value;     // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    _iqamahAlert    = UXPrefs.iqamahAlertEnabled.value;    // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    _jumuahReminder = UXPrefs.jumuahReminderEnabled.value; // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
   }
 
   Future<void> _loadVersion() async {
     try {
       final info = await PackageInfo.fromPlatform();
       if (!mounted) return;
-      // Shows "1.0.0 (1)" for pubspec "version: 1.0.0+1"
       setState(() => _appVersion = '${info.version} (${info.buildNumber})');
     } catch (_) {
       // keep placeholder
@@ -130,14 +129,14 @@ class _MorePageState extends State<MorePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).btn_cancel),
             ),
             FilledButton(
               onPressed: () {
                 ok = (controller.text == _adminPin);
                 Navigator.pop(ctx);
               },
-              child: const Text('Verify'),
+              child: Text(AppLocalizations.of(context).btn_save),
             ),
           ],
         );
@@ -160,27 +159,25 @@ class _MorePageState extends State<MorePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).btn_cancel),
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Update'),
+            child: Text(AppLocalizations.of(context).btn_save),
           ),
         ],
       ),
     ).then((v) => v ?? false);
   }
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // NOTIFICATIONS: helper to (re)schedule alerts for TODAY based on toggles
-  // Uses the same source of truth as main.dart (local prayer_times file).  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+  // (Re)schedule alerts for TODAY based on toggles
   Future<void> _rescheduleTodayAlerts({
     required bool adhan,
     required bool iqamah,
     required bool jumuah,
   }) async {
     final now = DateTime.now();
-    final days = await loadPrayerDays(year: now.year);     // utils/time_utils.dart  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    final days = await loadPrayerDays(year: now.year);     // local JSON loader (already used at startup)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
     final todayDate = DateTime(now.year, now.month, now.day);
 
     PrayerDay? today;
@@ -220,7 +217,6 @@ class _MorePageState extends State<MorePage> {
     final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
     final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah    ?? '');
 
-    // Schedule via AlertsScheduler (local notifications).  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
     await AlertsScheduler.instance.schedulePrayerAlertsForDay(
       dateLocal: base,
       fajrAdhan: fajrAdhan,
@@ -235,14 +231,13 @@ class _MorePageState extends State<MorePage> {
       ishaIqamah: ishaIqamah,
       adhanEnabled: adhan,
       iqamahEnabled: iqamah,
-    );
+    ); // schedules high-importance local notifications (Android) & alert/sound on iOS  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
 
     await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
       anyDateThisWeekLocal: base,
       enabled: jumuah,
-    );
+    ); // weekly Friday reminder  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
   }
-  // ───────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +269,7 @@ class _MorePageState extends State<MorePage> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
               // ============= NOTIFICATIONS =============
-              _sectionHeader(context, 'Notifications'),
+              _sectionHeader(context, l10n.more_notifications),
               _card(
                 context,
                 child: Theme(
@@ -285,13 +280,13 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _notificationsExpanded,
                     onExpansionChanged: (v) => setState(() => _notificationsExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.bell),
-                    title: _secTitle(context, 'Notifications'),
+                    title: _secTitle(context, l10n.more_notifications),
                     children: [
                       // Enable Notifications (tap → OS Settings), with buttons
                       FutureBuilder<NotificationSettings>(
                         future: NotificationOptInService.getStatus(),
                         builder: (context, snap) {
-                          String value = 'Checking…';
+                          String value = '…';
                           VoidCallback onTap = () {};
                           bool showEnableButton = false;
                           if (snap.hasData) {
@@ -299,19 +294,19 @@ class _MorePageState extends State<MorePage> {
                             final authorized = NotificationOptInService.isAuthorized(s);
                             final denied = s.authorizationStatus == AuthorizationStatus.denied;
                             if (authorized) {
-                              value = 'Enabled';
+                              value = l10n.common_enabled;
                               onTap = () async {
                                 await NotificationOptInService.openOSSettings();
                               };
                               showEnableButton = false;
                             } else if (denied) {
-                              value = 'Disabled';
+                              value = l10n.common_disabled;
                               onTap = () async {
                                 await NotificationOptInService.openOSSettings();
                               };
                               showEnableButton = true;
                             } else {
-                              value = 'Disabled';
+                              value = l10n.common_disabled;
                               onTap = () async {
                                 await NotificationOptInService.openOSSettings();
                               };
@@ -323,7 +318,7 @@ class _MorePageState extends State<MorePage> {
                               _pickerRow(
                                 context: context,
                                 icon: FontAwesomeIcons.bell,
-                                label: 'Enable Notifications',
+                                label: l10n.more_enable_notifications,
                                 value: value,
                                 onTap: onTap,
                               ),
@@ -336,7 +331,7 @@ class _MorePageState extends State<MorePage> {
                                         onPressed: () async {
                                           await NotificationOptInService.openOSSettings();
                                         },
-                                        child: const Text('Open Settings'),
+                                        child: Text(l10n.common_open_settings),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -349,12 +344,12 @@ class _MorePageState extends State<MorePage> {
                                             final ok = NotificationOptInService.isAuthorized(after);
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               SnackBar(content: Text(ok
-                                                  ? 'Notifications enabled'
-                                                  : 'Permission not granted')),
+                                                  ? l10n.common_enabled
+                                                  : l10n.common_disabled)),
                                             );
                                             setState(() {});
                                           },
-                                          child: const Text('Enable'),
+                                          child: Text(l10n.common_enable),
                                         ),
                                       ),
                                   ],
@@ -370,22 +365,20 @@ class _MorePageState extends State<MorePage> {
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.mosque,
-                        label: 'Prayer Alerts',
+                        label: l10n.more_prayer_alerts,
                         value: (_adhanAlert || _iqamahAlert)
-                            ? 'Adhan: ${_toggleLabel(_adhanAlert)} · Iqamah: ${_toggleLabel(_iqamahAlert)}'
-                            : 'Configure',
+                            ? '${l10n.more_adhan}: ${_toggleLabel(_adhanAlert)} · ${l10n.more_iqamah}: ${_toggleLabel(_iqamahAlert)}'
+                            : l10n.common_open,
                         onTap: _configurePrayerAlerts,
                       ),
                       const _Hairline(),
 
-                      // Jumu'ah Reminder (trimmed text)
+                      // Jumu'ah Reminder
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.handsPraying,
-                        label: "Jumu’ah Reminder",
-                        value: _jumuahReminder
-                            ? "On (1 hour before Jumu’ah)"
-                            : "Off (1 hour before Jumu’ah)",
+                        label: l10n.more_jumuah_reminder,
+                        value: _jumuahReminder ? l10n.more_jumuah_on : l10n.more_jumuah_off,
                         onTap: () async {
                           final enabled = await _toggleJumuahReminder();
                           if (!context.mounted) return;
@@ -395,8 +388,8 @@ class _MorePageState extends State<MorePage> {
 
                           // Persist and (re)schedule immediately
                           await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);   // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-                          await AlertsScheduler.instance.requestPermissions();        // ensure OS permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
-                          await _rescheduleTodayAlerts(
+                          await AlertsScheduler.instance.requestPermissions();        // OS permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                          await _rescheduleTodayAlerts(                              // schedule locally  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
                             adhan: UXPrefs.adhanAlertEnabled.value,
                             iqamah: UXPrefs.iqamahAlertEnabled.value,
                             jumuah: UXPrefs.jumuahReminderEnabled.value,
@@ -411,7 +404,7 @@ class _MorePageState extends State<MorePage> {
               const SizedBox(height: 20),
 
               // ============= ACCESSIBILITY =============
-              _sectionHeader(context, l10n.more_accessibility),
+              _sectionHeader(context, AppLocalizations.of(context).more_accessibility),
               _card(
                 context,
                 child: Theme(
@@ -422,7 +415,7 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _accExpanded,
                     onExpansionChanged: (v) => setState(() => _accExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.universalAccess),
-                    title: _secTitle(context, l10n.more_accessibility),
+                    title: _secTitle(context, AppLocalizations.of(context).more_accessibility),
                     children: [
                       // Dark Mode
                       ValueListenableBuilder<ThemeMode>(
@@ -435,7 +428,7 @@ class _MorePageState extends State<MorePage> {
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.moon,
-                            label: l10n.more_dark_mode,
+                            label: AppLocalizations.of(context).more_dark_mode,
                             value: isDark,
                             onChanged: (v) {
                               ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
@@ -453,7 +446,7 @@ class _MorePageState extends State<MorePage> {
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.mobileScreenButton,
-                            label: l10n.more_haptics,
+                            label: AppLocalizations.of(context).more_haptics,
                             value: enabled,
                             onChanged: (v) async {
                               await UXPrefs.setHapticsEnabled(v);
@@ -470,13 +463,13 @@ class _MorePageState extends State<MorePage> {
                           return _pickerRow(
                             context: context,
                             icon: FontAwesomeIcons.textHeight,
-                            label: l10n.more_text_size,
+                            label: AppLocalizations.of(context).more_text_size,
                             value: UXPrefs.labelForScale(scale),
                             onTap: () async {
                               final options = const <String>['Small', 'Default', 'Large'];
                               final choice = await _chooseOne(
                                 context,
-                                title: l10n.more_text_size,
+                                title: AppLocalizations.of(context).more_text_size,
                                 options: options,
                                 selected: UXPrefs.labelForScale(UXPrefs.textScale.value),
                               );
@@ -498,7 +491,7 @@ class _MorePageState extends State<MorePage> {
               const SizedBox(height: 20),
 
               // ============= DATE & TIME =============
-              _sectionHeader(context, l10n.more_date_time),
+              _sectionHeader(context, AppLocalizations.of(context).more_date_time),
               _card(
                 context,
                 child: Theme(
@@ -509,7 +502,7 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _dateTimeExpanded,
                     onExpansionChanged: (v) => setState(() => _dateTimeExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.clock),
-                    title: _secTitle(context, l10n.more_date_time),
+                    title: _secTitle(context, AppLocalizations.of(context).more_date_time),
                     children: [
                       // TIME FORMAT (12/24h)
                       ValueListenableBuilder<bool>(
@@ -520,14 +513,14 @@ class _MorePageState extends State<MorePage> {
                           return _segmentedRow(
                             context: context,
                             icon: FontAwesomeIcons.clock,
-                            label: l10n.more_time_format,
+                            label: AppLocalizations.of(context).more_time_format,
                             segments: segments,
                             index: selectedIndex,
                             onChanged: (i) async {
                               await UXPrefs.setUse24h(i == 1);
                               if (!context.mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${l10n.more_time_format}: ${segments[i]}');
+                              _toast('${AppLocalizations.of(context).more_time_format}: ${segments[i]}');
                               setState(() {});
                             },
                           );
@@ -539,6 +532,7 @@ class _MorePageState extends State<MorePage> {
                       ValueListenableBuilder<int>(
                         valueListenable: UXPrefs.hijriOffset,
                         builder: (context, offset, _) {
+                          final l10n = AppLocalizations.of(context);
                           final segments = <String>[
                             l10n.more_hijri_offset_minus1,
                             l10n.more_hijri_offset_zero,
@@ -601,7 +595,7 @@ class _MorePageState extends State<MorePage> {
               const SizedBox(height: 20),
 
               // ============= LANGUAGE =============
-              _sectionHeader(context, l10n.more_language),
+              _sectionHeader(context, AppLocalizations.of(context).more_language),
               _card(
                 context,
                 child: Theme(
@@ -612,14 +606,15 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _langExpanded,
                     onExpansionChanged: (v) => setState(() => _langExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.language),
-                    title: _secTitle(context, l10n.more_language),
+                    title: _secTitle(context, AppLocalizations.of(context).more_language),
                     children: [
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.language,
-                        label: l10n.more_language_label,
+                        label: AppLocalizations.of(context).more_language_label,
                         value: _currentLanguageLabel(context),
                         onTap: () async {
+                          final l10n = AppLocalizations.of(context);
                           final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
                           final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
@@ -644,7 +639,7 @@ class _MorePageState extends State<MorePage> {
               const SizedBox(height: 20),
 
               // ============= ABOUT =============
-              _sectionHeader(context, 'About'),
+              _sectionHeader(context, AppLocalizations.of(context).more_about),
               _card(
                 context,
                 child: Theme(
@@ -655,44 +650,44 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _aboutExpanded,
                     onExpansionChanged: (v) => setState(() => _aboutExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.circleInfo),
-                    title: _secTitle(context, 'About'),
+                    title: _secTitle(context, AppLocalizations.of(context).more_about),
                     children: [
                       _staticRow(
                         context: context,
                         icon: FontAwesomeIcons.tag,
-                        label: 'Version',
+                        label: AppLocalizations.of(context).more_version,
                         trailing: Text(_appVersion),
                       ),
                       const _Hairline(),
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.info,
-                        label: 'About the App',
-                        value: 'Open',
+                        label: AppLocalizations.of(context).more_about_app,
+                        value: AppLocalizations.of(context).common_open,
                         onTap: () => _openMarkdownSheet(
-                          title: 'About the App',
-                          body: 'IALFM Prayer Times App for daily Salah.',
+                          title: AppLocalizations.of(context).more_about_app,
+                          body: AppLocalizations.of(context).more_about_app_body,
                         ),
                       ),
                       const _Hairline(),
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.shieldHalved,
-                        label: 'Privacy Policy',
-                        value: 'Open',
+                        label: AppLocalizations.of(context).more_privacy_policy,
+                        value: AppLocalizations.of(context).common_open,
                         onTap: () => _openMarkdownSheet(
-                          title: 'Privacy Policy',
-                          body: _privacyPolicyText,
+                          title: AppLocalizations.of(context).more_privacy_policy,
+                          body: _privacyPolicyText, // keep static or localize as needed
                         ),
                       ),
                       const _Hairline(),
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.triangleExclamation,
-                        label: 'Disclaimer',
-                        value: 'Open',
+                        label: AppLocalizations.of(context).more_disclaimer,
+                        value: AppLocalizations.of(context).common_open,
                         onTap: () => _openMarkdownSheet(
-                          title: 'Disclaimer',
+                          title: AppLocalizations.of(context).more_disclaimer,
                           body: _disclaimerText,
                         ),
                       ),
@@ -700,10 +695,10 @@ class _MorePageState extends State<MorePage> {
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.scaleBalanced,
-                        label: 'Licensing',
-                        value: 'Open',
+                        label: AppLocalizations.of(context).more_licensing,
+                        value: AppLocalizations.of(context).common_open,
                         onTap: () => _openMarkdownSheet(
-                          title: 'Licensing',
+                          title: AppLocalizations.of(context).more_licensing,
                           body: _licensingText,
                         ),
                       ),
@@ -711,8 +706,8 @@ class _MorePageState extends State<MorePage> {
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.envelope,
-                        label: 'Contact',
-                        value: 'Open',
+                        label: AppLocalizations.of(context).more_contact,
+                        value: AppLocalizations.of(context).common_open,
                         onTap: _openContactSheet,
                       ),
                     ],
@@ -728,10 +723,11 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ───────────────────────── Notifications UI helpers ────────────────────────
-  String _toggleLabel(bool v) => v ? 'On' : 'Off';
+  // ───────────── Notifications UI helpers ─────────────
+  String _toggleLabel(bool v) => v ? 'On' : 'Off'; // keep concise English for combined value row
 
   Future<void> _configurePrayerAlerts() async {
+    final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -746,16 +742,16 @@ class _MorePageState extends State<MorePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Prayer Alerts', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    Text(l10n.more_prayer_alerts,
+                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
-                    // Wording matches scheduler behavior
                     SwitchListTile.adaptive(
-                      title: const Text('Adhan Alert (at Adhan time)'),
+                      title: Text(l10n.more_adhan_alert_at_time),
                       value: _adhanAlert,
                       onChanged: (v) => setModalState(() => _adhanAlert = v),
                     ),
                     SwitchListTile.adaptive(
-                      title: const Text('Iqamah Alert (5 minutes before)'),
+                      title: Text(l10n.more_iqamah_alert_5min),
                       value: _iqamahAlert,
                       onChanged: (v) => setModalState(() => _iqamahAlert = v),
                     ),
@@ -765,7 +761,7 @@ class _MorePageState extends State<MorePage> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Close'),
+                            child: Text(l10n.btn_close),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -775,25 +771,25 @@ class _MorePageState extends State<MorePage> {
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
-                              // 1) Persist toggles
-                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);    //  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);  //  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+                              // Persist toggles
+                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);   // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert); // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
 
-                              // 2) Ensure OS permission (Android 13+/iOS prompt as needed)
-                              await AlertsScheduler.instance.requestPermissions(); //  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                              // Ensure OS permission (Android 13+/iOS prompt as needed)
+                              await AlertsScheduler.instance.requestPermissions(); // permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
 
-                              // 3) Schedule for TODAY using persisted values
-                              await _rescheduleTodayAlerts(
+                              // Schedule for TODAY using persisted values
+                              await _rescheduleTodayAlerts(                     // local notifications  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
                                 adhan: UXPrefs.adhanAlertEnabled.value,
                                 iqamah: UXPrefs.iqamahAlertEnabled.value,
                                 jumuah: UXPrefs.jumuahReminderEnabled.value,
                               );
 
                               if (!mounted) return;
-                              _toast('Prayer alerts updated');
+                              _toast(l10n.common_enabled);
                               setState(() {});
                             },
-                            child: const Text('Save'),
+                            child: Text(l10n.btn_save),
                           ),
                         ),
                       ],
@@ -810,24 +806,23 @@ class _MorePageState extends State<MorePage> {
 
   Future<bool?> _toggleJumuahReminder() async {
     bool temp = _jumuahReminder;
+    final l10n = AppLocalizations.of(context);
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Jumu’ah Reminder"),
-        content: const Text(
-          "Send a friendly reminder 1 hour before Jumu’ah.",
-        ),
+        title: Text(l10n.more_jumuah_reminder),
+        content: const Text("Send a friendly reminder 1 hour before Jumu’ah."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, temp),
-            child: const Text('Cancel'),
+            child: Text(l10n.btn_cancel),
           ),
           StatefulBuilder(
             builder: (ctx, setDialogState) {
               return Row(
                 children: [
                   const SizedBox(width: 12),
-                  const Text('Enable'),
+                  Text(l10n.common_enable),
                   const Spacer(),
                   Switch.adaptive(
                     value: temp,
@@ -840,14 +835,14 @@ class _MorePageState extends State<MorePage> {
           const SizedBox(width: 8),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, temp),
-            child: const Text('Save'),
+            child: Text(l10n.btn_save),
           ),
         ],
       ),
     );
   }
 
-  // ───────────────────────────── About helpers ────────────────────────────────
+  // ───────────── About helpers ─────────────
   Future<void> _openMarkdownSheet({required String title, required String body}) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -877,7 +872,7 @@ class _MorePageState extends State<MorePage> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Close'),
+                    child: Text(AppLocalizations.of(context).btn_close),
                   ),
                 ),
               ],
@@ -920,7 +915,7 @@ class _MorePageState extends State<MorePage> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Close'),
+                    child: Text(AppLocalizations.of(context).btn_close),
                   ),
                 ),
               ],
@@ -942,7 +937,7 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
-  // ───────────────────────────── Shared UI helpers ───────────────────────────
+  // ───────────── Shared UI helpers ─────────────
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
     return Padding(
@@ -1090,6 +1085,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
+  // ⬇️ Restored helper: was missing in last drop; required by the Admin row
   Widget _buttonRow({
     required BuildContext context,
     required IconData icon,
@@ -1104,8 +1100,10 @@ class _MorePageState extends State<MorePage> {
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label,
-                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+            child: Text(
+              label,
+              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+            ),
           ),
           FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
         ],
@@ -1120,13 +1118,13 @@ class _MorePageState extends State<MorePage> {
         required String selected,
       }) async {
     int tempIndex = options.indexOf(selected);
+    final l10n = AppLocalizations.of(context);
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
-        final l10n = AppLocalizations.of(context);
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return SafeArea(
@@ -1137,8 +1135,7 @@ class _MorePageState extends State<MorePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(title,
-                          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     ),
                     SegmentedButton<int>(
                       segments: List.generate(
@@ -1181,7 +1178,7 @@ class _MorePageState extends State<MorePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ───────────────────────────── Static policy blocks ────────────────────────
+  // Static policy blocks (can be localized later if you prefer)
   static const String _privacyPolicyText =
       'We do not collect personal CPNI or sensitive personal data. We may store non‑identifying app settings on your device (e.g., theme, language, Hijri offset). Push notifications are used solely to deliver masjid announcements and time‑sensitive updates; you can manage notifications in your device Settings. We do not sell or share personal data with third parties.';
 

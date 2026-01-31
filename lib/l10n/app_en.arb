@@ -1,4 +1,3 @@
-
 {
   "@@locale": "en",
 
@@ -23,8 +22,31 @@
   "more_hijri_offset_minus1": "-1 day",
   "more_hijri_offset_zero": "0",
   "more_hijri_offset_plus1": "+1 day",
+  "more_notifications": "Notifications",
+  "more_enable_notifications": "Enable Notifications",
+  "more_prayer_alerts": "Prayer Alerts",
+  "more_adhan": "Adhan",
+  "more_iqamah": "Iqamah",
+  "more_adhan_alert_at_time": "Adhan Alert (at Adhan time)",
+  "more_iqamah_alert_5min": "Iqamah Alert (5 minutes before)",
+  "more_jumuah_reminder": "Jumu’ah Reminder",
+  "more_jumuah_on": "On (1 hour before Jumu’ah)",
+  "more_jumuah_off": "Off (1 hour before Jumu’ah)",
+  "more_about": "About",
+  "more_version": "Version",
+  "more_about_app": "About the App",
+  "more_about_app_body": "IALFM Prayer Times App for daily Salah.",
+  "more_privacy_policy": "Privacy Policy",
+  "more_disclaimer": "Disclaimer",
+  "more_licensing": "Licensing",
+  "more_contact": "Contact",
 
-
+  "common_open": "Open",
+  "common_enabled": "Enabled",
+  "common_disabled": "Disabled",
+  "common_enable": "Enable",
+  "common_open_settings": "Open Settings",
+  "btn_close": "Close",
   "btn_cancel": "Cancel",
   "btn_save": "Save",
   "lang_english": "English",
