@@ -1,6 +1,5 @@
 // lib/pages/prayer_page.dart
 import 'dart:async';
-// Removed: `import 'dart:ui' show FontFeature;` — Material provides what we use.
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -154,7 +153,7 @@ class _PrayerPageState extends State<PrayerPage> {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    // Lint-clean gradient lookup: avoid null-aware on a non-null receiver
+    // Gradient extension (lint-clean)
     final ag = Theme.of(context).extension<AppGradients>();
     final bgGradient = (ag != null) ? ag.page : AppColors.pageGradient;
 
@@ -399,7 +398,7 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner (unchanged)
+// CountdownBanner (unchanged behavior; lint-clean)
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
   final bool isLight;
@@ -431,7 +430,6 @@ class CountdownBanner extends StatefulWidget {
     fontSize: kCountdownDigitSizeLight,
     fontWeight: FontWeight.w700,
     letterSpacing: 1.0,
-    // FontFeature.tabularFigures() available via Material exports; no need for `dart:ui` import.
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
 

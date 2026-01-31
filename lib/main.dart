@@ -540,10 +540,11 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
     final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah ?? '');
 
-    // TODO: read from UXPrefs when you persist the new toggles
-    const bool adhanEnabled  = false;
-    const bool iqamahEnabled = false;
-    const bool jumuahEnabled = false;
+    // read from UXPrefs when you persist the new toggles
+    final bool adhanEnabled  = UXPrefs.adhanAlertEnabled.value;
+    final bool iqamahEnabled = UXPrefs.iqamahAlertEnabled.value;
+    final bool jumuahEnabled = UXPrefs.jumuahReminderEnabled.value;
+
 
     await AlertsScheduler.instance.schedulePrayerAlertsForDay(
       dateLocal: base,

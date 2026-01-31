@@ -16,6 +16,12 @@ import '../services/notification_optin_service.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+// NEW: for scheduling local notifications using your scheduler
+import '../services/alerts_scheduler.dart';           // ← scheduler API
+// NEW: to load & parse today’s prayer times for scheduling
+//import '../utils/time_utils.dart';                    // ← loadPrayerDays()  
+import '../models.dart';                              // ← PrayerDay model
+
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
   @override
@@ -37,17 +43,21 @@ class _MorePageState extends State<MorePage> {
   bool _notificationsExpanded = false;
   bool _aboutExpanded = false;
 
-  // Prayer Alerts (UI toggles; persistence can be added later)
+  // Prayer Alerts (UI toggles; persisted via UXPrefs)
   bool _adhanAlert = false;
   bool _iqamahAlert = false;
 
-  // Jumu'ah Reminder (UI toggle)
+  // Jumu'ah Reminder (UI toggle; persisted via UXPrefs)
   bool _jumuahReminder = false;
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
+    // Load persisted toggles from UXPrefs on open
+    _adhanAlert      = UXPrefs.adhanAlertEnabled.value;
+    _iqamahAlert     = UXPrefs.iqamahAlertEnabled.value;
+    _jumuahReminder  = UXPrefs.jumuahReminderEnabled.value;
   }
 
   Future<void> _loadVersion() async {
@@ -161,6 +171,79 @@ class _MorePageState extends State<MorePage> {
     ).then((v) => v ?? false);
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // NOTIFICATIONS: helper to (re)schedule alerts for TODAY based on toggles
+  // Uses the same source of truth as main.dart (local prayer_times file).  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+  Future<void> _rescheduleTodayAlerts({
+    required bool adhan,
+    required bool iqamah,
+    required bool jumuah,
+  }) async {
+    final now = DateTime.now();
+    final days = await loadPrayerDays(year: now.year);     // utils/time_utils.dart  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    final todayDate = DateTime(now.year, now.month, now.day);
+
+    PrayerDay? today;
+    for (final d in days) {
+      if (d.date.year == todayDate.year &&
+          d.date.month == todayDate.month &&
+          d.date.day == todayDate.day) {
+        today = d;
+        break;
+      }
+    }
+    if (today == null) return;
+
+    DateTime? mkTime(DateTime base, String hhmm) {
+      if (hhmm.isEmpty) return null;
+      final parts = hhmm.split(':');
+      if (parts.length != 2) return null;
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h == null || m == null) return null;
+      return DateTime(base.year, base.month, base.day, h, m);
+    }
+
+    final base = DateTime(today.date.year, today.date.month, today.date.day);
+
+    // Adhan
+    final fajrAdhan     = mkTime(base, today.prayers['fajr']?.begin    ?? '');
+    final dhuhrAdhan    = mkTime(base, today.prayers['dhuhr']?.begin   ?? '');
+    final asrAdhan      = mkTime(base, today.prayers['asr']?.begin     ?? '');
+    final maghribAdhan  = mkTime(base, today.prayers['maghrib']?.begin ?? '');
+    final ishaAdhan     = mkTime(base, today.prayers['isha']?.begin    ?? '');
+
+    // Iqamah
+    final fajrIqamah    = mkTime(base, today.prayers['fajr']?.iqamah    ?? '');
+    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']?.iqamah   ?? '');
+    final asrIqamah     = mkTime(base, today.prayers['asr']?.iqamah     ?? '');
+    final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
+    final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah    ?? '');
+
+    // Schedule via AlertsScheduler (local notifications).  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
+      dateLocal: base,
+      fajrAdhan: fajrAdhan,
+      dhuhrAdhan: dhuhrAdhan,
+      asrAdhan: asrAdhan,
+      maghribAdhan: maghribAdhan,
+      ishaAdhan: ishaAdhan,
+      fajrIqamah: fajrIqamah,
+      dhuhrIqamah: dhuhrIqamah,
+      asrIqamah: asrIqamah,
+      maghribIqamah: maghribIqamah,
+      ishaIqamah: ishaIqamah,
+      adhanEnabled: adhan,
+      iqamahEnabled: iqamah,
+    );
+
+    await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
+      anyDateThisWeekLocal: base,
+      enabled: jumuah,
+    );
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -211,12 +294,10 @@ class _MorePageState extends State<MorePage> {
                           String value = 'Checking…';
                           VoidCallback onTap = () {};
                           bool showEnableButton = false;
-
                           if (snap.hasData) {
                             final s = snap.data!;
                             final authorized = NotificationOptInService.isAuthorized(s);
                             final denied = s.authorizationStatus == AuthorizationStatus.denied;
-
                             if (authorized) {
                               value = 'Enabled';
                               onTap = () async {
@@ -237,7 +318,6 @@ class _MorePageState extends State<MorePage> {
                               showEnableButton = true;
                             }
                           }
-
                           return Column(
                             children: [
                               _pickerRow(
@@ -312,14 +392,22 @@ class _MorePageState extends State<MorePage> {
                           setState(() {
                             _jumuahReminder = enabled ?? _jumuahReminder;
                           });
+
+                          // Persist and (re)schedule immediately
+                          await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);   // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+                          await AlertsScheduler.instance.requestPermissions();        // ensure OS permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                          await _rescheduleTodayAlerts(
+                            adhan: UXPrefs.adhanAlertEnabled.value,
+                            iqamah: UXPrefs.iqamahAlertEnabled.value,
+                            jumuah: UXPrefs.jumuahReminderEnabled.value,
+                          );
                         },
                       ),
-
-                      // NOTE: Announcements row removed per request — bottom tab handles it.
                     ],
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // ============= ACCESSIBILITY =============
@@ -342,8 +430,8 @@ class _MorePageState extends State<MorePage> {
                         builder: (context, mode, _) {
                           final platformDark =
                               MediaQuery.of(context).platformBrightness == Brightness.dark;
-                          final isDark = (mode == ThemeMode.dark) ||
-                              (mode == ThemeMode.system && platformDark);
+                          final isDark = (mode == ThemeMode.dark)
+                              || (mode == ThemeMode.system && platformDark);
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.moon,
@@ -357,6 +445,7 @@ class _MorePageState extends State<MorePage> {
                         },
                       ),
                       const _Hairline(),
+
                       // Haptics
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
@@ -373,6 +462,7 @@ class _MorePageState extends State<MorePage> {
                         },
                       ),
                       const _Hairline(),
+
                       // Text Size picker
                       ValueListenableBuilder<double>(
                         valueListenable: UXPrefs.textScale,
@@ -404,6 +494,7 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // ============= DATE & TIME =============
@@ -474,7 +565,6 @@ class _MorePageState extends State<MorePage> {
                           );
                         },
                       ),
-
                       const _Hairline(),
 
                       // Admin-only override
@@ -484,15 +574,12 @@ class _MorePageState extends State<MorePage> {
                         label: 'Update Hijri Date from Masjid (Admin)',
                         onPressed: () async {
                           UXPrefs.maybeHaptic();
-
                           final pinOk = await _promptAdminPin();
                           if (!context.mounted) return;
                           if (!pinOk) return;
-
                           final sure = await _confirmRunOverride();
                           if (!context.mounted) return;
                           if (!sure) return;
-
                           final result = await HijriOverrideService.applyIfPresent(
                             resolveAppHijri: (g) async {
                               final h = HijriCalendar.fromDate(g);
@@ -510,6 +597,7 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // ============= LANGUAGE =============
@@ -552,6 +640,7 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // ============= ABOUT =============
@@ -593,7 +682,7 @@ class _MorePageState extends State<MorePage> {
                         value: 'Open',
                         onTap: () => _openMarkdownSheet(
                           title: 'Privacy Policy',
-                          body: _privacyPolicyText, // paragraph (no bullets)
+                          body: _privacyPolicyText,
                         ),
                       ),
                       const _Hairline(),
@@ -630,6 +719,7 @@ class _MorePageState extends State<MorePage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
             ],
           ),
@@ -638,7 +728,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ---------- Notifications helpers ----------
+  // ───────────────────────── Notifications UI helpers ────────────────────────
   String _toggleLabel(bool v) => v ? 'On' : 'Off';
 
   Future<void> _configurePrayerAlerts() async {
@@ -658,7 +748,7 @@ class _MorePageState extends State<MorePage> {
                   children: [
                     Text('Prayer Alerts', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
-                    // Wording matches actual scheduler behavior:
+                    // Wording matches scheduler behavior
                     SwitchListTile.adaptive(
                       title: const Text('Adhan Alert (at Adhan time)'),
                       value: _adhanAlert,
@@ -681,13 +771,27 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(ctx);
                               if (!mounted) return;
-                              setState(() {});
+
+                              // 1) Persist toggles
+                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);    //  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);  //  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+
+                              // 2) Ensure OS permission (Android 13+/iOS prompt as needed)
+                              await AlertsScheduler.instance.requestPermissions(); //  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+
+                              // 3) Schedule for TODAY using persisted values
+                              await _rescheduleTodayAlerts(
+                                adhan: UXPrefs.adhanAlertEnabled.value,
+                                iqamah: UXPrefs.iqamahAlertEnabled.value,
+                                jumuah: UXPrefs.jumuahReminderEnabled.value,
+                              );
+
+                              if (!mounted) return;
                               _toast('Prayer alerts updated');
-                              // NOTE: Actual scheduling handled by AlertsScheduler.
-                              // Configure it for: Adhan = T+0s, Iqamah = T-5m.
+                              setState(() {});
                             },
                             child: const Text('Save'),
                           ),
@@ -743,7 +847,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ---------- About helpers ----------
+  // ───────────────────────────── About helpers ────────────────────────────────
   Future<void> _openMarkdownSheet({required String title, required String body}) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -838,7 +942,7 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
-  // ---------- Shared UI helpers ----------
+  // ───────────────────────────── Shared UI helpers ───────────────────────────
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
     return Padding(
@@ -856,14 +960,11 @@ class _MorePageState extends State<MorePage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-
     final bg = isDark
         ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35), const Color(0xFF0E2330))
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
-
     final hairline =
     isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
-
     return Container(
       decoration: BoxDecoration(
         color: bg,
@@ -1036,7 +1137,8 @@ class _MorePageState extends State<MorePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                      child: Text(title,
+                          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     ),
                     SegmentedButton<int>(
                       segments: List.generate(
@@ -1079,7 +1181,7 @@ class _MorePageState extends State<MorePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ---------- Static policy blocks ----------
+  // ───────────────────────────── Static policy blocks ────────────────────────
   static const String _privacyPolicyText =
       'We do not collect personal CPNI or sensitive personal data. We may store non‑identifying app settings on your device (e.g., theme, language, Hijri offset). Push notifications are used solely to deliver masjid announcements and time‑sensitive updates; you can manage notifications in your device Settings. We do not sell or share personal data with third parties.';
 

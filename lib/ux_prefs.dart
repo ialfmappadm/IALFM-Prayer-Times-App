@@ -6,34 +6,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UXPrefs {
   static SharedPreferences? _sp;
 
-  // Keys
-  static const _kHaptics = 'ux.haptics';
-  static const _kTextScale = 'ux.textScale';
-  static const _kThemeMode = 'ux.themeMode';
-  static const _kUse24h = 'ux.use24h';
-  static const _kHijriOffset = 'ux.hijriOffset';
+  // ── Keys (existing) ────────────────────────────────────────────────────────
+  static const _kHaptics       = 'ux.haptics';
+  static const _kTextScale     = 'ux.textScale';
+  static const _kThemeMode     = 'ux.themeMode';
+  static const _kUse24h        = 'ux.use24h';
+  static const _kHijriOffset   = 'ux.hijriOffset';
   static const _kHijriBaseAdjust = 'ux.hijriBaseAdjust';
 
-  // Notifiers
-  static final ValueNotifier<bool> hapticsEnabled = ValueNotifier<bool>(false);
-  static final ValueNotifier<double> textScale = ValueNotifier<double>(1.0);
-  static final ValueNotifier<bool> use24h = ValueNotifier<bool>(false);
+  // ── NEW: Notification toggles ──────────────────────────────────────────────
+  static const _kAdhanAlertEnabled   = 'ux.alerts.adhanEnabled';
+  static const _kIqamahAlertEnabled  = 'ux.alerts.iqamahEnabled';
+  static const _kJumuahReminderEnabled = 'ux.alerts.jumuahEnabled';
 
+  // ── Notifiers (existing) ──────────────────────────────────────────────────
+  static final ValueNotifier<bool>   hapticsEnabled = ValueNotifier<bool>(false);
+  static final ValueNotifier<double> textScale      = ValueNotifier<double>(1.0);
+  static final ValueNotifier<bool>   use24h         = ValueNotifier<bool>(false);
   /// User-controlled offset (−1..+1)
-  static final ValueNotifier<int> hijriOffset = ValueNotifier<int>(0);
-
+  static final ValueNotifier<int>    hijriOffset    = ValueNotifier<int>(0);
   /// Internal base adjustment set by override service (e.g., −1..+1)
-  static final ValueNotifier<int> hijriBaseAdjust = ValueNotifier<int>(0);
+  static final ValueNotifier<int>    hijriBaseAdjust = ValueNotifier<int>(0);
+
+  // ── NEW: Notifiers for notification toggles ───────────────────────────────
+  static final ValueNotifier<bool> adhanAlertEnabled    = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> iqamahAlertEnabled   = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> jumuahReminderEnabled= ValueNotifier<bool>(false);
 
   static Future<void> init() async {
     _sp ??= await SharedPreferences.getInstance();
-    hapticsEnabled.value = _sp!.getBool(_kHaptics) ?? false;
-    textScale.value = _sp!.getDouble(_kTextScale) ?? 1.0;
-    use24h.value = _sp!.getBool(_kUse24h) ?? false;
-    hijriOffset.value = _sp!.getInt(_kHijriOffset) ?? 0;
-    hijriBaseAdjust.value = _sp!.getInt(_kHijriBaseAdjust) ?? 0;
+    // Existing prefs
+    hapticsEnabled.value   = _sp!.getBool(_kHaptics)       ?? false;
+    textScale.value        = _sp!.getDouble(_kTextScale)   ?? 1.0;
+    use24h.value           = _sp!.getBool(_kUse24h)        ?? false;
+    hijriOffset.value      = _sp!.getInt(_kHijriOffset)    ?? 0;
+    hijriBaseAdjust.value  = _sp!.getInt(_kHijriBaseAdjust)?? 0;
+
+    // NEW: Load notification toggles
+    adhanAlertEnabled.value     = _sp!.getBool(_kAdhanAlertEnabled)    ?? false;
+    iqamahAlertEnabled.value    = _sp!.getBool(_kIqamahAlertEnabled)   ?? false;
+    jumuahReminderEnabled.value = _sp!.getBool(_kJumuahReminderEnabled)?? false;
   }
 
+  // ── Existing setters ──────────────────────────────────────────────────────
   static Future<void> setHapticsEnabled(bool v) async {
     hapticsEnabled.value = v;
     await _sp?.setBool(_kHaptics, v);
@@ -79,8 +94,8 @@ class UXPrefs {
     _sp ??= await SharedPreferences.getInstance();
     late final String raw;
     switch (mode) {
-      case ThemeMode.light: raw = 'light'; break;
-      case ThemeMode.dark: raw = 'dark'; break;
+      case ThemeMode.light:  raw = 'light';  break;
+      case ThemeMode.dark:   raw = 'dark';   break;
       case ThemeMode.system: raw = 'system'; break;
     }
     await _sp!.setString(_kThemeMode, raw);
@@ -107,4 +122,20 @@ class UXPrefs {
 
   /// Effective total offset (base from override + user choice)
   static int get hijriEffectiveOffset => hijriBaseAdjust.value + hijriOffset.value;
+
+  // ── NEW: Setters for notification toggles ─────────────────────────────────
+  static Future<void> setAdhanAlertEnabled(bool v) async {
+    adhanAlertEnabled.value = v;
+    await _sp?.setBool(_kAdhanAlertEnabled, v);
+  }
+
+  static Future<void> setIqamahAlertEnabled(bool v) async {
+    iqamahAlertEnabled.value = v;
+    await _sp?.setBool(_kIqamahAlertEnabled, v);
+  }
+
+  static Future<void> setJumuahReminderEnabled(bool v) async {
+    jumuahReminderEnabled.value = v;
+    await _sp?.setBool(_kJumuahReminderEnabled, v);
+  }
 }

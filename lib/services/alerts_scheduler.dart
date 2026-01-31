@@ -10,7 +10,6 @@
 // • Re-schedule every midnight (you already have a midnight timer).
 // • Call schedulePrayerAlertsForDay(...) and scheduleJumuahReminderForWeek(...)
 //   when toggles change or when the day's prayer times refresh.
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -24,12 +23,9 @@ class AlertsScheduler {
   static final AlertsScheduler instance = AlertsScheduler._();
 
   final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
-
-  static const String _channelId = 'ialfm_alerts';
+  static const String _channelId   = 'ialfm_alerts';
   static const String _channelName = 'Prayer & Jumu’ah Alerts';
-  static const String _channelDesc =
-      'Adhan/Iqamah alerts and Friday Jumu’ah reminder';
-
+  static const String _channelDesc = 'Adhan/Iqamah alerts and Friday Jumu’ah reminder';
   bool _initialized = false;
 
   /// Initialize the local notifications plugin.
@@ -47,9 +43,7 @@ class AlertsScheduler {
       // onDidReceiveLocalNotification -> not needed for iOS < 10 support here
     );
 
-    final initSettings =
-    InitializationSettings(android: androidInit, iOS: iosInit);
-
+    final initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
     await _fln.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse r) {
@@ -68,7 +62,6 @@ class AlertsScheduler {
       enableVibration: true,
       playSound: true,
     );
-
     await _fln
         .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()
@@ -161,7 +154,6 @@ class AlertsScheduler {
       if (when == null) return;
       final alertAt = when.add(offset);
       if (alertAt.isBefore(DateTime.now())) return;
-
       final tzTime = tz.TZDateTime.from(alertAt, tz.local);
       await _fln.zonedSchedule(
         id,
@@ -177,7 +169,7 @@ class AlertsScheduler {
       );
     }
 
-    // ---------------- Adhan alerts (at time) ----------------
+    // ——— Adhan alerts (at time)
     if (adhanEnabled) {
       await scheduleWithOffset(
         title: 'Adhan Reminder',
@@ -216,9 +208,8 @@ class AlertsScheduler {
       );
     }
 
-    // ---------------- Iqamah alerts (5 minutes before) ----------------
+    // ——— Iqamah alerts (5 minutes before)
     const iqamahLead = Duration(minutes: -5);
-
     if (iqamahEnabled) {
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
@@ -268,7 +259,6 @@ class AlertsScheduler {
     assert(_initialized, 'AlertsScheduler.init() must be called first');
     if (!enabled) return;
 
-    // Find the Friday for this week relative to the supplied date.
     // DateTime.weekday: Monday=1 ... Sunday=7; Friday=5
     final int delta = 5 - anyDateThisWeekLocal.weekday;
     final DateTime friday =
@@ -276,18 +266,13 @@ class AlertsScheduler {
         : anyDateThisWeekLocal.add(Duration(days: 7 + delta));
 
     // 12:30 PM local
-    final DateTime reminderAt = DateTime(
-      friday.year, friday.month, friday.day, 12, 30,
-    );
-
-    // If already past, skip (next call next week will schedule)
+    final DateTime reminderAt = DateTime(friday.year, friday.month, friday.day, 12, 30);
     if (reminderAt.isBefore(DateTime.now())) return;
 
-    final int id = _idFor(_yyyymmdd(friday), 99); // 99: reserved slot for Jumu’ah
+    final int id = _idFor(_yyyymmdd(friday), 99); // reserved slot for Jumu’ah
     await _fln.cancel(id); // replace same-day reminder if present
 
     final tz.TZDateTime tzTime = tz.TZDateTime.from(reminderAt, tz.local);
-
     final android = AndroidNotificationDetails(
       _channelId,
       _channelName,
@@ -300,9 +285,8 @@ class AlertsScheduler {
     );
     const ios = DarwinNotificationDetails(presentAlert: true, presentSound: true);
     final nDetails = NotificationDetails(android: android, iOS: ios);
-
     const String title = "Jumu’ah Reminder";
-    const String body =
+    const String body  =
         "Jumu'ah Mubarak! Don't forget to perform Ghusl and head to the Masjid early for Khutbah, in shā’ Allāh!";
 
     await _fln.zonedSchedule(
@@ -319,7 +303,7 @@ class AlertsScheduler {
     );
   }
 
-  // ---------- ID helpers ----------
+  // ── ID helpers ─────────────────────────────────────────────────────────────
   int _yyyymmdd(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
   int _idFor(int baseYMD, int slot) => baseYMD * 100 + slot;
 }
