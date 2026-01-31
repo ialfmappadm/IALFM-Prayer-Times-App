@@ -38,22 +38,21 @@ import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 // NEW: warm-ups (images + glyphs)
 import 'warm_up.dart';
-
 // For PaintingBinding.imageCache bump
+import 'package:flutter/painting.dart' show PaintingBinding;
 
-// --- Navigation UI tuning
+// NEW: Font Awesome for bottom bar icons
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+// -- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
-
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
-
 // NEW: navigator key for a safe top-level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
-
 // Background FCM handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -125,7 +124,7 @@ Future<void> main() async {
       }
 
       // 🔹 Slightly increase image cache to avoid early evictions of small assets
-      //    used across top header / nav during first interactions.
+      // used across top header / nav during first interactions.
       final cache = PaintingBinding.instance.imageCache;
       cache.maximumSize = (cache.maximumSize * 1.3).round();
 
@@ -148,7 +147,7 @@ Future<void> main() async {
   });
 }
 
-// ---------------- Light Color Scheme ----------------
+// -------------------- Light Color Scheme --------------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42),
@@ -173,7 +172,6 @@ const ColorScheme lightColorScheme = ColorScheme(
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
-
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -185,21 +183,25 @@ const LinearGradient pageGradientLight = LinearGradient(
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
+
   @override
   AppGradients copyWith({Gradient? page}) =>
       AppGradients(page: page ?? this.page);
+
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
     return t < 0.5 ? this : other;
   }
+
   static const light = AppGradients(page: pageGradientLight);
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// ---------------- Bootstrap App ----------------
+// -------------------- Bootstrap App --------------------
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -210,21 +212,21 @@ class BootstrapApp extends StatelessWidget {
           builder: (context, appLocale, __) {
             final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
-              bodyMedium:  GoogleFonts.manrope(),
-              bodyLarge:   GoogleFonts.manrope(),
+              titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              bodyMedium: GoogleFonts.manrope(),
+              bodyLarge: GoogleFonts.manrope(),
             );
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall:    t.bodySmall   ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium:   t.bodyMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge:    t.bodyLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall:   t.titleSmall  ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:  t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge:   t.titleLarge  ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall:   t.labelSmall  ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:  t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge:   t.labelLarge  ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall: t.bodySmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium: t.bodyMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge: t.bodyLarge ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall: t.titleSmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium: t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge: t.titleLarge ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall: t.labelSmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium: t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge: t.labelLarge ?.copyWith(fontFamilyFallback: arabicFallback),
               displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
               displayMedium:t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
               displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
@@ -341,7 +343,7 @@ class BootstrapApp extends StatelessWidget {
   }
 }
 
-// ---------------- Bootstrap Screen ----------------
+// -------------------- Bootstrap Screen --------------------
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
   @override
@@ -417,7 +419,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
   Future<_InitResult> _initializeAll() async {
     // (kept as-is; FCM prompt now deferred post-frame)
-
     // Timezone init (central time)
     tz.Location location;
     try {
@@ -444,6 +445,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
+
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ??
@@ -486,11 +488,11 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     final begin = fmt(date);
     final Map<String, PrayerTime> prayers = {
-      'fajr':    PrayerTime(begin: begin, iqamah: ''),
-      'dhuhr':   PrayerTime(begin: begin, iqamah: ''),
-      'asr':     PrayerTime(begin: begin, iqamah: ''),
+      'fajr': PrayerTime(begin: begin, iqamah: ''),
+      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
+      'asr': PrayerTime(begin: begin, iqamah: ''),
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
-      'isha':    PrayerTime(begin: begin, iqamah: ''),
+      'isha': PrayerTime(begin: begin, iqamah: ''),
     };
     return PrayerDay(
       date: date,
@@ -527,24 +529,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     }
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
-
-    final fajrAdhan    = mkTime(base, today.prayers['fajr']?.begin ?? '');
-    final dhuhrAdhan   = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
-    final asrAdhan     = mkTime(base, today.prayers['asr']?.begin ?? '');
+    final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
+    final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
+    final asrAdhan = mkTime(base, today.prayers['asr']?.begin ?? '');
     final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
-    final ishaAdhan    = mkTime(base, today.prayers['isha']?.begin ?? '');
-
-    final fajrIqamah    = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
-    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
-    final asrIqamah     = mkTime(base, today.prayers['asr']?.iqamah ?? '');
+    final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
+    final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
+    final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
+    final asrIqamah = mkTime(base, today.prayers['asr']?.iqamah ?? '');
     final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
-    final ishaIqamah    = mkTime(base, today.prayers['isha']?.iqamah ?? '');
+    final ishaIqamah = mkTime(base, today.prayers['isha']?.iqamah ?? '');
 
-    // read from UXPrefs when you persist the new toggles
+    // Read toggles from UXPrefs (you wired these earlier)
     final bool adhanEnabled  = UXPrefs.adhanAlertEnabled.value;
     final bool iqamahEnabled = UXPrefs.iqamahAlertEnabled.value;
     final bool jumuahEnabled = UXPrefs.jumuahReminderEnabled.value;
-
 
     await AlertsScheduler.instance.schedulePrayerAlertsForDay(
       dateLocal: base,
@@ -569,7 +568,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 }
 
-// ---------------- Result wrapper ----------------
+// -------------------- Result wrapper --------------------
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
@@ -585,7 +584,7 @@ class _InitResult {
   });
 }
 
-// ---------------- Splash ----------------
+// -------------------- Splash --------------------
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -596,6 +595,7 @@ class _SplashScaffold extends StatelessWidget {
     this.subtitle,
     this.onRetry,
   });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -631,7 +631,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ---------------- Navigation ----------------
+// -------------------- Navigation --------------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -646,6 +646,7 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
+
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -671,7 +672,7 @@ class _HomeTabsState extends State<HomeTabs> {
       }
     });
     FirebaseMessaging.instance.getInitialMessage().then((m) {
-      if (m?.data['newAnnouncement' ]== 'true') {
+      if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
           _index = 1;
           hasNewAnnouncement = false;
@@ -695,6 +696,7 @@ class _HomeTabsState extends State<HomeTabs> {
       const DirectoryPage(),
       const MorePage(),
     ];
+
     return Scaffold(
       body: pages[_index],
       // Isolate bottom navigation from body repaints
@@ -712,10 +714,28 @@ class _HomeTabsState extends State<HomeTabs> {
             Haptics.tap();
           },
           destinations: const [
+            // 0: Prayer — keep Material clock
             NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-            NavigationDestination(label: '', icon: Icon(Icons.campaign)),
-            NavigationDestination(label: '', icon: Icon(Icons.tag)),
-            NavigationDestination(label: '', icon: Icon(Icons.contact_page)),
+
+            // 1: Announcements — FA bell
+            NavigationDestination(
+              label: '',
+              icon: FaIcon(FontAwesomeIcons.bell, size: 20),
+            ),
+
+            // 2: Social — FA Instagram
+            NavigationDestination(
+              label: '',
+              icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
+            ),
+
+            // 3: Directory — FA link
+            NavigationDestination(
+              label: '',
+              icon: FaIcon(FontAwesomeIcons.link, size: 20),
+            ),
+
+            // 4: More — keep Material ellipsis
             NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),
@@ -724,7 +744,7 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// ---------------- Helpers (coords & weather) ----------------
+// -------------------- Helpers (coords & weather) --------------------
 class LatLon {
   final double lat;
   final double lon;
@@ -766,7 +786,7 @@ Future<double?> _fetchTemperatureF({
   return null;
 }
 
-// ---------------- Hijri resolver ----------------
+// -------------------- Hijri resolver --------------------
 Future<HijriYMD> _appHijri(DateTime g) async {
   final h = HijriCalendar.fromDate(g);
   return HijriYMD(h.hYear, h.hMonth, h.hDay);
