@@ -11,7 +11,7 @@ import '../ux_prefs.dart';
 
 /// Light theme text colors (as in your original)
 const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
-const _kLightTextMuted   = Color(0xFF4A6273); // secondary text
+//const _kLightTextMuted   = Color(0xFF4A6273); // secondary text
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ✨ TUNABLE CONSTANTS
@@ -89,7 +89,7 @@ class TopHeader extends StatelessWidget {
 
     final titleColor  = isLight ? _kLightTextPrimary : AppColors.textSecondary;
     final dateColor   = isLight ? _kLightTextPrimary : AppColors.textPrimary;
-    final bulletColor = isLight ? _kLightTextMuted   : AppColors.textSecondary;
+    //final bulletColor = isLight ? _kLightTextMuted   : AppColors.textSecondary;
 
     // 🔶 Match the temperature color to the countdown digits
     final Color tempColor = isLight ? kCountdownGoldLight : AppColors.countdownText;

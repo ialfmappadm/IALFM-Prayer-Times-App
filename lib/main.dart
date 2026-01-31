@@ -43,7 +43,6 @@ import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import 'warm_up.dart';
 
 // For PaintingBinding.imageCache bump
-import 'package:flutter/painting.dart' show PaintingBinding;
 
 // --- Navigation UI tuning
 const double kNavIconSize = 18.0;

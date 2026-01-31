@@ -125,7 +125,7 @@ class SalahTable extends StatelessWidget {
         : const BoxDecoration(gradient: AppColors.headerGradient)));
 
     // ----- Glyph cache reused across rows this build (no behavior change) -----
-    final Map<String, Widget> _glyphCache = {
+    final Map<String, Widget> glyphCache = {
       'Fajr': prayerGlyph('Fajr', color: AppColors.goldSoft),
       'Sunrise': prayerGlyph('Sunrise', color: AppColors.goldSoft),
       'Dhuhr': prayerGlyph('Dhuhr', color: AppColors.goldSoft),
@@ -139,21 +139,21 @@ class SalahTable extends StatelessWidget {
 
     // ----- Pre-format times once per build (avoid repeated work in every row) -----
     final is24h = UXPrefs.use24h.value;
-    String _fmt(String s) => s.isEmpty ? '' : (is24h ? s : format12h(s));
+    String fmt(String s) => s.isEmpty ? '' : (is24h ? s : format12h(s));
 
-    final Map<String, String> _adhanFmt = {
-      for (final n in entries) n: _fmt(adhanByName[n] ?? ''),
+    final Map<String, String> adhanFmt = {
+      for (final n in entries) n: fmt(adhanByName[n] ?? ''),
     };
-    final Map<String, String> _iqamahFmt = {
-      for (final n in entries) n: _fmt((iqamahByName ?? const {})[n] ?? ''),
+    final Map<String, String> iqamahFmt = {
+      for (final n in entries) n: fmt((iqamahByName ?? const {})[n] ?? ''),
     };
 
     // Reuse a single const row padding (micro allocation win)
-    const _rowPad = EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+    const rowPad = EdgeInsets.symmetric(horizontal: 16, vertical: 12);
 
     Widget buildRow(String name, int i) {
-      final adhanText = _adhanFmt[name] ?? '';
-      final iqamahText = _iqamahFmt[name] ?? '';
+      final adhanText = adhanFmt[name] ?? '';
+      final iqamahText = iqamahFmt[name] ?? '';
       final isHighlight = (highlightName != null && highlightName == name);
 
       // Opaque row background per theme (ensures cheap composition)
@@ -217,7 +217,7 @@ class SalahTable extends StatelessWidget {
               const SizedBox(width: 6),
               Align(
                 alignment: Alignment.centerRight,
-                child: _glyphCache[name] ?? prayerGlyph(name, color: AppColors.goldSoft),
+                child: glyphCache[name] ?? prayerGlyph(name, color: AppColors.goldSoft),
               ),
             ],
           ],
@@ -252,7 +252,7 @@ class SalahTable extends StatelessWidget {
       Widget rowCore = MediaQuery(
         data: media.copyWith(textScaler: TextScaler.linear(rowScale)),
         child: Padding(
-          padding: _rowPad,
+          padding: rowPad,
           child: Row(children: [left, middle, right]),
         ),
       );
