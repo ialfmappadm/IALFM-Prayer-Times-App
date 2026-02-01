@@ -4,5 +4,5 @@ SdkRoot = $(SDKROOT)
 // Flutter generated settings
 #include? "Generated.xcconfig"
 
-// CocoaPods integration for Runner (Release)
-#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+// CocoaPods integration for Runner (Profile)
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"

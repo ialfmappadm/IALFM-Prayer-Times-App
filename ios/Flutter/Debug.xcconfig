@@ -1,2 +1,8 @@
-#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
-#include "Generated.xcconfig"
+// Provide SdkRoot for Dart native assets build step (ASCII only)
+SdkRoot = $(SDKROOT)
+
+// Flutter generated settings
+#include? "Generated.xcconfig"
+
+// CocoaPods integration for Runner (Debug)
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"

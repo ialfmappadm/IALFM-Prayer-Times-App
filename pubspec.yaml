@@ -12,7 +12,7 @@ dependencies:
 
 
   # UI/time utilities
-  google_fonts: ^7.0.0
+  google_fonts: ^8.0.0
   # Use canonical package instead of a fork
   flutter_native_timezone_latest: ^1.0.0
   intl: ^0.20.2
@@ -21,9 +21,9 @@ dependencies:
   url_launcher: ^6.3.2
   http: ^1.2.1
   font_awesome_flutter: ^10.12.0
-  package_info_plus: ^8.0.0
+  package_info_plus: ^9.0.0
   flutter_local_notifications: ^18.0.1
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.1
 
 
   # ----- Firebase (aligned with latest FlutterFire 2025/26) -----
@@ -56,6 +56,11 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   # Icon generator
   flutter_launcher_icons: ^0.14.4
+
+dependency_overrides:
+  flutter_local_notifications: 18.0.1
+  timezone: 0.9.4
+  path_provider_foundation: 2.5.1
 
 flutter:
   uses-material-design: true
