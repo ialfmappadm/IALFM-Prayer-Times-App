@@ -41,7 +41,7 @@ import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 // NEW: warm-ups (images + glyphs)
 import 'warm_up.dart';
 // For PaintingBinding.imageCache bump
-import 'package:flutter/painting.dart' show PaintingBinding;
+//import 'package:flutter/painting.dart' show PaintingBinding;
 
 // NEW: Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

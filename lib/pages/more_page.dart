@@ -17,10 +17,10 @@ import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Scheduling local notifications
-import '../services/alerts_scheduler.dart';            // Alerts scheduler (local notifications)
+import '../services/alerts_scheduler.dart';
 // Load & parse today’s prayer times for scheduling
-//import '../utils/time_utils.dart';                     // loadPrayerDays()
-import '../models.dart';                               // PrayerDay model
+//import '../utils/time_utils.dart';
+import '../models.dart';
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -50,14 +50,17 @@ class _MorePageState extends State<MorePage> {
   // Jumu'ah Reminder (UI toggle; persisted via UXPrefs)
   bool _jumuahReminder = false;
 
+  // Brand accent for CTAs (no purple)
+  static const Color _gold = Color(0xFFC7A447);
+
   @override
   void initState() {
     super.initState();
     _loadVersion();
     // Load persisted toggles on open
-    _adhanAlert     = UXPrefs.adhanAlertEnabled.value;     // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-    _iqamahAlert    = UXPrefs.iqamahAlertEnabled.value;    // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-    _jumuahReminder = UXPrefs.jumuahReminderEnabled.value; // persisted toggle (UXPrefs)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    _adhanAlert      = UXPrefs.adhanAlertEnabled.value;
+    _iqamahAlert     = UXPrefs.iqamahAlertEnabled.value;
+    _jumuahReminder  = UXPrefs.jumuahReminderEnabled.value;
   }
 
   Future<void> _loadVersion() async {
@@ -98,6 +101,11 @@ class _MorePageState extends State<MorePage> {
             child: Text(l10n.btn_cancel),
           ),
           FilledButton(
+            // gold CTA
+            style: FilledButton.styleFrom(
+              backgroundColor: _gold,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l10n.btn_save),
           ),
@@ -132,6 +140,11 @@ class _MorePageState extends State<MorePage> {
               child: Text(AppLocalizations.of(context).btn_cancel),
             ),
             FilledButton(
+              // gold CTA
+              style: FilledButton.styleFrom(
+                backgroundColor: _gold,
+                foregroundColor: Colors.black,
+              ),
               onPressed: () {
                 ok = (controller.text == _adminPin);
                 Navigator.pop(ctx);
@@ -162,6 +175,7 @@ class _MorePageState extends State<MorePage> {
             child: Text(AppLocalizations.of(context).btn_cancel),
           ),
           FilledButton.tonal(
+            // keep tonal neutral for safety action
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(AppLocalizations.of(context).btn_save),
           ),
@@ -177,7 +191,7 @@ class _MorePageState extends State<MorePage> {
     required bool jumuah,
   }) async {
     final now = DateTime.now();
-    final days = await loadPrayerDays(year: now.year);     // local JSON loader (already used at startup)  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+    final days = await loadPrayerDays(year: now.year);
     final todayDate = DateTime(now.year, now.month, now.day);
 
     PrayerDay? today;
@@ -196,7 +210,7 @@ class _MorePageState extends State<MorePage> {
       final parts = hhmm.split(':');
       if (parts.length != 2) return null;
       final h = int.tryParse(parts[0]);
-      final m = int.tryParse(parts[1]);
+      final m = int.tryParse(parts[1]); // ✅ fixed parentheses
       if (h == null || m == null) return null;
       return DateTime(base.year, base.month, base.day, h, m);
     }
@@ -231,12 +245,12 @@ class _MorePageState extends State<MorePage> {
       ishaIqamah: ishaIqamah,
       adhanEnabled: adhan,
       iqamahEnabled: iqamah,
-    ); // schedules high-importance local notifications (Android) & alert/sound on iOS  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+    );
 
     await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
       anyDateThisWeekLocal: base,
       enabled: jumuah,
-    ); // weekly Friday reminder  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+    );
   }
 
   @override
@@ -338,6 +352,11 @@ class _MorePageState extends State<MorePage> {
                                     if (showEnableButton)
                                       Expanded(
                                         child: FilledButton(
+                                          // gold CTA for "Enable"
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: _gold,
+                                            foregroundColor: Colors.black,
+                                          ),
                                           onPressed: () async {
                                             final after = await NotificationOptInService.requestPermission();
                                             if (!context.mounted) return;
@@ -387,9 +406,9 @@ class _MorePageState extends State<MorePage> {
                           });
 
                           // Persist and (re)schedule immediately
-                          await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);   // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-                          await AlertsScheduler.instance.requestPermissions();        // OS permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
-                          await _rescheduleTodayAlerts(                              // schedule locally  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                          await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);
+                          await AlertsScheduler.instance.requestPermissions();
+                          await _rescheduleTodayAlerts(
                             adhan: UXPrefs.adhanAlertEnabled.value,
                             iqamah: UXPrefs.iqamahAlertEnabled.value,
                             jumuah: UXPrefs.jumuahReminderEnabled.value,
@@ -677,7 +696,7 @@ class _MorePageState extends State<MorePage> {
                         value: AppLocalizations.of(context).common_open,
                         onTap: () => _openMarkdownSheet(
                           title: AppLocalizations.of(context).more_privacy_policy,
-                          body: _privacyPolicyText, // keep static or localize as needed
+                          body: _privacyPolicyText,
                         ),
                       ),
                       const _Hairline(),
@@ -724,14 +743,14 @@ class _MorePageState extends State<MorePage> {
   }
 
   // ───────────── Notifications UI helpers ─────────────
-  String _toggleLabel(bool v) => v ? 'On' : 'Off'; // keep concise English for combined value row
+  String _toggleLabel(bool v) => v ? 'On' : 'Off';
 
   Future<void> _configurePrayerAlerts() async {
     final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return StatefulBuilder(
@@ -767,19 +786,24 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
+                            // gold CTA (no purple)
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _gold,
+                              foregroundColor: Colors.black,
+                            ),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
                               // Persist toggles
-                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);   // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
-                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert); // persist  [1](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/alerts_scheduler.dart)
+                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);
+                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);
 
                               // Ensure OS permission (Android 13+/iOS prompt as needed)
-                              await AlertsScheduler.instance.requestPermissions(); // permission  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                              await AlertsScheduler.instance.requestPermissions();
 
                               // Schedule for TODAY using persisted values
-                              await _rescheduleTodayAlerts(                     // local notifications  [2](https://ialfm-my.sharepoint.com/personal/syed_ialfm_org/Documents/Microsoft%20Copilot%20Chat%20Files/more_page.dart)
+                              await _rescheduleTodayAlerts(
                                 adhan: UXPrefs.adhanAlertEnabled.value,
                                 iqamah: UXPrefs.iqamahAlertEnabled.value,
                                 jumuah: UXPrefs.jumuahReminderEnabled.value,
@@ -834,6 +858,11 @@ class _MorePageState extends State<MorePage> {
           ),
           const SizedBox(width: 8),
           FilledButton(
+            // gold CTA (no purple)
+            style: FilledButton.styleFrom(
+              backgroundColor: _gold,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () => Navigator.pop(ctx, temp),
             child: Text(l10n.btn_save),
           ),
@@ -847,7 +876,7 @@ class _MorePageState extends State<MorePage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return SafeArea(
@@ -871,6 +900,11 @@ class _MorePageState extends State<MorePage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    // gold CTA (close)
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: Colors.black,
+                    ),
                     onPressed: () => Navigator.pop(ctx),
                     child: Text(AppLocalizations.of(context).btn_close),
                   ),
@@ -887,7 +921,7 @@ class _MorePageState extends State<MorePage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return SafeArea(
@@ -914,6 +948,11 @@ class _MorePageState extends State<MorePage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    // gold CTA (close)
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: Colors.black,
+                    ),
                     onPressed: () => Navigator.pop(ctx),
                     child: Text(AppLocalizations.of(context).btn_close),
                   ),
@@ -955,9 +994,12 @@ class _MorePageState extends State<MorePage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+
+    // 🔹 Dark cards use Salah table highlight color (matches Directory/Social)
     final bg = isDark
-        ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35), const Color(0xFF0E2330))
+        ? AppColors.rowHighlight
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+
     final hairline =
     isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
     return Container(
@@ -1085,7 +1127,6 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ⬇️ Restored helper: was missing in last drop; required by the Admin row
   Widget _buttonRow({
     required BuildContext context,
     required IconData icon,
@@ -1122,7 +1163,7 @@ class _MorePageState extends State<MorePage> {
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return StatefulBuilder(
@@ -1157,6 +1198,11 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
+                            // gold CTA (no purple)
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _gold,
+                              foregroundColor: Colors.black,
+                            ),
                             onPressed: () => Navigator.pop(ctx, options[tempIndex]),
                             child: Text(l10n.btn_save),
                           ),

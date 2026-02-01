@@ -27,7 +27,7 @@ const double _cardVPadding = 16.0;
 
 /// Light palette anchors (used only for the AppBar title in light mode)
 const _kLightTextPrimary = Color(0xFF0F2432);
-const _kLightTextMuted = Color(0xFF4A6273);
+const _kLightTextMuted   = Color(0xFF4A6273);
 
 class SocialPage extends StatelessWidget {
   const SocialPage({super.key});
@@ -55,22 +55,22 @@ class SocialPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context); // <-- localized strings
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final cs = theme.colorScheme;
+    final l10n   = AppLocalizations.of(context); // <-- localized strings
+    final theme  = Theme.of(context);
+    final isLight= theme.brightness == Brightness.light;
+    final cs     = theme.colorScheme;
 
     // Page gradient: prefer AppGradients (same as More/Directory), otherwise AppColors fallback.
     final pageGradient = theme.extension<AppGradients>()?.page ?? AppColors.pageGradient;
 
     // AppBar consistent with other pages
-    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
-    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     // Text colors inside cards (match other pages)
     final titleText = cs.onSurface;
-    final subText = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
+    final subText   = isLight ? _kLightTextMuted : Colors.white.withValues(alpha: 0.75);
 
     final items = <_SocialItem>[
       _SocialItem(
@@ -204,18 +204,21 @@ class _CardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final theme  = Theme.of(context);
+    final cs     = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Bubble glaze identical to updated More/Directory:
-    // Use soft navy in dark mode (no harsh black)
+    // 🔹 CHANGE HERE:
+    // Use the same DARK highlight color as Salah table rows for card background.
+    // Light stays as-is.
     final bg = isDark
-        ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35), const Color(0xFF0E2330))
+        ? AppColors.rowHighlight
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
 
-    // Hairline identical to More/Directory
-    final brd = isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
+    // Hairline identical to other pages
+    final brd = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : cs.outline.withValues(alpha: 0.30);
 
     return InkWell(
       borderRadius: BorderRadius.circular(_cardRadius),
@@ -232,7 +235,10 @@ class _CardTile extends StatelessWidget {
       },
       child: Container(
         width: width,
-        padding: const EdgeInsets.symmetric(horizontal: _cardHPadding, vertical: _cardVPadding),
+        padding: const EdgeInsets.symmetric(
+          horizontal: _cardHPadding,
+          vertical: _cardVPadding,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(_cardRadius),

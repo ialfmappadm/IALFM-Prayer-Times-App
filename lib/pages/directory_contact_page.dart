@@ -1,3 +1,4 @@
+// lib/pages/directory_contact_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart'; // defaultTargetPlatform
@@ -11,8 +12,8 @@ class DirectoryContactPage extends StatelessWidget {
 
   // === CONTACT INFO ===
   static const String _displayPhone = '972-355-3937';
-  static final Uri _telUri = Uri.parse('tel:+19723553937');
-  static final Uri _webUri = Uri.parse('https://www.ialfm.org');
+  static final Uri _telUri  = Uri.parse('tel:+19723553937');
+  static final Uri _webUri  = Uri.parse('https://www.ialfm.org');
   static final Uri _mailUri = Uri.parse('mailto:info@ialfm.org');
 
   // === LOCATION ===
@@ -36,7 +37,7 @@ class DirectoryContactPage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ---------- Private helpers (now referenced) ----------
+  // ---------- Private helpers (methods of this widget) ----------
   Widget _row({
     required BuildContext context,
     required IconData icon,
@@ -117,6 +118,7 @@ class DirectoryContactPage extends StatelessWidget {
             children: [
               // Local map image (16:9)
               AspectRatio(aspectRatio: 16 / 9, child: image),
+
               // Bottom scrim with caption + CTA
               Positioned(
                 left: 0,
@@ -225,21 +227,19 @@ class DirectoryContactPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final cs = theme.colorScheme;
+    final theme     = Theme.of(context);
+    final isLight   = theme.brightness == Brightness.light;
+    final cs        = theme.colorScheme;
     final gradients = theme.extension<AppGradients>();
-
-    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg  = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final iconsColor = titleColor;
-    final overlay =
-    isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
-    // ✅ Apply this color to the contact card so it's not an unused local.
+    // 🔹 CHANGE: align contact card with Salah table highlight in dark mode.
     final Color cardFill = isLight
         ? Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface)
-        : Color.alphaBlend(AppColors.bgPrimary.withValues(alpha: 0.25), Colors.black);
+        : AppColors.rowHighlight; // same “light navy-ish” as table highlight
 
     return Scaffold(
       appBar: AppBar(
@@ -272,7 +272,7 @@ class DirectoryContactPage extends StatelessWidget {
                     // --- CONTACT CARD ---
                     Container(
                       decoration: BoxDecoration(
-                        color: cardFill, // ✅ use the computed fill
+                        color: cardFill, // ✅ uses AppColors.rowHighlight in DARK
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -342,7 +342,6 @@ class DirectoryContactPage extends StatelessWidget {
 
                     // --- FEEDBACK FORM ---
                     const FeedbackForm(),
-
                     const SizedBox(height: 48),
                   ],
                 ),
@@ -417,7 +416,6 @@ class _FeedbackFormState extends State<FeedbackForm>
     // TEST
     final to = "syed@ialfm.org";
     // PROD: final to = "bod@ialfm.org";
-
     final uri = Uri.parse("mailto:$to?subject=$subject&body=$body");
 
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -428,7 +426,6 @@ class _FeedbackFormState extends State<FeedbackForm>
       );
       return;
     }
-
     await _showSuccessDialog();
     if (!mounted) return;
     setState(() {
@@ -442,11 +439,9 @@ class _FeedbackFormState extends State<FeedbackForm>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final onSurface = cs.onSurface;
-
     final fieldBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
     );
-
     final valid =
         subjectCtrl.text.trim().isNotEmpty && detailsCtrl.text.trim().isNotEmpty;
 
@@ -487,7 +482,6 @@ class _FeedbackFormState extends State<FeedbackForm>
               (v == null || v.trim().isEmpty) ? 'Please enter a subject' : null,
               onChanged: (_) => setState(() {}),
             ),
-
             const SizedBox(height: 16),
 
             // Membership toggle (SegmentedButton)
@@ -520,7 +514,6 @@ class _FeedbackFormState extends State<FeedbackForm>
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
-
             const SizedBox(height: 16),
 
             // Details (required)
@@ -548,7 +541,6 @@ class _FeedbackFormState extends State<FeedbackForm>
               (v == null || v.trim().isEmpty) ? 'Please enter details' : null,
               onChanged: (_) => setState(() {}),
             ),
-
             const SizedBox(height: 20),
 
             // Send
@@ -580,7 +572,7 @@ class _FeedbackFormState extends State<FeedbackForm>
   }
 }
 
-// -------- Animated success checkmark dialog (no extra packages) --------
+// ---------- Animated success checkmark dialog ----------
 class _SuccessCheckDialog extends StatefulWidget {
   const _SuccessCheckDialog();
   @override
@@ -602,9 +594,8 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
       reverseDuration: const Duration(milliseconds: 250),
     );
     _scale = CurvedAnimation(parent: _ac, curve: Curves.easeOutBack);
-    _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+    _fade  = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
     _ac.forward();
-
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) Navigator.of(context).pop();
     });

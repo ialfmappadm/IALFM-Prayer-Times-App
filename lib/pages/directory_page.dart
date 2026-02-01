@@ -30,16 +30,15 @@ class _DirectoryPageState extends State<DirectoryPage> {
   static final Uri _sundaySchool = Uri.parse('https://www.ialfm.org/ss-overview/');
   static final Uri _pillars = Uri.parse('https://www.ialfm.org/pillars-academy/');
   static final Uri _quran = Uri.parse('https://www.ialfm.org/quran-school/');
-  static final Uri _mRenew = Uri.parse(
-      'https://us.mohid.co/tx/dallas/ialfm/masjid/member/account/signin');
-  static final Uri _mIndiv = Uri.parse(
-      'https://us.mohid.co/tx/dallas/ialfm/masjid/online/membership/');
+  static final Uri _mRenew =
+  Uri.parse('https://us.mohid.co/tx/dallas/ialfm/masjid/member/account/signin');
+  static final Uri _mIndiv =
+  Uri.parse('https://us.mohid.co/tx/dallas/ialfm/masjid/online/membership/');
   static final Uri _mFamily = Uri.parse(
       'https://us.mohid.co/tx/dallas/ialfm/masjid/online/membership/L2VWRmVJcDFvUUJvUU4wdFU2TTlFdz09');
   static final Uri _calendar = Uri.parse('https://www.ialfm.org/calendar/');
   static final Uri _erf = Uri.parse('https://www.ialfm.org/erf/');
-  static final Uri _docs =
-  Uri.parse('https://www.ialfm.org/ialfm-documents-forms/');
+  static final Uri _docs = Uri.parse('https://www.ialfm.org/ialfm-documents-forms/');
   static final Uri _volunteer = Uri.parse('https://www.ialfm.org/volunteer/');
   static final Uri _linkTree = Uri.parse('https://linktr.ee/ialfm');
   static final Uri _linkTreeYouth = Uri.parse('https://linktr.ee/ialfmyouth');
@@ -76,7 +75,6 @@ class _DirectoryPageState extends State<DirectoryPage> {
           .get(Uri.parse(_latestNewsletterEndpoint))
           .timeout(const Duration(seconds: 8));
       if (!context.mounted) return;
-
       if (resp.statusCode == 200) {
         final body = resp.body;
         final match =
@@ -88,7 +86,6 @@ class _DirectoryPageState extends State<DirectoryPage> {
           return;
         }
       }
-
       await _open(context, _mailchimpArchiveUrl);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,9 +119,9 @@ class _DirectoryPageState extends State<DirectoryPage> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    // 🔹 CHANGE (dark only): use Salah table highlight color.
     final bg = isDark
-        ? Color.alphaBlend(const Color(0xFF132C3B).withValues(alpha: 0.35),
-        const Color(0xFF0E2330))
+        ? AppColors.rowHighlight
         : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
 
     final hairline =
@@ -190,7 +187,6 @@ class _DirectoryPageState extends State<DirectoryPage> {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final gradients = Theme.of(context).extension<AppGradients>();
     final l10n = AppLocalizations.of(context);
-
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
