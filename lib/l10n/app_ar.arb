@@ -59,7 +59,7 @@
   "dir_section_resources": "الموارد",
 
   "dir_contact_us": "تواصل معنا",
-  "dir_contact_us_feedback": "اتصل بنا والملاحظات",
+  "dir_contact_us_feedback": "الاتصال والاقتراحات",
   "dir_imam": "إمامنا",
   "dir_board": "مجلس الإدارة",
   "dir_committees": "اللجان",
@@ -75,13 +75,13 @@
   "dir_view_all_newsletters": "استعراض جميع النشرات السابقة",
   "dir_link_tree": "روابط IALFM",
   "dir_link_tree_youth": "روابط شباب IALFM",
-  "dir_calendar": "التقويم السنوي",
+  "dir_calendar": "جدول المناسبات",
   "dir_erf": "صندوق الإغاثة الطارئة",
   "dir_docs": "مستندات IALFM",
   "dir_volunteer": "كن متطوعًا",
 
-  "notifications_title": "الإشعارات",
-  "social_follow_us": "تابعنا…",
+  "notifications_title": "أخبار هامة",
+  "social_follow_us": ":تابعنا على",
   "ann_default_title": "إعلان",
   "ann_empty_title": "لا توجد إعلانات حالياً",
   "ann_empty_body": "يرجى التحقق لاحقًا."
