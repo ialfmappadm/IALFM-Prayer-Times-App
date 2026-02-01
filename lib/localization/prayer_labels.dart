@@ -76,12 +76,12 @@ class PrayerLabels {
     final key = _normalizeKey(nextPrayerKey);
     if (isAr) {
       switch (key) {
-        case 'fajr': return 'اذان الفجر في';
-        case 'dhuhr': return 'اذان الظهر في';
-        case 'asr': return 'اذان العصر في';
-        case 'maghrib': return 'اذان المغرب في';
-        case 'isha': return 'اذان العشاء في';
-        default: return 'الأذان في';
+        case 'fajr': return ': اذان الفجر الساعة';
+        case 'dhuhr': return ': اذان الظهر الساعة';
+        case 'asr': return ': اذان العصر الساعة';
+        case 'maghrib': return ': اذان المغرب الساعة';
+        case 'isha': return ': اذان العشاء الساعة';
+        default: return ': الأذان الساعة';
       }
     }
     String cap(String s) => s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1);
