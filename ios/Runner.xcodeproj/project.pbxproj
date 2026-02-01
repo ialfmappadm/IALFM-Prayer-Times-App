@@ -15,6 +15,8 @@
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		801767142F11639C00F5D979 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 801767132F11639C00F5D979 /* GoogleService-Info.plist */; };
 		808146E62F2EEB6400A7E161 /* Profile.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 808146E52F2EEB6400A7E161 /* Profile.xcconfig */; };
+		80B4FB422F2EFF4600382ADF /* Profile.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 80B4FB412F2EFF4600382ADF /* Profile.xcconfig */; };
+		80B4FB442F2EFF4E00382ADF /* Profile 2.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 80B4FB432F2EFF4E00382ADF /* Profile 2.xcconfig */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -61,6 +63,8 @@
 		808146E32F2EEB2F00A7E161 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Main.strings; sourceTree = "<group>"; };
 		808146E42F2EEB2F00A7E161 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		808146E52F2EEB6400A7E161 /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Profile.xcconfig; sourceTree = "<group>"; };
+		80B4FB412F2EFF4600382ADF /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Profile.xcconfig; sourceTree = "<group>"; };
+		80B4FB432F2EFF4E00382ADF /* Profile 2.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Profile 2.xcconfig"; sourceTree = "<group>"; };
 		81881F64E26404C5B085BEF4 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		8F7B57C449AA5BA94AF6DA39 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -136,6 +140,8 @@
 				6B5614686E3D5D592B61E2EA /* Pods */,
 				B17984AE38B42A81790C37FD /* Frameworks */,
 				808146E52F2EEB6400A7E161 /* Profile.xcconfig */,
+				80B4FB412F2EFF4600382ADF /* Profile.xcconfig */,
+				80B4FB432F2EFF4E00382ADF /* Profile 2.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -270,7 +276,9 @@
 			files = (
 				808146E62F2EEB6400A7E161 /* Profile.xcconfig in Resources */,
 				801767142F11639C00F5D979 /* GoogleService-Info.plist in Resources */,
+				80B4FB422F2EFF4600382ADF /* Profile.xcconfig in Resources */,
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
+				80B4FB442F2EFF4E00382ADF /* Profile 2.xcconfig in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
@@ -426,7 +434,7 @@
 /* Begin XCBuildConfiguration section */
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 808146E52F2EEB6400A7E161 /* Profile.xcconfig */;
+			baseConfigurationReference = 80B4FB432F2EFF4E00382ADF /* Profile 2.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
