@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart'; // defaultTargetPlatform
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 
@@ -12,8 +13,8 @@ class DirectoryContactPage extends StatelessWidget {
 
   // === CONTACT INFO ===
   static const String _displayPhone = '972-355-3937';
-  static final Uri _telUri  = Uri.parse('tel:+19723553937');
-  static final Uri _webUri  = Uri.parse('https://www.ialfm.org');
+  static final Uri _telUri = Uri.parse('tel:+19723553937');
+  static final Uri _webUri = Uri.parse('https://www.ialfm.org');
   static final Uri _mailUri = Uri.parse('mailto:info@ialfm.org');
 
   // === LOCATION ===
@@ -37,7 +38,7 @@ class DirectoryContactPage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ---------- Private helpers (methods of this widget) ----------
+  // ───────────── Private helpers ─────────────
   Widget _row({
     required BuildContext context,
     required IconData icon,
@@ -79,9 +80,8 @@ class DirectoryContactPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Divider(
       height: 1,
-      color: isDark
-          ? Colors.white.withValues(alpha: 0.08)
-          : cs.outline.withValues(alpha: 0.30),
+      color:
+      isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30),
       indent: 14,
       endIndent: 14,
     );
@@ -89,7 +89,6 @@ class DirectoryContactPage extends StatelessWidget {
 
   Widget _mapPreview(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
     final image = Image.asset(
       _mapAsset,
       fit: BoxFit.cover,
@@ -118,15 +117,13 @@ class DirectoryContactPage extends StatelessWidget {
             children: [
               // Local map image (16:9)
               AspectRatio(aspectRatio: 16 / 9, child: image),
-
               // Bottom scrim with caption + CTA
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -139,47 +136,19 @@ class DirectoryContactPage extends StatelessWidget {
                     ),
                   ),
                   child: Row(
-                    children: [
-                      const FaIcon(FontAwesomeIcons.locationDot,
-                          color: Colors.white, size: 16),
-                      const SizedBox(width: 8),
+                    children: const [
+                      FaIcon(FontAwesomeIcons.locationDot, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _address,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 14),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFC7A447), // gold CTA
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Padding(
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          child: Row(
-                            children: [
-                              FaIcon(FontAwesomeIcons.route,
-                                  size: 12, color: Colors.black),
-                              SizedBox(width: 6),
-                              Text(
-                                'Open in Maps',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      SizedBox(width: 8),
+                      _OpenInMapsPill(),
                     ],
                   ),
                 ),
@@ -196,11 +165,7 @@ class DirectoryContactPage extends StatelessWidget {
         Expanded(
           child: Text(
             _address,
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: cs.onSurface, fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
         IconButton(
@@ -227,19 +192,19 @@ class DirectoryContactPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme     = Theme.of(context);
-    final isLight   = theme.brightness == Brightness.light;
-    final cs        = theme.colorScheme;
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final cs = theme.colorScheme;
     final gradients = theme.extension<AppGradients>();
-    final appBarBg  = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final iconsColor = titleColor;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
-    // 🔹 CHANGE: align contact card with Salah table highlight in dark mode.
+    // CHANGE: align contact card with Salah table highlight in dark mode.
     final Color cardFill = isLight
         ? Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface)
-        : AppColors.rowHighlight; // same “light navy-ish” as table highlight
+        : AppColors.rowHighlight;
 
     return Scaffold(
       appBar: AppBar(
@@ -248,11 +213,7 @@ class DirectoryContactPage extends StatelessWidget {
         centerTitle: true,
         title: Text(
           'Contact Us & Feedback',
-          style: TextStyle(
-            color: titleColor,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         iconTheme: IconThemeData(color: iconsColor),
         systemOverlayStyle: overlay,
@@ -269,10 +230,10 @@ class DirectoryContactPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- CONTACT CARD ---
+                    // ─── CONTACT CARD ───
                     Container(
                       decoration: BoxDecoration(
-                        color: cardFill, // ✅ uses AppColors.rowHighlight in DARK
+                        color: cardFill,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -291,8 +252,7 @@ class DirectoryContactPage extends StatelessWidget {
                           _row(
                             context: context,
                             icon: FontAwesomeIcons.globe,
-                            label:
-                            _webUri.toString().replaceFirst('https://', ''),
+                            label: _webUri.toString().replaceFirst('https://', ''),
                             onTap: () async {
                               final ok = await _open(_webUri);
                               if (!context.mounted) return;
@@ -313,35 +273,25 @@ class DirectoryContactPage extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // --- MAP PREVIEW ---
+                    // ─── MAP PREVIEW ───
                     _mapPreview(context),
-
                     const SizedBox(height: 32),
-
-                    // --- FEEDBACK HEADER ---
+                    // ─── FEEDBACK HEADER ───
                     Text(
                       "Contact Us & Feedback",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: cs.onSurface,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: cs.onSurface),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       "Email will be sent to the IALFM Board of Directors.",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: cs.onSurface.withValues(alpha: 0.75),
-                      ),
+                      style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.75)),
                     ),
                     const SizedBox(height: 12),
 
-                    // --- FEEDBACK FORM ---
+                    // ─── FEEDBACK FORM ───
                     const FeedbackForm(),
+
                     const SizedBox(height: 48),
                   ],
                 ),
@@ -369,6 +319,14 @@ class _FeedbackFormState extends State<FeedbackForm>
 
   /// toggle: true => member, false => not member
   bool isMember = true;
+
+  // Mohid membership links (match DirectoryPage)
+  // Individual:
+  static final Uri _mIndiv =
+  Uri.parse('https://us.mohid.co/tx/dallas/ialfm/masjid/online/membership/');
+  // Family:
+  static final Uri _mFamily = Uri.parse(
+      'https://us.mohid.co/tx/dallas/ialfm/masjid/online/membership/L2VWRmVJcDFvUUJvUU4wdFU2TTlFdz09');
 
   @override
   void dispose() {
@@ -403,9 +361,7 @@ class _FeedbackFormState extends State<FeedbackForm>
     final bodyPlain = [
       "Feedback form submitted using IALFM Mobile App (${_platformString()})",
       "",
-      isMember
-          ? "Membership Status: I'm a member"
-          : "Membership Status: I'm currently not a member",
+      isMember ? "Membership Status: I'm a member" : "Membership Status: I'm currently not a member",
       "",
       "--------------------",
       "Assalam Alaikum IALFM Board,",
@@ -421,9 +377,8 @@ class _FeedbackFormState extends State<FeedbackForm>
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Could not open email app")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Could not open email app")));
       return;
     }
     await _showSuccessDialog();
@@ -433,6 +388,80 @@ class _FeedbackFormState extends State<FeedbackForm>
       detailsCtrl.clear();
       isMember = true;
     });
+  }
+
+  Future<void> _showMembershipPrompt() async {
+    final cs = Theme.of(context).colorScheme;
+    const gold = Color(0xFFC7A447);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Become a Member",
+                  style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "You selected “I'm not a member”. Would you like to join now?",
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+
+                // Individual
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await launchUrl(_mIndiv, mode: LaunchMode.externalApplication);
+                    },
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text("Individual Membership"),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: gold, foregroundColor: Colors.black),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Family
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await launchUrl(_mFamily, mode: LaunchMode.externalApplication);
+                    },
+                    icon: const Icon(Icons.family_restroom_outlined),
+                    label: const Text("Family Membership"),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: gold, foregroundColor: Colors.black),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Close
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text("Close"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -460,11 +489,7 @@ class _FeedbackFormState extends State<FeedbackForm>
             // Subject (required)
             Text(
               "Subject",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: onSurface,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -474,24 +499,18 @@ class _FeedbackFormState extends State<FeedbackForm>
                 hintText: "Enter a brief subject line",
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
-                focusedBorder: fieldBorder.copyWith(
-                  borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5)),
-                ),
+                focusedBorder:
+                fieldBorder.copyWith(borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5))),
               ),
-              validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Please enter a subject' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a subject' : null,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
 
-            // Membership toggle (SegmentedButton)
+            // Membership toggle
             Text(
               "Membership Status",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: onSurface,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface),
             ),
             const SizedBox(height: 8),
             SegmentedButton<bool>(
@@ -508,7 +527,14 @@ class _FeedbackFormState extends State<FeedbackForm>
                 ),
               ],
               selected: {isMember},
-              onSelectionChanged: (s) => setState(() => isMember = s.first),
+              onSelectionChanged: (s) {
+                final wasMember = isMember;
+                setState(() => isMember = s.first);
+                // If the user switched from member -> not member, prompt to join.
+                if (wasMember && !isMember) {
+                  _showMembershipPrompt();
+                }
+              },
               style: const ButtonStyle(
                 visualDensity: VisualDensity(horizontal: -1, vertical: -2),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -519,11 +545,7 @@ class _FeedbackFormState extends State<FeedbackForm>
             // Details (required)
             Text(
               "Details",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: onSurface,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -533,12 +555,10 @@ class _FeedbackFormState extends State<FeedbackForm>
                 hintText: "Describe the issue or suggestion…",
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
-                focusedBorder: fieldBorder.copyWith(
-                  borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5)),
-                ),
+                focusedBorder:
+                fieldBorder.copyWith(borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5))),
               ),
-              validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Please enter details' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter details' : null,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 20),
@@ -548,20 +568,15 @@ class _FeedbackFormState extends State<FeedbackForm>
               width: double.infinity,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: valid
-                      ? const Color(0xFFC7A447)
-                      : const Color(0xFFC7A447).withValues(alpha: 0.45),
+                  backgroundColor:
+                  valid ? const Color(0xFFC7A447) : const Color(0xFFC7A447).withValues(alpha: 0.45),
                   foregroundColor: Colors.black,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 ),
                 onPressed: valid ? _sendEmail : null,
                 child: const Text(
                   "Send Feedback",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -572,7 +587,7 @@ class _FeedbackFormState extends State<FeedbackForm>
   }
 }
 
-// ---------- Animated success checkmark dialog ----------
+// ───────── Animated success checkmark dialog ─────────
 class _SuccessCheckDialog extends StatefulWidget {
   const _SuccessCheckDialog();
   @override
@@ -594,7 +609,7 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
       reverseDuration: const Duration(milliseconds: 250),
     );
     _scale = CurvedAnimation(parent: _ac, curve: Curves.easeOutBack);
-    _fade  = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+    _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
     _ac.forward();
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) Navigator.of(context).pop();
@@ -674,6 +689,32 @@ class _MapPlaceholder extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenInMapsPill extends StatelessWidget {
+  const _OpenInMapsPill();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFC7A447), // gold CTA
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          children: [
+            FaIcon(FontAwesomeIcons.route, size: 12, color: Colors.black),
+            SizedBox(width: 6),
+            Text(
+              'Open in Maps',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black),
+            ),
+          ],
         ),
       ),
     );
