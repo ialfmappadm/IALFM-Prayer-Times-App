@@ -6,49 +6,60 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UXPrefs {
   static SharedPreferences? _sp;
 
-  // ── Keys (existing) ────────────────────────────────────────────────────────
-  static const _kHaptics       = 'ux.haptics';
-  static const _kTextScale     = 'ux.textScale';
-  static const _kThemeMode     = 'ux.themeMode';
-  static const _kUse24h        = 'ux.use24h';
-  static const _kHijriOffset   = 'ux.hijriOffset';
+  // Existing keys
+  static const _kHaptics = 'ux.haptics';
+  static const _kTextScale = 'ux.textScale';
+  static const _kThemeMode = 'ux.themeMode';
+  static const _kUse24h = 'ux.use24h';
+  static const _kHijriOffset = 'ux.hijriOffset';
   static const _kHijriBaseAdjust = 'ux.hijriBaseAdjust';
 
-  // ── NEW: Notification toggles ──────────────────────────────────────────────
-  static const _kAdhanAlertEnabled   = 'ux.alerts.adhanEnabled';
-  static const _kIqamahAlertEnabled  = 'ux.alerts.iqamahEnabled';
+  // Notification toggles (existing in your app)
+  static const _kAdhanAlertEnabled = 'ux.alerts.adhanEnabled';
+  static const _kIqamahAlertEnabled = 'ux.alerts.iqamahEnabled';
   static const _kJumuahReminderEnabled = 'ux.alerts.jumuahEnabled';
 
-  // ── Notifiers (existing) ──────────────────────────────────────────────────
-  static final ValueNotifier<bool>   hapticsEnabled = ValueNotifier<bool>(false);
-  static final ValueNotifier<double> textScale      = ValueNotifier<double>(1.0);
-  static final ValueNotifier<bool>   use24h         = ValueNotifier<bool>(false);
-  /// User-controlled offset (−1..+1)
-  static final ValueNotifier<int>    hijriOffset    = ValueNotifier<int>(0);
-  /// Internal base adjustment set by override service (e.g., −1..+1)
-  static final ValueNotifier<int>    hijriBaseAdjust = ValueNotifier<int>(0);
+  // NEW: Iqamah-change prompt tracking
+  static const _kHeadsUpShownSet = 'ux.changeAlert.headsUpShownSet';
+  static const _kNightBeforeShownSet = 'ux.changeAlert.nightBeforeShownSet';
+  static const _kLastOpenYMD = 'ux.lastOpenYMD';
 
-  // ── NEW: Notifiers for notification toggles ───────────────────────────────
-  static final ValueNotifier<bool> adhanAlertEnabled    = ValueNotifier<bool>(false);
-  static final ValueNotifier<bool> iqamahAlertEnabled   = ValueNotifier<bool>(false);
-  static final ValueNotifier<bool> jumuahReminderEnabled= ValueNotifier<bool>(false);
+  static Set<String> _headsUpShown = <String>{};
+  static Set<String> _nightBeforeShown = <String>{};
+
+  // Notifiers (existing)
+  static final ValueNotifier<bool> hapticsEnabled = ValueNotifier<bool>(false);
+  static final ValueNotifier<double> textScale = ValueNotifier<double>(1.0);
+  static final ValueNotifier<bool> use24h = ValueNotifier<bool>(false);
+  static final ValueNotifier<int> hijriOffset = ValueNotifier<int>(0);
+  static final ValueNotifier<int> hijriBaseAdjust = ValueNotifier<int>(0);
+
+  // Toggles (existing)
+  static final ValueNotifier<bool> adhanAlertEnabled = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> iqamahAlertEnabled = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> jumuahReminderEnabled = ValueNotifier<bool>(false);
 
   static Future<void> init() async {
     _sp ??= await SharedPreferences.getInstance();
-    // Existing prefs
-    hapticsEnabled.value   = _sp!.getBool(_kHaptics)       ?? false;
-    textScale.value        = _sp!.getDouble(_kTextScale)   ?? 1.0;
-    use24h.value           = _sp!.getBool(_kUse24h)        ?? false;
-    hijriOffset.value      = _sp!.getInt(_kHijriOffset)    ?? 0;
-    hijriBaseAdjust.value  = _sp!.getInt(_kHijriBaseAdjust)?? 0;
 
-    // NEW: Load notification toggles
-    adhanAlertEnabled.value     = _sp!.getBool(_kAdhanAlertEnabled)    ?? false;
-    iqamahAlertEnabled.value    = _sp!.getBool(_kIqamahAlertEnabled)   ?? false;
-    jumuahReminderEnabled.value = _sp!.getBool(_kJumuahReminderEnabled)?? false;
+    // existing
+    hapticsEnabled.value = _sp!.getBool(_kHaptics) ?? false;
+    textScale.value = _sp!.getDouble(_kTextScale) ?? 1.0;
+    use24h.value = _sp!.getBool(_kUse24h) ?? false;
+    hijriOffset.value = _sp!.getInt(_kHijriOffset) ?? 0;
+    hijriBaseAdjust.value = _sp!.getInt(_kHijriBaseAdjust) ?? 0;
+
+    // toggles
+    adhanAlertEnabled.value = _sp!.getBool(_kAdhanAlertEnabled) ?? false;
+    iqamahAlertEnabled.value = _sp!.getBool(_kIqamahAlertEnabled) ?? false;
+    jumuahReminderEnabled.value = _sp!.getBool(_kJumuahReminderEnabled) ?? false;
+
+    // sets
+    _headsUpShown = (_sp!.getStringList(_kHeadsUpShownSet) ?? const <String>[]).toSet();
+    _nightBeforeShown = (_sp!.getStringList(_kNightBeforeShownSet) ?? const <String>[]).toSet();
   }
 
-  // ── Existing setters ──────────────────────────────────────────────────────
+  // existing setters
   static Future<void> setHapticsEnabled(bool v) async {
     hapticsEnabled.value = v;
     await _sp?.setBool(_kHaptics, v);
@@ -78,7 +89,7 @@ class UXPrefs {
     return 'Default';
   }
 
-  // Theme mode persistence
+  // Theme mode
   static Future<ThemeMode?> loadThemeMode() async {
     _sp ??= await SharedPreferences.getInstance();
     final raw = _sp!.getString(_kThemeMode);
@@ -94,8 +105,8 @@ class UXPrefs {
     _sp ??= await SharedPreferences.getInstance();
     late final String raw;
     switch (mode) {
-      case ThemeMode.light:  raw = 'light';  break;
-      case ThemeMode.dark:   raw = 'dark';   break;
+      case ThemeMode.light: raw = 'light'; break;
+      case ThemeMode.dark: raw = 'dark'; break;
       case ThemeMode.system: raw = 'system'; break;
     }
     await _sp!.setString(_kThemeMode, raw);
@@ -120,10 +131,9 @@ class UXPrefs {
     await _sp?.setInt(_kHijriBaseAdjust, clamped);
   }
 
-  /// Effective total offset (base from override + user choice)
   static int get hijriEffectiveOffset => hijriBaseAdjust.value + hijriOffset.value;
 
-  // ── NEW: Setters for notification toggles ─────────────────────────────────
+  // Toggle setters
   static Future<void> setAdhanAlertEnabled(bool v) async {
     adhanAlertEnabled.value = v;
     await _sp?.setBool(_kAdhanAlertEnabled, v);
@@ -138,4 +148,30 @@ class UXPrefs {
     jumuahReminderEnabled.value = v;
     await _sp?.setBool(_kJumuahReminderEnabled, v);
   }
+
+  // NEW: "first open of the day" helper. Returns true if today’s first open.
+  static Future<bool> markOpenToday(DateTime nowLocal) async {
+    _sp ??= await SharedPreferences.getInstance();
+    final ymd = _ymd(nowLocal);
+    final prev = _sp!.getString(_kLastOpenYMD);
+    if (prev == ymd) return false;
+    await _sp!.setString(_kLastOpenYMD, ymd);
+    return true;
+  }
+
+  // NEW: one‑shot guards per change date (YYYY‑MM‑DD)
+  static bool wasShownHeadsUp(String ymd) => _headsUpShown.contains(ymd);
+  static Future<void> markShownHeadsUp(String ymd) async {
+    _headsUpShown.add(ymd);
+    await _sp?.setStringList(_kHeadsUpShownSet, _headsUpShown.toList());
+  }
+
+  static bool wasShownNightBefore(String ymd) => _nightBeforeShown.contains(ymd);
+  static Future<void> markShownNightBefore(String ymd) async {
+    _nightBeforeShown.add(ymd);
+    await _sp?.setStringList(_kNightBeforeShownSet, _nightBeforeShown.toList());
+  }
+
+  static String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
 }

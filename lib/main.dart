@@ -40,11 +40,12 @@ import 'services/alerts_scheduler.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 // NEW: warm-ups (images + glyphs)
 import 'warm_up.dart';
-// For PaintingBinding.imageCache bump
-//import 'package:flutter/painting.dart' show PaintingBinding;
 
 // NEW: Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+// Iqamah change detector (local JSON only)
+import 'services/iqamah_change_service.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -53,6 +54,7 @@ final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 // NEW: navigator key for a safe top-level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
+
 // Background FCM handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -63,7 +65,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
     kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    providerApple:
+    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
   // ✅ Now resolves with the restored import
   final repo = PrayerTimesRepository();
@@ -395,6 +398,12 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
+
+          // Post-frame: maybe show heads-up / night-before prompts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _maybeShowIqamahChangePrompt(r);
+          });
+
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -463,12 +472,19 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     // Schedule local alerts (only if OS notifications are enabled)
     await _scheduleLocalAlerts(nowLocal: nowLocal, today: today);
 
+    // Detect upcoming Iqamah change using local JSON only (works offline, any year)
+    final upcoming = IqamahChangeService.detectUpcomingChange(
+      allDays: days,
+      todayLocal: nowLocal,
+    );
+
     return _InitResult(
       location: location,
       nowLocal: nowLocal,
       today: today,
       tomorrow: tomorrow,
       temperatureF: currentTempF,
+      upcomingChange: upcoming,
     );
   }
 
@@ -566,6 +582,138 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       enabled: jumuahEnabled,
     );
   }
+
+  // ---- Iqamah change prompt helpers ----
+  Future<void> _maybeShowIqamahChangePrompt(_InitResult r) async {
+    final ch = r.upcomingChange;
+    if (ch == null || !ch.anyChange) return;
+
+    // First-open-of-day guard (prevents re-prompting if user reopens app)
+    final firstOpen = await UXPrefs.markOpenToday(r.nowLocal);
+    if (!mounted) return; // ⬅️ fix: don't use context after async gap
+    if (!firstOpen) return;
+
+    final changeYMD = ch.changeYMD;
+    final daysToChange = ch.changeDate.difference(r.today.date).inDays;
+
+    if (daysToChange == 2) {
+      if (!UXPrefs.wasShownHeadsUp(changeYMD)) {
+        await _showIqamahHeadsUpSheet(context, ch, changeYMD);
+        if (!mounted) return; // ⬅️ fix after await
+        await UXPrefs.markShownHeadsUp(changeYMD);
+      }
+      return;
+    }
+
+    if (daysToChange == 1) {
+      final afterMaghrib = IqamahChangeService.isAfterMaghrib(
+        today: r.today,
+        nowLocal: r.nowLocal,
+      );
+      if (afterMaghrib && !UXPrefs.wasShownNightBefore(changeYMD)) {
+        await _showIqamahNightBeforeSheet(context, ch, changeYMD);
+        if (!mounted) return; // ⬅️ fix after await
+        await UXPrefs.markShownNightBefore(changeYMD);
+      }
+      return;
+    }
+  }
+
+  Future<void> _showIqamahHeadsUpSheet(
+      BuildContext context, IqamahChange ch, String changeYMD) async {
+    const gold = Color(0xFFC7A447);
+    final cs = Theme.of(context).colorScheme;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Upcoming Iqamah Change (in 2 days)',
+                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                Text(
+                  'Changes effective on $changeYMD:',
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)),
+                ),
+                const SizedBox(height: 8),
+                ...ch.prettyDiffs.entries.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('• ${e.key}: ${e.value}',
+                      style: TextStyle(color: cs.onSurface)),
+                )),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: gold, foregroundColor: Colors.black),
+                    child: const Text('OK, got it'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showIqamahNightBeforeSheet(
+      BuildContext context, IqamahChange ch, String changeYMD) async {
+    const gold = Color(0xFFC7A447);
+    final cs = Theme.of(context).colorScheme;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Iqamah Times Change Tomorrow',
+                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                if (ch.fajrEmphasis)
+                  Text('⚠️ Fajr will change tomorrow morning.',
+                      style: TextStyle(
+                          color: cs.onSurface, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                ...ch.prettyDiffs.entries.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('• ${e.key}: ${e.value}',
+                      style: TextStyle(color: cs.onSurface)),
+                )),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: gold, foregroundColor: Colors.black),
+                    child: const Text('OK'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 // -------------------- Result wrapper --------------------
@@ -575,12 +723,15 @@ class _InitResult {
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
+  final IqamahChange? upcomingChange;
+
   _InitResult({
     required this.location,
     required this.nowLocal,
     required this.today,
     required this.tomorrow,
     required this.temperatureF,
+    required this.upcomingChange,
   });
 }
 
