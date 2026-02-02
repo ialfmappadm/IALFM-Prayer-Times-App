@@ -1,4 +1,4 @@
-// lib/pages/about_page.dart
+// lib/pages/terms_of_use_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,10 +6,9 @@ import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
-import './version_page.dart';
 
-class AboutPage extends StatelessWidget {
-  const AboutPage({super.key});
+class TermsOfUsePage extends StatelessWidget {
+  const TermsOfUsePage({super.key});
 
   static const _websiteUrl = 'https://www.ialfm.org';
   static const _policyUrl  = 'https://www.ialfm.org/ialfm-mobile-app-privacy-policy/';
@@ -30,7 +29,7 @@ class AboutPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          l10n.more_about_app, // localized title
+          l10n.more_terms_of_use,
           style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         iconTheme: IconThemeData(color: titleColor),
@@ -44,56 +43,57 @@ class AboutPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionHeader(l10n.about_overview),
+                _sectionHeader(l10n.terms_agreement),
                 const SizedBox(height: 8),
-                _bodyText(context, l10n.about_overview_body),
+                _bodyText(context, l10n.terms_agreement_body),
 
-                const SizedBox(height: 18),
-                _sectionHeader(l10n.about_key_features),
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_acceptable_use),
                 const SizedBox(height: 8),
-                _bullet(context, l10n.about_feature_1),
-                _bullet(context, l10n.about_feature_2),
-                _bullet(context, l10n.about_feature_3),
-                _bullet(context, l10n.about_feature_4),
-                _bullet(context, l10n.about_feature_5),
-                _bullet(context, l10n.about_feature_6),
-                _bullet(context, l10n.about_feature_7),
-                _bullet(context, l10n.about_feature_8),
-                _bullet(context, l10n.about_feature_9),
+                _bullet(context, l10n.terms_acceptable_b1),
+                _bullet(context, l10n.terms_acceptable_b2),
 
-                const SizedBox(height: 20),
-                _sectionHeader(l10n.about_quick_links),
-                const SizedBox(height: 10),
-                _fullWidthButton(
-                  label: l10n.about_visit_website,
-                  icon: Icons.public,
-                  onPressed: () => _openExternal(_websiteUrl, context),
-                ),
-                const SizedBox(height: 10),
-                _fullWidthButton(
-                  label: l10n.about_view_full_privacy_policy,
-                  icon: Icons.privacy_tip_outlined,
-                  onPressed: () => _openExternal(_policyUrl, context),
-                ),
-                const SizedBox(height: 10),
-                _fullWidthButton(
-                  label: l10n.contact_support,
-                  icon: Icons.mail_outline,
-                  onPressed: () => _showContactSheet(context),
-                ),
-                const SizedBox(height: 10),
-                _fullWidthButton(
-                  label: l10n.about_app_version_button,
-                  icon: Icons.info_outline,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const VersionInfoPage()),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                _sectionHeader(l10n.about_disclaimer),
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_content_links),
                 const SizedBox(height: 8),
-                _bodyText(context, l10n.about_disclaimer_body),
+                _bullet(context, l10n.terms_links_b1),
+                _bullet(context, l10n.terms_links_b2),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_donations),
+                const SizedBox(height: 8),
+                _bullet(context, l10n.terms_donations_b1),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_no_warranty),
+                const SizedBox(height: 8),
+                _bullet(context, l10n.terms_no_warranty_b1),
+                _bullet(context, l10n.terms_no_warranty_b2),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_liability),
+                const SizedBox(height: 8),
+                _bullet(context, l10n.terms_liability_b1),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_ip),
+                const SizedBox(height: 8),
+                _bullet(context, l10n.terms_ip_b1),
+                _bullet(context, l10n.terms_ip_b2),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.terms_privacy_header),
+                const SizedBox(height: 8),
+                _bodyText(context, l10n.terms_privacy_body),
+                const SizedBox(height: 8),
+                _linkButton(context, l10n.view_privacy_policy_website, _policyUrl),
+
+                const SizedBox(height: 16),
+                _sectionHeader(l10n.contact_title),
+                const SizedBox(height: 8),
+                _linkButton(context, l10n.contact_support, null, onTap: () => _showContactSheet(context)),
+                const SizedBox(height: 10),
+                _linkButton(context, l10n.about_visit_website, _websiteUrl),
               ],
             ),
           ),
@@ -215,16 +215,12 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  Widget _fullWidthButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
+  Widget _linkButton(BuildContext context, String label, String? url, {VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon),
+        onPressed: onTap ?? () => _openExternal(url!, context),
+        icon: const Icon(Icons.open_in_new),
         label: Text(label),
         style: FilledButton.styleFrom(
           backgroundColor: const Color(0xFFC7A447), // gold
