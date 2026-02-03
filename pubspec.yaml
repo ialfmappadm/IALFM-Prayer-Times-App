@@ -94,11 +94,17 @@ flutter:
 # Flutter Launcher Icons config
 # ----------------------------
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
-  image_path: assets/branding/ialfm_logo.png
-  adaptive_icon_background: "#0A1733"
-  adaptive_icon_foreground: assets/branding/ialfm_logo.png
+
+  # Required pair (satisfies the validator):
+  image_path_android: assets/branding/ialfm_icon_centered_1024_594.png
+  image_path_ios:     assets/branding/ialfm_icon_centered_1024_594.png
+
+  # Android Adaptive Icon
+  adaptive_icon_background: assets/branding/ialfm_bg_gradient.png
+  adaptive_icon_foreground: assets/branding/ialfm_icon_centered_1024_594.png
+
   min_sdk_android: 21
 
 # ----------------------------
