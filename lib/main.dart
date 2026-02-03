@@ -100,7 +100,7 @@ Future<void> main() async {
     GoogleFonts.config.allowRuntimeFetching = false;
 
     // Enable detector logs if needed
-    IqamahChangeService.logEnabled = true;
+    //IqamahChangeService.logEnabled = true;
 
     // Firebase init + App Check
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -801,7 +801,7 @@ class _HomeTabsState extends State<HomeTabs> {
             ),
             NavigationDestination(
               label: '',
-              icon: FaIcon(FontAwesomeIcons.link, size: 20),
+              icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
             ),
             NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],

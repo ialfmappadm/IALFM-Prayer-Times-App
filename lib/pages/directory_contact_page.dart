@@ -370,8 +370,8 @@ class _FeedbackFormState extends State<FeedbackForm>
     final body = Uri.encodeComponent(bodyPlain);
 
     // TEST
-    final to = "syed@ialfm.org";
-    // PROD: final to = "bod@ialfm.org";
+    //final to = "syed@ialfm.org";
+    final to = "bod@ialfm.org";
     final uri = Uri.parse("mailto:$to?subject=$subject&body=$body");
 
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
