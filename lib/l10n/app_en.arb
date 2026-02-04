@@ -148,5 +148,16 @@
   "contact_title": "Contact IALFM",
   "contact_support": "Contact Support",
   "contact_feedback_title": "Feedback / Features",
-  "contact_board_title": "Board / Governance"
+  "contact_board_title": "Board / Governance",
+  "about_last_updated_title": "Last Updated",
+  "about_last_updated_local_prefix": "Updated locally:",
+  "about_last_updated_unknown": "No cloud update yet",
+  "about_ct_suffix": "CT",
+  "about_last_updated_hint": "Tip: long‑press the date to check for an update",
+  "about_refresh_updated_toast": "File downloaded successfully",
+  "about_refresh_none_toast": "No update required",
+  "about_refresh_failed_toast": "Update failed: {error}",
+  "@about_refresh_failed_toast": {
+    "placeholders": { "error": {} }
+  }
 }

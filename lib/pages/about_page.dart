@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 import './version_page.dart';
+import '../widgets/schedule_info_tile.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
   static const _websiteUrl = 'https://www.ialfm.org';
-  static const _policyUrl  = 'https://www.ialfm.org/ialfm-mobile-app-privacy-policy/';
+  static const _policyUrl =
+      'https://www.ialfm.org/ialfm-mobile-app-privacy-policy/';
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,8 @@ class AboutPage extends StatelessWidget {
     final gradients = theme.extension<AppGradients>();
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
-    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay =
+    isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     return Scaffold(
       appBar: AppBar(
@@ -30,8 +32,9 @@ class AboutPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          l10n.more_about_app, // localized title
-          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+          l10n.more_about_app,
+          style: TextStyle(
+              color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
@@ -47,8 +50,8 @@ class AboutPage extends StatelessWidget {
                 _sectionHeader(l10n.about_overview),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.about_overview_body),
-
                 const SizedBox(height: 18),
+
                 _sectionHeader(l10n.about_key_features),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.about_feature_1),
@@ -60,8 +63,8 @@ class AboutPage extends StatelessWidget {
                 _bullet(context, l10n.about_feature_7),
                 _bullet(context, l10n.about_feature_8),
                 _bullet(context, l10n.about_feature_9),
-
                 const SizedBox(height: 20),
+
                 _sectionHeader(l10n.about_quick_links),
                 const SizedBox(height: 10),
                 _fullWidthButton(
@@ -89,11 +92,15 @@ class AboutPage extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const VersionInfoPage()),
                   ),
                 ),
-
                 const SizedBox(height: 24),
+
                 _sectionHeader(l10n.about_disclaimer),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.about_disclaimer_body),
+
+                // --- GOLD "Last Updated" block (hidden long-press to refresh)
+                const SizedBox(height: 24),
+                const ScheduleInfoTile(),
               ],
             ),
           ),
@@ -102,7 +109,7 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  // ---- Private helpers ----
+  // helpers (unchanged)
   static Future<void> _openExternal(String url, BuildContext context) async {
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -130,7 +137,8 @@ class AboutPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(l10n.contact_title,
-                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                    style: TextStyle(
+                        color: cs.onSurface, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.feedback_outlined),

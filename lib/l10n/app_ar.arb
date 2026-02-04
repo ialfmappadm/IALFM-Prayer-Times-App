@@ -149,5 +149,16 @@
   "contact_title": "تواصل مع IALFM",
   "contact_support": "دعم التواصل",
   "contact_feedback_title": "ملاحظات / ميزات",
-  "contact_board_title": "مجلس الإدارة / الحوكمة"
+  "contact_board_title": "مجلس الإدارة / الحوكمة",
+  "about_last_updated_title": "آخر تحديث",
+  "about_last_updated_local_prefix": "مُحدَّث محليًا:",
+  "about_last_updated_unknown": "لا يوجد تحديث سحابي بعد",
+  "about_ct_suffix": "بتوقيت الوسط (CT)",
+  "about_last_updated_hint": "تلميح: اضغط مطوّلًا على التاريخ للتحقق من وجود تحديث",
+  "about_refresh_updated_toast": "تم تنزيل الملف بنجاح",
+  "about_refresh_none_toast": "لا حاجة للتحديث",
+  "about_refresh_failed_toast": "فشل التحديث: {error}",
+  "@about_refresh_failed_toast": {
+    "placeholders": { "error": {} }
+  }
 }
