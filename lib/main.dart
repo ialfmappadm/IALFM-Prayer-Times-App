@@ -8,16 +8,19 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
+
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // cloud metadata peek
+
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
+
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -27,30 +30,42 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-// Repository
+
+// Repository (Storage -> local persist)
 import 'prayer_times_firebase.dart';
+
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
+
 // Haptics
 import 'utils/haptics.dart';
+
 // Notifications opt-in + local scheduler
 import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
+
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
 // Warm-ups (images + glyphs)
 import 'warm_up.dart';
+
 // Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 // Iqamah change detector (local JSON only)
 import 'services/iqamah_change_service.dart';
+
 // Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
 import 'widgets/iqamah_change_sheet.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
+
+// Daily check guard: only fetch if cloud stamp is new AND recent
+const Duration kFreshCloudStampMaxAge = Duration(hours: 6);
 
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
@@ -86,11 +101,11 @@ Future<void> main() async {
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-    // Force GoogleFonts to ONLY use bundled asset fonts (never HTTP)
-    GoogleFonts.config.allowRuntimeFetching = false;
-
     // Enable detector logs if needed
     //IqamahChangeService.logEnabled = true;
+    
+    // Fonts are asset-only (never HTTP)
+    GoogleFonts.config.allowRuntimeFetching = false;
 
     // Firebase init + App Check
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -136,7 +151,7 @@ Future<void> main() async {
   });
 }
 
-// Async work after first frame
+// Async work after first frame (warm-ups + deferred topic subscription)
 Future<void> _postFrameAsync() async {
   final ctx = navKey.currentContext;
   if (ctx != null) {
@@ -327,9 +342,7 @@ class BootstrapApp extends StatelessWidget {
               theme: baseLight,
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
-              // navigator key (so we can grab a context post-frame)
               navigatorKey: navKey,
-              // HapticNavigatorObserver is not const; use non-const list
               navigatorObservers: [HapticNavigatorObserver()],
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -365,14 +378,23 @@ class _BootstrapScreen extends StatefulWidget {
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
 
-class _BootstrapScreenState extends State<_BootstrapScreen> {
+class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingObserver {
   late Future<_InitResult> _initFuture;
   final PrayerTimesRepository _repo = PrayerTimesRepository();
   Timer? _midnightTimer;
 
+  // Daily check prefs keys
+  static const _kLastDailyCheckYMD = 'ux.schedule.lastDailyCheckYMD';
+  static const _kLastCloudStamp = 'ux.schedule.lastCloudStamp';
+  static const _kLastShownUpdatedAt = 'ux.schedule.lastShownUpdatedAt';
+
+  String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initFuture = _initializeAll();
     _initFuture.whenComplete(() {
       if (mounted) FlutterNativeSplash.remove();
@@ -381,6 +403,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Badge handled in HomeTabs
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnightTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Once per day (first foreground after midnight), do a cheap metadata peek
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_maybeDailyCloudCheck());
+    }
   }
 
   void _scheduleMidnightRefresh() {
@@ -395,12 +432,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       });
       _scheduleMidnightRefresh();
     });
-  }
-
-  @override
-  void dispose() {
-    _midnightTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -445,11 +476,34 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       location = tz.getLocation('America/Chicago');
     }
 
-    // Pull latest prayer times from Firebase (best‑effort)
+    // Pull latest prayer times from Firebase (best‑effort) once at startup
     try {
-      final ok = await _repo.refreshFromFirebase(year: DateTime.now().year);
-      debugPrint(
-          'Startup refresh: ${ok ? 'updated from Firebase' : 'no remote / kept local'}');
+      final updated = await _repo.refreshFromFirebase(year: DateTime.now().year);
+      debugPrint('Startup refresh: ${updated ? 'updated from Firebase' : 'no remote / kept local'}');
+
+      // Discreet update SnackBar — only once per 'lastUpdated' and only if fresh (<= 2 min)
+      if (updated) {
+        final meta = await _repo.readMeta();
+        final whenStr = (meta?['lastUpdated'] ?? '') as String;
+        final when = DateTime.tryParse(whenStr)?.toLocal();
+
+        final isFresh = when != null &&
+            DateTime.now().difference(when) <= const Duration(minutes: 2);
+
+        final lastShown = await UXPrefs.getString(_kLastShownUpdatedAt);
+
+        if (isFresh && whenStr.isNotEmpty && whenStr != lastShown) {
+          messengerKey.currentState?.showSnackBar(
+            const SnackBar(
+              content: Text('Prayer times updated'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
+          await UXPrefs.setString(_kLastCloudStamp, whenStr); // record baseline
+        }
+      }
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
@@ -496,35 +550,77 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     );
   }
 
-  PrayerDay? _findByDate(List<PrayerDay> days, DateTime target) {
-    for (final d in days) {
-      if (d.date.year == target.year &&
-          d.date.month == target.month &&
-          d.date.day == target.day) {
-        return d;
-      }
-    }
-    return null;
-  }
+  // ---- Daily cloud metadata peek ----
+  Future<void> _maybeDailyCloudCheck() async {
+    try {
+      // only once per day
+      final todayYMD = _ymd(DateTime.now());
+      final lastYMD = await UXPrefs.getString(_kLastDailyCheckYMD);
+      if (lastYMD == todayYMD) return;
 
-  PrayerDay _dummyDay(DateTime date) {
-    String fmt(DateTime d) =>
-        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    final begin = fmt(date);
-    final Map<String, PrayerTime> prayers = {
-      'fajr': PrayerTime(begin: begin, iqamah: ''),
-      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
-      'asr': PrayerTime(begin: begin, iqamah: ''),
-      'maghrib': PrayerTime(begin: begin, iqamah: ''),
-      'isha': PrayerTime(begin: begin, iqamah: ''),
-    };
-    return PrayerDay(
-      date: date,
-      prayers: prayers,
-      sunrise: begin,
-      sunset: begin,
-      serial: 0,
-    );
+      await UXPrefs.setString(_kLastDailyCheckYMD, todayYMD);
+
+      final year = DateTime.now().year;
+
+      // Peek metadata (no content download)
+      final ref = FirebaseStorage.instance.ref('prayer_times/$year.json');
+      FullMetadata meta;
+      try {
+        meta = await ref.getMetadata();
+      } on FirebaseException catch (e) {
+        if (e.code == 'object-not-found') {
+          // nothing in cloud → keep using local, do nothing
+          debugPrint('[DailyCheck] cloud object missing → skip.');
+          return;
+        }
+        return;
+      }
+
+      final stamp = (meta.updated ?? meta.timeCreated); // DateTime?
+      if (stamp == null) return;
+
+      final lastKnownStr = await UXPrefs.getString(_kLastCloudStamp);
+      final lastKnown = (lastKnownStr != null && lastKnownStr.isNotEmpty)
+          ? DateTime.tryParse(lastKnownStr)
+          : null;
+
+      // Only care if stamp is recent (few hours) and newer than we know
+      final isRecent = DateTime.now().difference(stamp.toLocal()) <= kFreshCloudStampMaxAge;
+      final isNewer = (lastKnown == null) || stamp.isAfter(lastKnown);
+
+      if (!(isRecent && isNewer)) {
+        debugPrint('[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
+        return;
+      }
+
+      // Download & persist updated file
+      final updated = await _repo.refreshFromFirebase(year: year);
+      if (updated) {
+        final metaLocal = await _repo.readMeta();
+        final whenStr = (metaLocal?['lastUpdated'] ?? '') as String;
+        final when = DateTime.tryParse(whenStr)?.toLocal();
+        final isFresh = when != null &&
+            DateTime.now().difference(when) <= const Duration(minutes: 2);
+        final lastShown = await UXPrefs.getString(_kLastShownUpdatedAt);
+
+        if (isFresh && whenStr.isNotEmpty && whenStr != lastShown) {
+          messengerKey.currentState?.showSnackBar(
+            const SnackBar(
+              content: Text('Prayer times updated'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
+        }
+        await UXPrefs.setString(_kLastCloudStamp, stamp.toUtc().toIso8601String());
+        debugPrint('[DailyCheck] updated from cloud.');
+      } else {
+        debugPrint('[DailyCheck] metadata newer but refresh failed → try tomorrow.');
+      }
+    } catch (e, st) {
+      debugPrint('Daily cloud check error: $e\n$st');
+    }
   }
 
   // ---- Local alerts scheduling
@@ -568,7 +664,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final bool iqamahEnabled = UXPrefs.iqamahAlertEnabled.value;
     final bool jumuahEnabled = UXPrefs.jumuahReminderEnabled.value;
 
-    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
+    await _schedulePrayerAlertsForDay(
       dateLocal: base,
       fajrAdhan: fajrAdhan,
       dhuhrAdhan: dhuhrAdhan,
@@ -587,6 +683,39 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
       anyDateThisWeekLocal: base,
       enabled: jumuahEnabled,
+    );
+  }
+
+  // Extracted to avoid very long `_scheduleLocalAlerts`
+  Future<void> _schedulePrayerAlertsForDay({
+    required DateTime dateLocal,
+    DateTime? fajrAdhan,
+    DateTime? dhuhrAdhan,
+    DateTime? asrAdhan,
+    DateTime? maghribAdhan,
+    DateTime? ishaAdhan,
+    DateTime? fajrIqamah,
+    DateTime? dhuhrIqamah,
+    DateTime? asrIqamah,
+    DateTime? maghribIqamah,
+    DateTime? ishaIqamah,
+    required bool adhanEnabled,
+    required bool iqamahEnabled,
+  }) async {
+    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
+      dateLocal: dateLocal,
+      fajrAdhan: fajrAdhan,
+      dhuhrAdhan: dhuhrAdhan,
+      asrAdhan: asrAdhan,
+      maghribAdhan: maghribAdhan,
+      ishaAdhan: ishaAdhan,
+      fajrIqamah: fajrIqamah,
+      dhuhrIqamah: dhuhrIqamah,
+      asrIqamah: asrIqamah,
+      maghribIqamah: maghribIqamah,
+      ishaIqamah: ishaIqamah,
+      adhanEnabled: adhanEnabled,
+      iqamahEnabled: iqamahEnabled,
     );
   }
 
@@ -623,6 +752,37 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       }
       return;
     }
+  }
+
+  PrayerDay? _findByDate(List<PrayerDay> days, DateTime target) {
+    for (final d in days) {
+      if (d.date.year == target.year &&
+          d.date.month == target.month &&
+          d.date.day == target.day) {
+        return d;
+      }
+    }
+    return null;
+  }
+
+  PrayerDay _dummyDay(DateTime date) {
+    String fmt(DateTime d) =>
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final begin = fmt(date);
+    final Map<String, PrayerTime> prayers = {
+      'fajr': PrayerTime(begin: begin, iqamah: ''),
+      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
+      'asr': PrayerTime(begin: begin, iqamah: ''),
+      'maghrib': PrayerTime(begin: begin, iqamah: ''),
+      'isha': PrayerTime(begin: begin, iqamah: ''),
+    };
+    return PrayerDay(
+      date: date,
+      prayers: prayers,
+      sunrise: begin,
+      sunset: begin,
+      serial: 0,
+    );
   }
 }
 
@@ -740,7 +900,7 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // No RC fetches on resume; we stay event-driven. Dot shows on FCM only.
+    // event-driven; no RC polling for announcements
   }
 
   @override
@@ -759,7 +919,7 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
         tomorrow: widget.tomorrow,
         temperatureF: widget.temperatureF,
       ),
-      AnnouncementsTab(location: widget.location), // fetches RC *when opened*
+      AnnouncementsTab(location: widget.location),
       const SocialPage(),
       const DirectoryPage(),
       const MorePage(),
@@ -773,10 +933,9 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
           height: kNavBarHeight,
           selectedIndex: _index,
           onDestinationSelected: (i) async {
-            // Optionally: if the user clicks AWAY from the notifications tab,
-            // reset "seen" so a later publish shows the dot. This is optional.
+            // Optional: reset "seen" when leaving the notifications tab
             if (_index == 1 && i != 1) {
-              await UXPrefs.setString(_kAnnSeenFp, null); // reset
+              await UXPrefs.setString(_kAnnSeenFp, null);
             }
 
             setState(() {
