@@ -1,8 +1,7 @@
 // lib/pages/prayer_page.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart'; // <-- added for Ticker
 import 'package:timezone/timezone.dart' as tz;
-
 import '../utils/time_utils.dart';
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
@@ -16,24 +15,24 @@ import '../warm_up.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // LIGHT THEME CONSTANTS (unchanged)
 const _kLightTextPrimary = Color(0xFF0F2432);
-const _kLightTextMuted   = Color(0xFF4A6273);
-const _kLightRowAlt      = Color(0xFFE5ECF2);
-const _kLightCard        = Color(0xFFFFFFFF);
-const _kLightDivider     = Color(0xFF7B90A0);
-const _kLightHighlight   = Color(0xFFFFF0C9);
-const _kLightPanel       = Color(0xFFE9F2F9);
-const _kLightPanelTop    = Color(0xFFDDEAF3);
+const _kLightTextMuted = Color(0xFF4A6273);
+const _kLightRowAlt = Color(0xFFE5ECF2);
+const _kLightCard = Color(0xFFFFFFFF);
+const _kLightDivider = Color(0xFF7B90A0);
+const _kLightHighlight = Color(0xFFFFF0C9);
+const _kLightPanel = Color(0xFFE9F2F9);
+const _kLightPanelTop = Color(0xFFDDEAF3);
 const _kLightPanelBottom = Color(0xFFCBDCE8);
-const _kLightGoldDigits  = Color(0xFF9C7C2C);
+const _kLightGoldDigits = Color(0xFF9C7C2C);
 
-const double kTempFallbackF   = 72.0;
-const double _kHeaderHeight   = 116.0;
-const bool   enableDstPreviewToggle = false;
+const double kTempFallbackF = 72.0;
+const double _kHeaderHeight = 116.0;
+const bool enableDstPreviewToggle = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ✨ EDIT THESE to change the countdown digit sizes (light & dark)
 const double kCountdownDigitSizeLight = 56; // default was 40
-const double kCountdownDigitSizeDark  = 56; // default was 42
+const double kCountdownDigitSizeDark = 56;  // default was 42
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PrayerPage extends StatefulWidget {
@@ -42,7 +41,6 @@ class PrayerPage extends StatefulWidget {
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
-
   const PrayerPage({
     super.key,
     required this.location,
@@ -72,7 +70,6 @@ class _PrayerPageState extends State<PrayerPage> {
       try {
         await warmUpAboveTheFold(context);
       } catch (_) {}
-
       if (!mounted) return;
       try {
         final isLight = Theme.of(context).brightness == Brightness.light;
@@ -98,7 +95,6 @@ class _PrayerPageState extends State<PrayerPage> {
         oldWidget.today.date != widget.today.date ||
             oldWidget.tomorrow?.date != widget.tomorrow?.date;
     final locChanged = oldWidget.location.name != widget.location.name;
-
     if (dayChanged || locChanged) {
       _initTracker();
       if (mounted) setState(() {});
@@ -195,35 +191,34 @@ class _PrayerPageState extends State<PrayerPage> {
     _mkTime(base, widget.today.prayers['isha']?.begin ?? '');
     final bool afterIshaAdhan =
         (ishaAdhanToday != null) && now.isAfter(ishaAdhanToday);
-
-    final bool useTomorrowFajr    = afterIshaAdhan && widget.tomorrow != null;
+    final bool useTomorrowFajr = afterIshaAdhan && widget.tomorrow != null;
     final bool useTomorrowSunrise = afterIshaAdhan && widget.tomorrow != null;
 
     // Build data maps (only Fajr/Sunrise conditionally switch to tomorrow)
     final adhanByName = <String, String>{
-      'Fajr'   : useTomorrowFajr
+      'Fajr' : useTomorrowFajr
           ? (widget.tomorrow!.prayers['fajr']?.begin ?? '')
           : (widget.today.prayers['fajr']?.begin ?? ''),
       'Sunrise': useTomorrowSunrise
           ? (widget.tomorrow!.sunrise ?? '')
           : (widget.today.sunrise ?? ''),
-      'Dhuhr'  : widget.today.prayers['dhuhr']?.begin ?? '',
-      'Asr'    : widget.today.prayers['asr']?.begin ?? '',
+      'Dhuhr' : widget.today.prayers['dhuhr']?.begin ?? '',
+      'Asr' : widget.today.prayers['asr']?.begin ?? '',
       'Maghrib': widget.today.prayers['maghrib']?.begin ?? '',
-      'Isha'   : widget.today.prayers['isha']?.begin ?? '',
+      'Isha' : widget.today.prayers['isha']?.begin ?? '',
       "Jumu'ah": '13:30',
       if (effectiveIsDst) "Youth Jumu'ah": '16:00',
     };
 
     final iqamahByName = <String, String>{
-      'Fajr'   : useTomorrowFajr
+      'Fajr' : useTomorrowFajr
           ? (widget.tomorrow!.prayers['fajr']?.iqamah ?? '')
           : (widget.today.prayers['fajr']?.iqamah ?? ''),
       'Sunrise': '',
-      'Dhuhr'  : widget.today.prayers['dhuhr']?.iqamah ?? '',
-      'Asr'    : widget.today.prayers['asr']?.iqamah ?? '',
+      'Dhuhr' : widget.today.prayers['dhuhr']?.iqamah ?? '',
+      'Asr' : widget.today.prayers['asr']?.iqamah ?? '',
       'Maghrib': widget.today.prayers['maghrib']?.iqamah ?? '',
-      'Isha'   : widget.today.prayers['isha']?.iqamah ?? '',
+      'Isha' : widget.today.prayers['isha']?.iqamah ?? '',
       "Jumu'ah": '14:00',
       if (effectiveIsDst) "Youth Jumu'ah": '16:15',
     };
@@ -398,7 +393,7 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner (unchanged behavior; lint-clean)
+// CountdownBanner (unchanged visuals; now Ticker-based for smoother ticks)
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
   final bool isLight;
@@ -446,23 +441,22 @@ class CountdownBanner extends StatefulWidget {
 }
 
 class _CountdownBannerState extends State<CountdownBanner>
-    with WidgetsBindingObserver {
-  Timer? _ticker;
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  Ticker? _ticker;
+  Duration _acc = Duration.zero;
   String _digits = '--:--';
   String? _lastNextName;
   AppLifecycleState _life = AppLifecycleState.resumed;
   bool _tickerModeEnabled = true;
-  bool _firstStart = true;
 
-  bool get _shouldTick =>
-      _life == AppLifecycleState.resumed && _tickerModeEnabled;
+  bool get _shouldTick => _life == AppLifecycleState.resumed && _tickerModeEnabled;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _tickOnce();
-    _ensureTicker();
+    _tickOnce();      // compute once immediately
+    _ensureTicker();  // then start frame-aligned ticker
   }
 
   @override
@@ -481,32 +475,24 @@ class _CountdownBannerState extends State<CountdownBanner>
     }
   }
 
-  void _startTickerAligned() {
-    final now = DateTime.now();
-    final msToNextSecond = 1000 - now.millisecond;
-    Timer(Duration(milliseconds: msToNextSecond), () {
-      if (!mounted || !_shouldTick || _ticker != null) return;
-      _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tickOnce());
-    });
-    _firstStart = false;
-  }
-
-  void _startTickerImmediate() {
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tickOnce());
-  }
-
   void _ensureTicker() {
     if (_shouldTick) {
       if (_ticker == null) {
-        if (_firstStart) {
-          _startTickerAligned();
-        } else {
-          _startTickerImmediate();
-        }
+        _ticker = createTicker(_onTick)..start();
+        _acc = Duration.zero; // reset accumulator
       }
     } else {
-      _ticker?.cancel();
+      _ticker?.dispose();
       _ticker = null;
+    }
+  }
+
+  void _onTick(Duration elapsed) {
+    // Update at most once per second (frame-aligned)
+    final delta = elapsed - _acc;
+    if (delta >= const Duration(seconds: 1)) {
+      _acc = elapsed;
+      _tickOnce();
     }
   }
 
@@ -515,6 +501,7 @@ class _CountdownBannerState extends State<CountdownBanner>
     final safe = rem.isNegative ? Duration.zero : rem;
     final newDigits = formatCountdown(safe);
     final name = widget.tracker.current.name;
+
     if (name != _lastNextName) {
       _lastNextName = name;
       widget.onNextChanged?.call(name);
@@ -528,20 +515,21 @@ class _CountdownBannerState extends State<CountdownBanner>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _ticker?.cancel();
+    _ticker?.dispose();
+    _ticker = null;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isLight = widget.isLight;
-    final title   = widget.title;
+    final title = widget.title;
 
     final light = Container(
       decoration: const BoxDecoration(
         color: _kLightPanel,
         border: Border(
-          top:    BorderSide(color: _kLightPanelTop,    width: 1),
+          top: BorderSide(color: _kLightPanelTop, width: 1),
           bottom: BorderSide(color: _kLightPanelBottom, width: 1),
         ),
       ),

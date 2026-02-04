@@ -29,7 +29,7 @@ class AlertsFacade {
     }
 
     // 2) Parse "HH:mm" => DateTime for the same Gregorian date
-    DateTime? _mkTime(DateTime base, String hhmm) {
+    DateTime? mkTime(DateTime base, String hhmm) {
       if (hhmm.isEmpty) return null;
       final parts = hhmm.split(':');
       if (parts.length != 2) return null;
@@ -41,17 +41,17 @@ class AlertsFacade {
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
 
-    final fajrAdhan    = _mkTime(base, today.prayers['fajr']   ?.begin  ?? '');
-    final dhuhrAdhan   = _mkTime(base, today.prayers['dhuhr']  ?.begin  ?? '');
-    final asrAdhan     = _mkTime(base, today.prayers['asr']    ?.begin  ?? '');
-    final maghribAdhan = _mkTime(base, today.prayers['maghrib']?.begin  ?? '');
-    final ishaAdhan    = _mkTime(base, today.prayers['isha']   ?.begin  ?? '');
+    final fajrAdhan    = mkTime(base, today.prayers['fajr']   ?.begin  ?? '');
+    final dhuhrAdhan   = mkTime(base, today.prayers['dhuhr']  ?.begin  ?? '');
+    final asrAdhan     = mkTime(base, today.prayers['asr']    ?.begin  ?? '');
+    final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin  ?? '');
+    final ishaAdhan    = mkTime(base, today.prayers['isha']   ?.begin  ?? '');
 
-    final fajrIqamah    = _mkTime(base, today.prayers['fajr']   ?.iqamah ?? '');
-    final dhuhrIqamah   = _mkTime(base, today.prayers['dhuhr']  ?.iqamah ?? '');
-    final asrIqamah     = _mkTime(base, today.prayers['asr']    ?.iqamah ?? '');
-    final maghribIqamah = _mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
-    final ishaIqamah    = _mkTime(base, today.prayers['isha']   ?.iqamah ?? '');
+    final fajrIqamah    = mkTime(base, today.prayers['fajr']   ?.iqamah ?? '');
+    final dhuhrIqamah   = mkTime(base, today.prayers['dhuhr']  ?.iqamah ?? '');
+    final asrIqamah     = mkTime(base, today.prayers['asr']    ?.iqamah ?? '');
+    final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
+    final ishaIqamah    = mkTime(base, today.prayers['isha']   ?.iqamah ?? '');
 
     // 3) Read user toggles from UXPrefs (AlertsScheduler reads them internally in your setup,
     //    but keeping them explicit here mirrors your prior logic and avoids regressions).

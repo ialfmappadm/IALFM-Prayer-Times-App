@@ -8,17 +8,14 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
-
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
-
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -28,41 +25,32 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-
-
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
-
 // Haptics
 import 'utils/haptics.dart';
-
 // Notifications local alert scheduler
 import 'services/alerts_scheduler.dart';
-
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 // Warm-ups (images + glyphs)
 import 'warm_up.dart';
-
 // Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 // Iqamah change detector (local JSON only)
 import 'services/iqamah_change_service.dart';
-
 // Centralized popup UI
 import 'widgets/iqamah_change_sheet.dart';
-
 // Prayer Times update service
 import 'services/schedule_update_service.dart';
-
 // FCM Notifications service
 import 'services/messaging_service.dart';
-
 // Facade for local iOS and android alerts
 import 'services/alerts_facade.dart';
+
+// NEW: memoized time formatting cache (UTC -> Central + locale-aware)
+import 'services/time_format_cache.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -79,7 +67,6 @@ Future<void> main() async {
     BindingBase.debugZoneErrorsAreFatal = true;
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
     // Fonts are asset-only (never HTTP)
     GoogleFonts.config.allowRuntimeFetching = false;
 
@@ -94,10 +81,8 @@ Future<void> main() async {
       providerApple:
       kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
-
     // Register FCM background handler via MessagingService
     MessagingService.instance.configureBackgroundHandler();
-
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       Zone.current.handleUncaughtError(
@@ -105,19 +90,14 @@ Future<void> main() async {
         details.stack ?? StackTrace.current,
       );
     };
-
     // Prefs & Theme
     await UXPrefs.init();
     await ThemeController.init();
-
     // Cloud Hijri override (uses real resolver)
     await HijriOverrideService.applyIfPresent(resolveAppHijri: _appHijri);
-
     // Local notifications scheduler
     await AlertsScheduler.instance.init(androidSmallIcon: 'ic_stat_bell');
-
     runApp(const BootstrapApp());
-
     // Post-frame must be sync; kick off async work via helper
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_postFrameAsync());
@@ -133,11 +113,9 @@ Future<void> _postFrameAsync() async {
   if (ctx != null) {
     await warmUpAboveTheFold(ctx);
   }
-
   // Slightly increase image cache to avoid early evictions of small assets
   final cache = PaintingBinding.instance.imageCache;
   cache.maximumSize = (cache.maximumSize * 1.3).round();
-
   // FCM permission + topic subscribe handled (deferred) by the service
   await MessagingService.instance.initDeferred();
 }
@@ -167,13 +145,11 @@ const ColorScheme lightColorScheme = ColorScheme(
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
-
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
   colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
 );
-
 // ThemeExtension for gradient
 @immutable
 class AppGradients extends ThemeExtension<AppGradients> {
@@ -190,7 +166,6 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const light = AppGradients(page: pageGradientLight);
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
-
 // ---------------- Bootstrap App ----------------
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
@@ -212,7 +187,6 @@ class BootstrapApp extends StatelessWidget {
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             );
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
-
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
               bodySmall: t.bodySmall ?.copyWith(fontFamilyFallback: arabicFallback),
               bodyMedium: t.bodyMedium ?.copyWith(fontFamilyFallback: arabicFallback),
@@ -230,10 +204,8 @@ class BootstrapApp extends StatelessWidget {
               headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
               headlineLarge:t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
-
             final TextTheme chosenLight = addFallbacks(baseLatin);
-            final TextTheme chosenDark  = addFallbacks(baseLatin);
-
+            final TextTheme chosenDark = addFallbacks(baseLatin);
             final ThemeData baseLight = ThemeData(
               useMaterial3: true,
               colorScheme: lightColorScheme,
@@ -267,7 +239,6 @@ class BootstrapApp extends StatelessWidget {
                 AppGradients.light,
               ],
             );
-
             final ThemeData baseDark = ThemeData(
               brightness: Brightness.dark,
               useMaterial3: true,
@@ -301,6 +272,10 @@ class BootstrapApp extends StatelessWidget {
                 AppGradients.dark,
               ],
             );
+
+            // NEW: keep TimeFormatCache in sync with the active app locale
+            final effectiveLocale = appLocale ?? const Locale('en');
+            TimeFormatCache.instance.setLocale(effectiveLocale);
 
             return MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -346,14 +321,11 @@ class _BootstrapScreen extends StatefulWidget {
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
-
 class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingObserver {
   late Future<_InitResult> _initFuture;
   Timer? _midnightTimer;
-
   // Store “should show” SnackBar decision, then display post‑frame.
   ScheduleUpdateResult? _startupSnack;
-
   @override
   void initState() {
     super.initState();
@@ -364,14 +336,12 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     });
     _scheduleMidnightRefresh();
   }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _midnightTimer?.cancel();
     super.dispose();
   }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -397,7 +367,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       }());
     }
   }
-
   void _scheduleMidnightRefresh() {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
@@ -411,7 +380,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       _scheduleMidnightRefresh();
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_InitResult>(
@@ -437,7 +405,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
             }
             _maybeShowIqamahChangePrompt(r);
           });
-
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -459,7 +426,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       },
     );
   }
-
   Future<_InitResult> _initializeAll() async {
     // Timezone init (central time)
     tz.Location location;
@@ -468,7 +434,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     } catch (_) {
       location = tz.getLocation('America/Chicago');
     }
-
     // Startup refresh via service — CAPTURE decision; show SnackBar post-frame
     try {
       final res = await ScheduleUpdateService.instance.refreshOnStartup();
@@ -477,7 +442,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     } catch (e, st) {
       debugPrint('Startup refresh error: $e\n$st');
     }
-
     // Load local schedule
     final nowLocal = DateTime.now();
     List<PrayerDay> days;
@@ -493,23 +457,19 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
             (days.isNotEmpty ? days.first : _dummyDay(todayDate));
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
-
     // Weather (non‑blocking)
     final coords = _coordsForLocation(location);
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
     ).timeout(const Duration(seconds: 5), onTimeout: () => null);
-
     // Schedule local alerts via the facade (collapsed, same behavior)
     await AlertsFacade.instance.scheduleAllForToday(today: today);
-
     // Detect upcoming Iqamah change using local JSON only
     final upcoming = IqamahChangeService.detectUpcomingChange(
       allDays: days,
       todayLocal: nowLocal,
     );
-
     return _InitResult(
       location: location,
       nowLocal: nowLocal,
@@ -519,20 +479,16 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       upcomingChange: upcoming,
     );
   }
-
   // ---- Iqamah change prompt helpers (unchanged)
   Future<void> _maybeShowIqamahChangePrompt(_InitResult r) async {
     final ch = r.upcomingChange;
     if (ch == null || !ch.anyChange) return;
-
     // First-open-of-day guard (prevents re-prompting if user reopens app)
     final firstOpen = await UXPrefs.markOpenToday(r.nowLocal);
     if (!mounted) return;
     if (!firstOpen) return;
-
     final changeYMD = ch.changeYMD;
     final delta = ch.daysToChange; // use detector’s own delta
-
     if (delta == 2) {
       if (!UXPrefs.wasShownHeadsUp(changeYMD)) {
         await showIqamahChangeSheet(context, ch);
@@ -554,7 +510,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       return;
     }
   }
-
   PrayerDay? _findByDate(List<PrayerDay> days, DateTime target) {
     for (final d in days) {
       if (d.date.year == target.year &&
@@ -565,7 +520,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     }
     return null;
   }
-
   PrayerDay _dummyDay(DateTime date) {
     String fmt(DateTime d) =>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
@@ -586,7 +540,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     );
   }
 }
-
 // ---------------- Result wrapper ----------------
 class _InitResult {
   final tz.Location location;
@@ -604,7 +557,6 @@ class _InitResult {
     required this.upcomingChange,
   });
 }
-
 // ---------------- Splash ----------------
 class _SplashScaffold extends StatelessWidget {
   final String title;
@@ -650,7 +602,6 @@ class _SplashScaffold extends StatelessWidget {
     );
   }
 }
-
 // ---------------- Navigation (HomeTabs) ----------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
@@ -669,36 +620,29 @@ class HomeTabs extends StatefulWidget {
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
-
 class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
   int _index = 0;
   bool hasNewAnnouncement = false;
-
   static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
     // Bind announcement nudges via MessagingService (no direct FCM here)
     MessagingService.instance.bindAnnouncementNudges(
       onNewNudge: () => setState(() => hasNewAnnouncement = true),
       onOpenNudge: () => setState(() { _index = 1; hasNewAnnouncement = false; }),
     );
   }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // event-driven; MessagingService handles nudges
   }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
@@ -727,7 +671,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
             if (_index == 1 && i != 1) {
               await UXPrefs.setString(_kAnnSeenFp, null);
             }
-
             setState(() {
               _index = i;
               if (i == 1) hasNewAnnouncement = false; // clear dot when opening tab
@@ -736,7 +679,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
           },
           destinations: [
             const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-
             // 🔔 with red dot
             NavigationDestination(
               label: '',
@@ -775,7 +717,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                   ),
               ]),
             ),
-
             const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20)),
             const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20)),
             const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
@@ -785,14 +726,12 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
     );
   }
 }
-
 // ---- Helpers (coords & weather)
 class LatLon {
   final double lat;
   final double lon;
   const LatLon(this.lat, this.lon);
 }
-
 LatLon _coordsForLocation(tz.Location location) {
   final locationName = location.name.toLowerCase();
   if (locationName.contains('america/chicago')) {
@@ -800,7 +739,6 @@ LatLon _coordsForLocation(tz.Location location) {
   }
   return const LatLon(33.0354, -97.0830);
 }
-
 Future<double?> _fetchTemperatureF({
   required double latitude,
   required double longitude,
@@ -827,7 +765,6 @@ Future<double?> _fetchTemperatureF({
   }
   return null;
 }
-
 // ---- Hijri resolver
 Future<HijriYMD> _appHijri(DateTime g) async {
   final h = HijriCalendar.fromDate(g);
