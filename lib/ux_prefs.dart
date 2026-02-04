@@ -14,7 +14,7 @@ class UXPrefs {
   static const _kHijriOffset = 'ux.hijriOffset';
   static const _kHijriBaseAdjust = 'ux.hijriBaseAdjust';
 
-  // Notification toggles (existing in your app)
+  // Notification toggles (existing)
   static const _kAdhanAlertEnabled = 'ux.alerts.adhanEnabled';
   static const _kIqamahAlertEnabled = 'ux.alerts.iqamahEnabled';
   static const _kJumuahReminderEnabled = 'ux.alerts.jumuahEnabled';
@@ -41,7 +41,6 @@ class UXPrefs {
 
   static Future<void> init() async {
     _sp ??= await SharedPreferences.getInstance();
-
     // existing
     hapticsEnabled.value = _sp!.getBool(_kHaptics) ?? false;
     textScale.value = _sp!.getDouble(_kTextScale) ?? 1.0;
@@ -149,7 +148,7 @@ class UXPrefs {
     await _sp?.setBool(_kJumuahReminderEnabled, v);
   }
 
-  // NEW: "first open of the day" helper. Returns true if today’s first open.
+  // NEW: “first open of the day” helper
   static Future<bool> markOpenToday(DateTime nowLocal) async {
     _sp ??= await SharedPreferences.getInstance();
     final ymd = _ymd(nowLocal);
@@ -170,6 +169,21 @@ class UXPrefs {
   static Future<void> markShownNightBefore(String ymd) async {
     _nightBeforeShown.add(ymd);
     await _sp?.setStringList(_kNightBeforeShownSet, _nightBeforeShown.toList());
+  }
+
+  // NEW: tiny KV helpers used for announcement “version” / “payload”
+  static Future<String?> getString(String key) async {
+    _sp ??= await SharedPreferences.getInstance();
+    return _sp!.getString(key);
+  }
+
+  static Future<void> setString(String key, String? value) async {
+    _sp ??= await SharedPreferences.getInstance();
+    if (value == null) {
+      await _sp!.remove(key);
+    } else {
+      await _sp!.setString(key, value);
+    }
   }
 
   static String _ymd(DateTime d) =>

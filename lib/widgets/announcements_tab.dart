@@ -1,19 +1,18 @@
-
 // lib/widgets/announcements_tab.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // SystemUiOverlayStyle
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../app_colors.dart'; // brand colors/gradients
 import '../main.dart' show AppGradients; // read theme gradient
-
-// NEW: generated localizations
+// Generated localizations
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
-// Cool Light palette anchors
-const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
-const _kLightTextMuted   = Color(0xFF4A6273);
+// Light palette anchors
+const _kLightTextPrimary = Color(0xFF0F2432); // deep blue‑gray
+const _kLightTextMuted = Color(0xFF4A6273);
 
 /// Lightweight UI model for each announcement item.
 class _AnnItem {
@@ -59,7 +58,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     if (state == AppLifecycleState.resumed) _refresh();
   }
 
-  // ------------------------ Remote Config ------------------------
+  // ------------------- Remote Config -------------------
   Future<void> _initRemoteConfig() async {
     try {
       final rc = FirebaseRemoteConfig.instance;
@@ -108,57 +107,95 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
   void _readAnnouncements(FirebaseRemoteConfig rc) {
     final jsonStr = rc.getString('announcements_json').trim();
-    List<_AnnItem> parsed = _parseArray(jsonStr);
+    // Parse list (may be empty)
+    final list = _parseArray(jsonStr);
 
-    if (parsed.isEmpty) {
-      final active = rc.getBool('announcement_active');
-      final title = rc.getString('announcement_title').trim();
-      final text  = rc.getString('announcement_text').trim();
-      final when  = rc.getString('announcement_published_at').trim();
-      if (active && (title.isNotEmpty || text.isNotEmpty)) {
-        parsed = <_AnnItem>[
-          _AnnItem(
-            id: 'legacy-0',
-            title: title.isEmpty ? 'Announcement' : title, // will be localized in UI
-            text: text,
-            publishedAtUtc: _parseToUtc(when),
-          ),
-        ];
+    // Parse legacy single (may be active or empty)
+    final active = rc.getBool('announcement_active');
+    final title = rc.getString('announcement_title').trim();
+    final text = rc.getString('announcement_text').trim();
+    final when = rc.getString('announcement_published_at').trim();
+
+    final List<_AnnItem> merged = [...list];
+
+    if (active && (title.isNotEmpty || text.isNotEmpty)) {
+      final legacy = _AnnItem(
+        id: 'legacy-0',
+        title: title.isEmpty ? 'Announcement' : title,
+        text: text,
+        publishedAtUtc: _parseToUtc(when),
+      );
+      // If list already contains an item with this id, replace it; else append.
+      final ix = merged.indexWhere((e) => e.id == legacy.id);
+      if (ix >= 0) {
+        merged[ix] = legacy;
+      } else {
+        merged.add(legacy);
       }
     }
 
-    parsed.sort((a, b) {
-      final ta = a.publishedAtUtc?.millisecondsSinceEpoch ?? 0;
-      final tb = b.publishedAtUtc?.millisecondsSinceEpoch ?? 0;
+    // Sort newest first by publishedAtUtc (nulls last)
+    merged.sort((a, b) {
+      final ta = a.publishedAtUtc?.millisecondsSinceEpoch ?? -1;
+      final tb = b.publishedAtUtc?.millisecondsSinceEpoch ?? -1;
       return tb.compareTo(ta);
     });
 
-    if (mounted) setState(() => _items = parsed);
+    if (mounted) setState(() => _items = merged);
   }
 
+  /// Robustly parse many forms:
+  /// - 2026-02-03T17:48:00-0600
+  /// - 2026-02-03T17:48:00-06:00
+  /// - 2026-02-03 17:48-0600
+  /// - 2026-02-03T17:48-0600   (adds :00 seconds)
+  /// Returns UTC, or null on failure.
   DateTime? _parseToUtc(String raw) {
     if (raw.isEmpty) return null;
-    DateTime? tryIso(String s) => DateTime.tryParse(s)?.toUtc();
 
-    final iso = tryIso(raw);
-    if (iso != null) return iso;
+    String s = raw.trim();
 
-    final m = RegExp(r'^(\S*[T ]\d{2}:\d{2}:\d{2})([+\-]\d{2})(\d{2})$').firstMatch(raw);
-    if (m != null) {
-      final fixed = '${m.group(1)}${m.group(2)}:${m.group(3)}';
-      final fixedDt = tryIso(fixed);
-      if (fixedDt != null) return fixedDt;
+    // Normalize date-time separator (space -> 'T')
+    s = s.replaceAllMapped(
+      RegExp(r'^(\d{4}-\d{2}-\d{2})\s+'),
+          (m) => '${m.group(1)}T',
+    );
+
+    // If time lacks seconds (HH:mm), add :00 just before the offset or end
+    final rxNoSeconds = RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?!:)');
+    if (rxNoSeconds.hasMatch(s)) {
+      s = s.replaceAllMapped(
+        RegExp(r'(T\d{2}:\d{2})(?=([Zz]|[+\-]\d{2}:?\d{2})?$)'),
+            (m) => '${m.group(1)}:00',
+      );
     }
 
-    final digits = RegExp(r'^\d{10,13}$');
-    if (digits.hasMatch(raw)) {
-      try {
-        final n = int.parse(raw);
-        final ms = raw.length == 13 ? n : n * 1000;
-        return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
-      } catch (_) {}
+    // Normalize timezone offsets like -0600 -> -06:00 (at end of string)
+    s = s.replaceAllMapped(
+      RegExp(r'([+\-]\d{2})(\d{2})$'),
+          (m) => '${m.group(1)}:${m.group(2)}',
+    );
+
+    // Try strict ISO parse
+    try {
+      final dt = DateTime.parse(s);
+      return dt.toUtc();
+    } catch (_) {}
+
+    // Final fallback: force seconds and colonized offset again
+    try {
+      String t = s;
+      t = t.replaceAllMapped(
+        RegExp(r'(\d{2}:\d{2})(?=([Zz]|[+\-]\d{2}:\d{2})?$)'),
+            (m) => '${m.group(1)}:00',
+      );
+      return DateTime.parse(t).toUtc();
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('published_at parse failed: "$raw" -> "$s"\n$e\n$st');
+      }
+      return null;
     }
-    return null;
   }
 
   List<_AnnItem> _parseArray(String jsonStr) {
@@ -168,9 +205,9 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       if (decoded is List) {
         return decoded.map<_AnnItem>((e) {
           final m = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
-          final id   = (m['id'] ?? '').toString();
-          final title= (m['title'] ?? '').toString();
-          final text = (m['text']  ?? m['body'] ?? '').toString();
+          final id = (m['id'] ?? '').toString();
+          final title = (m['title'] ?? '').toString();
+          final text = (m['text'] ?? m['body'] ?? '').toString();
           final when = (m['published_at'] ?? m['publishedAt'] ?? m['published'])?.toString() ?? '';
           return _AnnItem(
             id: id.isEmpty ? 'item-${DateTime.now().microsecondsSinceEpoch}' : id,
@@ -200,10 +237,10 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context); // <-- generated l10n
+    final l10n = AppLocalizations.of(context);
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    // Theme-adaptive page gradient with Light fallback if extension not present
+    // Theme‑adaptive page gradient with Light fallback if extension not present
     final gradient = Theme.of(context).extension<AppGradients>()?.page ??
         (isLight
             ? const LinearGradient(
@@ -214,17 +251,16 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
             : AppColors.pageGradient);
 
     // AppBar colors per theme
-    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
     final iconsColor = titleColor;
-    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     Widget listContent;
     if (_loading) {
       listContent = const Center(child: CircularProgressIndicator());
     } else {
       final hasAny = _items.any((it) => it.title.trim().isNotEmpty || it.text.trim().isNotEmpty);
-
       final content = Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: hasAny
@@ -235,7 +271,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
             final a = _items[index];
             final whenLabel = (a.publishedAtUtc != null) ? _formatCentral(a.publishedAtUtc!) : null;
             final safeTitle = (a.title.isEmpty && a.text.isNotEmpty)
-                ? l10n.ann_default_title // <-- localized fallback
+                ? l10n.ann_default_title
                 : a.title;
             return _AnnouncementCard(
               title: safeTitle,
@@ -247,8 +283,8 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
             : ListView(
           children: [
             _AnnouncementCard(
-              title: l10n.ann_empty_title,         // <-- localized
-              body:  l10n.ann_empty_body,          // <-- localized
+              title: l10n.ann_empty_title,
+              body: l10n.ann_empty_body,
               whenLabel: null,
             ),
           ],
@@ -263,7 +299,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
         elevation: 0,
         centerTitle: true,
         title: Text(
-          l10n.notifications_title, // <-- localized header
+          l10n.notifications_title,
           style: TextStyle(
             color: titleColor,
             fontSize: 20,
@@ -290,16 +326,14 @@ class _AnnouncementCard extends StatelessWidget {
     required this.body,
     required this.whenLabel,
   });
-
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     // White bubble in both themes; dark text in Dark mode for readability
-    final Color cardColor     = Colors.white;
-    final Color titleColor    = isLight ? _kLightTextPrimary : Colors.black;
-    final Color bodyColor     = isLight ? _kLightTextPrimary : Colors.black87;
-    final Color timestampColor= isLight ? _kLightTextMuted   : Colors.black54;
-
+    final Color cardColor = Colors.white;
+    final Color titleColor = isLight ? _kLightTextPrimary : Colors.black;
+    final Color bodyColor = isLight ? _kLightTextPrimary : Colors.black87;
+    final Color timestampColor= isLight ? _kLightTextMuted : Colors.black54;
     return Card(
       color: cardColor,
       elevation: 3,

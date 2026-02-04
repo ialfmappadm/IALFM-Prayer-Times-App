@@ -8,18 +8,16 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
-
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
-
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -29,43 +27,35 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-
 // Repository
 import 'prayer_times_firebase.dart';
-
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
-
 // Haptics
 import 'utils/haptics.dart';
-
 // Notifications opt-in + local scheduler
 import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
-
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 // Warm-ups (images + glyphs)
 import 'warm_up.dart';
-
 // Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 // Iqamah change detector (local JSON only)
 import 'services/iqamah_change_service.dart';
-
 // Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
 import 'widgets/iqamah_change_sheet.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
+
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
-// Navigator key for a safe top-level BuildContext after first frame
+// Navigator key for a safe top‑level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
 // Background FCM handler
@@ -137,37 +127,40 @@ Future<void> main() async {
 
     runApp(const BootstrapApp());
 
-    // Warm-ups AFTER the first frame (does NOT block first paint)
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final ctx = navKey.currentContext;
-      if (ctx != null) {
-        await warmUpAboveTheFold(ctx);
-      }
-
-      // Slightly increase image cache to avoid early evictions of small assets
-      final cache = PaintingBinding.instance.imageCache;
-      cache.maximumSize = (cache.maximumSize * 1.3).round();
-
-      // Defer FCM permission + topic subscription ~1.2s after first paint
-      unawaited(Future<void>(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 1200));
-        try {
-          final settings = await FirebaseMessaging.instance.requestPermission(
-            alert: true, badge: true, sound: true, provisional: false,
-          );
-          debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
-          await FirebaseMessaging.instance.subscribeToTopic('allUsers');
-        } catch (e, st) {
-          debugPrint('Deferred FCM setup error: $e\n$st');
-        }
-      }));
+    // Post-frame must be sync; kick off async work via helper
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_postFrameAsync());
     });
   }, (Object error, StackTrace stack) {
     debugPrint('Uncaught async error: $error\n$stack');
   });
 }
 
-// -------------------- Light Color Scheme --------------------
+// Async work after first frame
+Future<void> _postFrameAsync() async {
+  final ctx = navKey.currentContext;
+  if (ctx != null) {
+    await warmUpAboveTheFold(ctx);
+  }
+  // Slightly increase image cache to avoid early evictions of small assets
+  final cache = PaintingBinding.instance.imageCache;
+  cache.maximumSize = (cache.maximumSize * 1.3).round();
+
+  // Defer FCM permission + topic subscription ~1.2s after first paint
+  unawaited(Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
+    try {
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true, badge: true, sound: true, provisional: false,
+      );
+      debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
+      await FirebaseMessaging.instance.subscribeToTopic('allUsers');
+    } catch (e, st) {
+      debugPrint('Deferred FCM setup error: $e\n$st');
+    }
+  }));
+}
+
+// ---------------- Light Color Scheme ----------------
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42),
@@ -204,30 +197,25 @@ const LinearGradient pageGradientLight = LinearGradient(
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
-
   @override
   AppGradients copyWith({Gradient? page}) =>
       AppGradients(page: page ?? this.page);
-
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
     return t < 0.5 ? this : other;
   }
-
   static const light = AppGradients(page: pageGradientLight);
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// -------------------- Bootstrap App --------------------
+// ---------------- Bootstrap App ----------------
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     // Ensure GoogleFonts never tries HTTP; will use your asset TTFs
     GoogleFonts.config.allowRuntimeFetching = false;
-
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
@@ -239,20 +227,20 @@ class BootstrapApp extends StatelessWidget {
             GoogleFonts.manropeTextTheme(ThemeData(brightness: Brightness.light).textTheme)
                 .copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             );
-
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
+
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall:    t.bodySmall    ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium:   t.bodyMedium   ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge:    t.bodyLarge    ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall:   t.titleSmall   ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:  t.titleMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge:   t.titleLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall:   t.labelSmall   ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:  t.labelMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge:   t.labelLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall: t.bodySmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium: t.bodyMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge: t.bodyLarge ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall: t.titleSmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium: t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge: t.titleLarge ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall: t.labelSmall ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium: t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge: t.labelLarge ?.copyWith(fontFamilyFallback: arabicFallback),
               displaySmall: t.displaySmall ?.copyWith(fontFamilyFallback: arabicFallback),
               displayMedium:t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
               displayLarge: t.displayLarge ?.copyWith(fontFamilyFallback: arabicFallback),
@@ -341,6 +329,7 @@ class BootstrapApp extends StatelessWidget {
               scaffoldMessengerKey: messengerKey,
               // navigator key (so we can grab a context post-frame)
               navigatorKey: navKey,
+              // HapticNavigatorObserver is not const; use non-const list
               navigatorObservers: [HapticNavigatorObserver()],
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -369,7 +358,7 @@ class BootstrapApp extends StatelessWidget {
   }
 }
 
-// -------------------- Bootstrap Screen --------------------
+// ---------------- Bootstrap Screen ----------------
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
   @override
@@ -421,12 +410,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
-
           // Post-frame: maybe show heads-up / night-before prompts
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _maybeShowIqamahChangePrompt(r);
           });
-
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -476,7 +463,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
-
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ??
@@ -494,7 +480,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     // Schedule local alerts (only if OS notifications are enabled)
     await _scheduleLocalAlerts(nowLocal: nowLocal, today: today);
 
-    // Detect upcoming Iqamah change using local JSON only (works offline, any year)
+    // Detect upcoming Iqamah change using local JSON only
     final upcoming = IqamahChangeService.detectUpcomingChange(
       allDays: days,
       todayLocal: nowLocal,
@@ -541,7 +527,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     );
   }
 
-  // ---- Local alerts scheduling ----
+  // ---- Local alerts scheduling
   Future<void> _scheduleLocalAlerts({
     required DateTime nowLocal,
     required PrayerDay today,
@@ -554,7 +540,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       }
       return;
     }
-
     // Parse "HH:mm" -> DateTime
     DateTime? mkTime(DateTime base, String hhmm) {
       if (hhmm.isEmpty) return null;
@@ -579,7 +564,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final ishaIqamah = mkTime(base, today.prayers['isha']?.iqamah ?? '');
 
     // Read toggles from UXPrefs
-    final bool adhanEnabled  = UXPrefs.adhanAlertEnabled.value;
+    final bool adhanEnabled = UXPrefs.adhanAlertEnabled.value;
     final bool iqamahEnabled = UXPrefs.iqamahAlertEnabled.value;
     final bool jumuahEnabled = UXPrefs.jumuahReminderEnabled.value;
 
@@ -605,7 +590,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     );
   }
 
-  // ---- Iqamah change prompt helpers (unified sheet) ----
+  // ---- Iqamah change prompt helpers (unified sheet)
   Future<void> _maybeShowIqamahChangePrompt(_InitResult r) async {
     final ch = r.upcomingChange;
     if (ch == null || !ch.anyChange) return;
@@ -626,7 +611,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
       }
       return;
     }
-
     if (delta == 1) {
       final afterCutoff = IqamahChangeService.isAfterMaghrib(
         today: r.today,
@@ -642,7 +626,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 }
 
-// -------------------- Result wrapper --------------------
+// ---------------- Result wrapper ----------------
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
@@ -650,7 +634,6 @@ class _InitResult {
   final PrayerDay? tomorrow;
   final double? temperatureF;
   final IqamahChange? upcomingChange;
-
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -661,7 +644,7 @@ class _InitResult {
   });
 }
 
-// -------------------- Splash --------------------
+// ---------------- Splash ----------------
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -672,7 +655,6 @@ class _SplashScaffold extends StatelessWidget {
     this.subtitle,
     this.onRetry,
   });
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -708,7 +690,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// -------------------- Navigation --------------------
+// ---------------- Navigation (HomeTabs) ----------------
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
@@ -723,18 +705,22 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
-
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
 
-class _HomeTabsState extends State<HomeTabs> {
+class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
   int _index = 0;
   bool hasNewAnnouncement = false;
+
+  static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // FCM "nudge" path — the ONLY way we light the dot (no polling).
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['newAnnouncement'] == 'true') {
         setState(() => hasNewAnnouncement = true);
@@ -742,20 +728,25 @@ class _HomeTabsState extends State<HomeTabs> {
     });
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
-        setState(() {
-          _index = 1;
-          hasNewAnnouncement = false;
-        });
+        setState(() { _index = 1; hasNewAnnouncement = false; });
       }
     });
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
-        setState(() {
-          _index = 1;
-          hasNewAnnouncement = false;
-        });
+        setState(() { _index = 1; hasNewAnnouncement = false; });
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // No RC fetches on resume; we stay event-driven. Dot shows on FCM only.
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -768,12 +759,11 @@ class _HomeTabsState extends State<HomeTabs> {
         tomorrow: widget.tomorrow,
         temperatureF: widget.temperatureF,
       ),
-      AnnouncementsTab(location: widget.location),
+      AnnouncementsTab(location: widget.location), // fetches RC *when opened*
       const SocialPage(),
       const DirectoryPage(),
       const MorePage(),
     ];
-
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: RepaintBoundary(
@@ -782,28 +772,64 @@ class _HomeTabsState extends State<HomeTabs> {
           elevation: 0,
           height: kNavBarHeight,
           selectedIndex: _index,
-          onDestinationSelected: (i) {
+          onDestinationSelected: (i) async {
+            // Optionally: if the user clicks AWAY from the notifications tab,
+            // reset "seen" so a later publish shows the dot. This is optional.
+            if (_index == 1 && i != 1) {
+              await UXPrefs.setString(_kAnnSeenFp, null); // reset
+            }
+
             setState(() {
               _index = i;
-              if (i == 1) hasNewAnnouncement = false;
+              if (i == 1) hasNewAnnouncement = false; // clear dot when opening tab
             });
             Haptics.tap();
           },
-          destinations: const [
-            NavigationDestination(label: '', icon: Icon(Icons.schedule)),
+          destinations: [
+            const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
+
+            // 🔔 with red dot
             NavigationDestination(
               label: '',
-              icon: FaIcon(FontAwesomeIcons.bell, size: 20),
+              icon: Stack(clipBehavior: Clip.none, children: [
+                const FaIcon(FontAwesomeIcons.bell, size: 20),
+                if (hasNewAnnouncement)
+                  Positioned(
+                    right: -2, top: -2,
+                    child: Container(
+                      width: 10, height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red, shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.light ? Colors.white : Colors.black,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ]),
+              selectedIcon: Stack(clipBehavior: Clip.none, children: [
+                const FaIcon(FontAwesomeIcons.bell, size: 20),
+                if (hasNewAnnouncement)
+                  Positioned(
+                    right: -2, top: -2,
+                    child: Container(
+                      width: 10, height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red, shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.light ? Colors.white : Colors.black,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ]),
             ),
-            NavigationDestination(
-              label: '',
-              icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
-            ),
-            NavigationDestination(
-              label: '',
-              icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
-            ),
-            NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
+
+            const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20)),
+            const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20)),
+            const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),
       ),
@@ -811,7 +837,7 @@ class _HomeTabsState extends State<HomeTabs> {
   }
 }
 
-// -------------------- Helpers (coords & weather) --------------------
+// ---- Helpers (coords & weather)
 class LatLon {
   final double lat;
   final double lon;
@@ -853,7 +879,7 @@ Future<double?> _fetchTemperatureF({
   return null;
 }
 
-// -------------------- Hijri resolver --------------------
+// ---- Hijri resolver
 Future<HijriYMD> _appHijri(DateTime g) async {
   final h = HijriCalendar.fromDate(g);
   return HijriYMD(h.hYear, h.hMonth, h.hDay);

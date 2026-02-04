@@ -90,3 +90,6 @@ ios/Runner/Assets.xcassets/AppIcon.appiconset/*
 ios/Runner.xcodeproj/project.pbxproj
 
 
+
+# Cloud Functions (RC) local deps
+/tools/cloud-functions-rc/node_modules/
