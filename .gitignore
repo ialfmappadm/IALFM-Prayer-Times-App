@@ -39,12 +39,7 @@ windows/
 # Misc
 *.iml
 
-# Node.js stuff
-tools/fcm/serviceAccount*.json
-serviceAccount*.json
-tools/fcm/node_modules/
-tools/fcm/package-lock.json
-
+#flutter dependencies
 .flutter-plugins-dependencies
 local.json
 
@@ -54,8 +49,6 @@ android/app/src/main/res_backup_overwritten_*/
 
 bundletool*.jar
 
-# Retired v1 functions folder
-functions/
 
 # l10 generated files
 lib/l10n/generated/
@@ -89,7 +82,6 @@ ios/Runner/Assets.xcassets/AppIcon.appiconset/*
 # (Optional) Xcode project churn if you don't want icon-related diffs
 ios/Runner.xcodeproj/project.pbxproj
 
-
-
-# Cloud Functions (RC) local deps
+# Cloud Functions (RC) and Newsltter local deps
 /tools/cloud-functions-rc/node_modules/
+/tools/newsletter/node_modules/

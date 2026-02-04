@@ -103,7 +103,7 @@ Future<void> main() async {
 
     // Enable detector logs if needed
     //IqamahChangeService.logEnabled = true;
-    
+
     // Fonts are asset-only (never HTTP)
     GoogleFonts.config.allowRuntimeFetching = false;
 
