@@ -4,27 +4,29 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // SystemUiOverlayStyle
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
-import '../app_colors.dart'; // brand colors/gradients
-import '../main.dart' show AppGradients; // read theme gradient
-// Generated localizations
+import '../app_colors.dart';
+import '../main.dart' show AppGradients;
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
-// Light palette anchors
-const _kLightTextPrimary = Color(0xFF0F2432); // deep blue‑gray
-const _kLightTextMuted = Color(0xFF4A6273);
+const _kLightTextPrimary = Color(0xFF0F2432);
+const _kLightTextMuted   = Color(0xFF4A6273);
 
-/// Lightweight UI model for each announcement item.
+/// UI model for a card
 class _AnnItem {
   final String id;
   final String title;
   final String text;
-  final DateTime? publishedAtUtc; // canonical UTC timestamp
+  final DateTime? publishedAtUtc; // UTC if known
+  final int? sortById;            // lower appears first
+
   const _AnnItem({
     required this.id,
     required this.title,
     required this.text,
     required this.publishedAtUtc,
+    required this.sortById,
   });
 }
 
@@ -66,13 +68,13 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
         fetchTimeout: const Duration(seconds: 10),
         minimumFetchInterval: Duration.zero,
       ));
+      // Minimal defaults; list is empty by default.
       await rc.setDefaults(const {
-        'announcement_active': true,
-        'announcement_title': 'Announcement',
-        'announcement_text': 'Assalamu Alaikum',
+        'announcement_active': false,
+        'announcement_title': '',
+        'announcement_text': '',
         'announcement_published_at': '',
         'announcements_json': '[]',
-        'announcements_version': '',
       });
       final updated = await rc.fetchAndActivate();
       debugPrint('RemoteConfig fetchAndActivate -> updated=$updated');
@@ -106,26 +108,25 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
   }
 
   void _readAnnouncements(FirebaseRemoteConfig rc) {
+    // 1) Try list
     final jsonStr = rc.getString('announcements_json').trim();
-    // Parse list (may be empty)
     final list = _parseArray(jsonStr);
 
-    // Parse legacy single (may be active or empty)
+    // 2) Merge legacy single (GUI) if active
     final active = rc.getBool('announcement_active');
-    final title = rc.getString('announcement_title').trim();
-    final text = rc.getString('announcement_text').trim();
-    final when = rc.getString('announcement_published_at').trim();
+    final title  = rc.getString('announcement_title').trim();
+    final text   = rc.getString('announcement_text').trim();
+    final when   = rc.getString('announcement_published_at').trim();
 
-    final List<_AnnItem> merged = [...list];
-
+    final merged = <_AnnItem>[...list];
     if (active && (title.isNotEmpty || text.isNotEmpty)) {
       final legacy = _AnnItem(
         id: 'legacy-0',
         title: title.isEmpty ? 'Announcement' : title,
         text: text,
         publishedAtUtc: _parseToUtc(when),
+        sortById: null, // single card has no sort_by_id; null -> listed after sorted items
       );
-      // If list already contains an item with this id, replace it; else append.
       final ix = merged.indexWhere((e) => e.id == legacy.id);
       if (ix >= 0) {
         merged[ix] = legacy;
@@ -134,8 +135,17 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       }
     }
 
-    // Sort newest first by publishedAtUtc (nulls last)
+    // 3) Order:
+    // If ANY item has sortById, order by sortById ASC (nulls last), then by publishedAt desc.
+    // Else, order by publishedAt desc.
+    final anySortKey = merged.any((e) => e.sortById != null);
     merged.sort((a, b) {
+      if (anySortKey) {
+        final asv = a.sortById ?? 1 << 30;
+        final bsv = b.sortById ?? 1 << 30;
+        final cmp = asv.compareTo(bsv);
+        if (cmp != 0) return cmp;
+      }
       final ta = a.publishedAtUtc?.millisecondsSinceEpoch ?? -1;
       final tb = b.publishedAtUtc?.millisecondsSinceEpoch ?? -1;
       return tb.compareTo(ta);
@@ -144,18 +154,14 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     if (mounted) setState(() => _items = merged);
   }
 
-  /// Robustly parse many forms:
-  /// - 2026-02-03T17:48:00-0600
-  /// - 2026-02-03T17:48:00-06:00
-  /// - 2026-02-03 17:48-0600
-  /// - 2026-02-03T17:48-0600   (adds :00 seconds)
-  /// Returns UTC, or null on failure.
+  /// Robust timestamp parsing:
+  /// Supports "2026-02-03T17:48:00-0600", "2026-02-03T17:48:00-06:00",
+  /// "2026-02-03 17:48-0600", "2026-02-03T17:48-0600" (adds :00).
   DateTime? _parseToUtc(String raw) {
     if (raw.isEmpty) return null;
-
     String s = raw.trim();
 
-    // Normalize date-time separator (space -> 'T')
+    // space -> 'T'  (use replaceAllMapped instead of replaceFirst+callback)
     s = s.replaceAllMapped(
       RegExp(r'^(\d{4}-\d{2}-\d{2})\s+'),
           (m) => '${m.group(1)}T',
@@ -170,7 +176,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       );
     }
 
-    // Normalize timezone offsets like -0600 -> -06:00 (at end of string)
+    // normalize "-0600" -> "-06:00" at end
     s = s.replaceAllMapped(
       RegExp(r'([+\-]\d{2})(\d{2})$'),
           (m) => '${m.group(1)}:${m.group(2)}',
@@ -184,8 +190,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
 
     // Final fallback: force seconds and colonized offset again
     try {
-      String t = s;
-      t = t.replaceAllMapped(
+      String t = s.replaceAllMapped(
         RegExp(r'(\d{2}:\d{2})(?=([Zz]|[+\-]\d{2}:\d{2})?$)'),
             (m) => '${m.group(1)}:00',
       );
@@ -205,15 +210,31 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
       if (decoded is List) {
         return decoded.map<_AnnItem>((e) {
           final m = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
-          final id = (m['id'] ?? '').toString();
+          final id    = (m['id'] ?? '').toString();
           final title = (m['title'] ?? '').toString();
-          final text = (m['text'] ?? m['body'] ?? '').toString();
-          final when = (m['published_at'] ?? m['publishedAt'] ?? m['published'])?.toString() ?? '';
+          final text  = (m['text']  ?? m['body'] ?? '').toString();
+          final when  = (m['published_at'] ?? m['publishedAt'] ?? m['published'])?.toString() ?? '';
+
+          // sort_by_id may be number or string; parse to int if possible
+          int? sortBy;
+          final rawSort = m['sort_by_id'];
+          if (rawSort != null) {
+            if (rawSort is num) {
+              sortBy = rawSort.toInt();
+            } else {
+              final s = rawSort.toString().trim();
+              if (RegExp(r'^[+-]?\d+$').hasMatch(s)) {
+                sortBy = int.tryParse(s);
+              }
+            }
+          }
+
           return _AnnItem(
             id: id.isEmpty ? 'item-${DateTime.now().microsecondsSinceEpoch}' : id,
             title: title,
             text: text,
             publishedAtUtc: _parseToUtc(when),
+            sortById: sortBy,
           );
         }).toList();
       }
@@ -223,24 +244,17 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
     return const [];
   }
 
+
   String _formatCentral(DateTime dUtc) {
     final central = tz.TZDateTime.from(dUtc, widget.location);
-    const w = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    final wd = w[central.weekday - 1];
-    final mo = m[central.month - 1];
-    int h = central.hour % 12; if (h == 0) h = 12;
-    final ap = central.hour >= 12 ? 'PM' : 'AM';
-    final mm = central.minute.toString().padLeft(2, '0');
-    return '$wd, $mo ${central.day} ${central.year} $h:$mm $ap';
+    return DateFormat('EEE, MMM d, y h:mm a').format(central);
   }
+
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
-    // Theme‑adaptive page gradient with Light fallback if extension not present
+    final l10n     = AppLocalizations.of(context);
+    final isLight  = Theme.of(context).brightness == Brightness.light;
     final gradient = Theme.of(context).extension<AppGradients>()?.page ??
         (isLight
             ? const LinearGradient(
@@ -249,12 +263,10 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
           colors: [Color(0xFFF6F9FC), Colors.white],
         )
             : AppColors.pageGradient);
-
-    // AppBar colors per theme
-    final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
+    final appBarBg   = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? _kLightTextPrimary : Colors.white;
     final iconsColor = titleColor;
-    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay    = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     Widget listContent;
     if (_loading) {
@@ -300,11 +312,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab>
         centerTitle: true,
         title: Text(
           l10n.notifications_title,
-          style: TextStyle(
-            color: titleColor,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600).copyWith(color: titleColor),
         ),
         iconTheme: IconThemeData(color: iconsColor),
         systemOverlayStyle: overlay,
@@ -329,11 +337,11 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    // White bubble in both themes; dark text in Dark mode for readability
-    final Color cardColor = Colors.white;
-    final Color titleColor = isLight ? _kLightTextPrimary : Colors.black;
-    final Color bodyColor = isLight ? _kLightTextPrimary : Colors.black87;
-    final Color timestampColor= isLight ? _kLightTextMuted : Colors.black54;
+    final cardColor      = Colors.white;
+    final titleColor     = isLight ? _kLightTextPrimary : Colors.black;
+    final bodyColor      = isLight ? _kLightTextPrimary : Colors.black87;
+    final timestampColor = isLight ? _kLightTextMuted   : Colors.black54;
+
     return Card(
       color: cardColor,
       elevation: 3,
@@ -348,23 +356,15 @@ class _AnnouncementCard extends StatelessWidget {
             // Title
             Text(
               title,
-              style: (Theme.of(context).textTheme.titleMedium ??
-                  const TextStyle(fontSize: 18))
-                  .copyWith(
-                fontWeight: FontWeight.w800,
-                color: titleColor,
-              ),
+              style: (Theme.of(context).textTheme.titleMedium ?? const TextStyle(fontSize: 18))
+                  .copyWith(fontWeight: FontWeight.w800, color: titleColor),
             ),
             const SizedBox(height: 8),
             // Body
             Text(
               body,
-              style: (Theme.of(context).textTheme.bodyLarge ??
-                  const TextStyle(fontSize: 16))
-                  .copyWith(
-                height: 1.35,
-                color: bodyColor,
-              ),
+              style: (Theme.of(context).textTheme.bodyLarge ?? const TextStyle(fontSize: 16))
+                  .copyWith(height: 1.35, color: bodyColor),
             ),
             if (whenLabel != null) ...[
               const SizedBox(height: 8),
@@ -372,8 +372,7 @@ class _AnnouncementCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   whenLabel!,
-                  style: (Theme.of(context).textTheme.bodySmall ??
-                      const TextStyle(fontSize: 12))
+                  style: (Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12))
                       .copyWith(color: timestampColor),
                 ),
               ),

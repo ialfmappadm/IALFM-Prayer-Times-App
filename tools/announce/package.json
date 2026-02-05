@@ -1,0 +1,14 @@
+{
+  "name": "announce-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "publish": "node publish_and_notify.js --file=announcements.json --topic=allUsers"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "dotenv": "^16.4.0",
+    "firebase-admin": "^12.6.0"
+  }
+}

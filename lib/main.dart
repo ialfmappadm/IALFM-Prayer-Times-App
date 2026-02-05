@@ -14,6 +14,7 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // cloud metadata peek
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
@@ -1020,15 +1021,17 @@ class HomeTabs extends StatefulWidget {
 class _HomeTabsState extends State<HomeTabs>
     with WidgetsBindingObserver, RestorationMixin {
   // More tab index in your pages[] (Prayer, Announcements, Social, Directory, More)
-  static const int kMoreTabIndex = 4;
+  //static const int kMoreTabIndex = 4;
 
   // Restorable selected index
   final RestorableInt _restorableIndex = RestorableInt(0);
 
   bool hasNewAnnouncement = false;
-  static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
 
-  // ---- RestorationMixin
+  // Announcement fingerprint keys
+  static const _kAnnSeenFp = 'ux.ann.lastSeenFp'; // last seen by the user
+  String? _annFp;                                 // latest fetched/received fp
+
   @override
   String? get restorationId => 'home_tabs';
 
@@ -1045,66 +1048,81 @@ class _HomeTabsState extends State<HomeTabs>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // FCM "nudge" path — the ONLY way we light the dot (no polling).
+    // --- FCM fast path: nudge the dot on new announcements ---
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.data['newAnnouncement'] == 'true') {
-        setState(() => hasNewAnnouncement = true);
+      // Prefer fingerprint if provided; else accept the old 'newAnnouncement=true'
+      final fp = message.data['ann_fp'] as String?;
+      if (fp != null && fp.isNotEmpty) {
+        unawaited(_applyAnnFp(fp));
+      } else if (message.data['newAnnouncement'] == 'true') {
+        if (mounted) setState(() => hasNewAnnouncement = true);
       }
     });
+
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
-      if (m.data['newAnnouncement'] == 'true') {
-        setState(() {
-          _index = 1;
-          hasNewAnnouncement = false;
-        });
+      final fp = m.data['ann_fp'] as String?;
+      if (fp != null && fp.isNotEmpty) {
+        unawaited(_applyAnnFp(fp));
+      } else if (m.data['newAnnouncement'] == 'true') {
+        if (mounted) setState(() => _index = 1); // open tab; dot cleared on open
       }
     });
+
     FirebaseMessaging.instance.getInitialMessage().then((m) {
-      if (m?.data['newAnnouncement'] == 'true') {
-        setState(() {
-          _index = 1;
-          hasNewAnnouncement = false;
-        });
+      final fp = m?.data['ann_fp'] as String?;
+      if (fp != null && fp.isNotEmpty) {
+        unawaited(_applyAnnFp(fp));
+      } else if (m?.data['newAnnouncement'] == 'true') {
+        if (mounted) setState(() => _index = 1);
       }
     });
 
-    // Honor the notifications return intent as a backstop on cold start
-    _restoreTabIntent();
-  }
+    // RC fallback: pick up changes even when no FCM was sent
+    unawaited(_fetchAnnFpFromRC());
 
-  Future<void> _restoreTabIntent() async {
-    final intent = await UXPrefs.getLastIntendedTab(); // 'more' | null
-    if (!mounted) return;
-    if (intent == 'more') {
-      setState(() => _index = kMoreTabIndex);
-      await UXPrefs.setLastIntendedTab(null);
-
-      // Optional: show a quick status snack after we’re visible (cold start)
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final status = await NotificationOptInService.getStatus();
-        final authorized = NotificationOptInService.isAuthorized(status);
-        messengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text(authorized
-                ? 'Notifications enabled'
-                : 'Notifications disabled'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      });
-    }
+    // (You already call _restoreTabIntent(); keep that if present)
+    // unawaited(_restoreTabIntent());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // event‑driven; no RC polling for announcements
+    // Refresh from RC when app returns to foreground
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_fetchAnnFpFromRC());
+    }
+  }
+
+  // --- RC fetch + apply ---
+  Future<void> _fetchAnnFpFromRC() async {
+    try {
+      final rc = FirebaseRemoteConfig.instance;
+      // Keep fetch fast; 0–15 min interval is fine — we only call on resume/start
+      await rc.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(seconds: 5),
+        minimumFetchInterval: const Duration(minutes: 15),
+      ));
+      await rc.fetchAndActivate();
+      final fp = rc.getString('ann_fp').trim();
+      await _applyAnnFp(fp.isEmpty ? null : fp);
+    } catch (_) {
+      // swallow — dot just won't update from RC this time
+    }
+  }
+
+  // Compare new fingerprint to what user last saw; light the dot if different.
+  Future<void> _applyAnnFp(String? fp) async {
+    if (fp == null || fp.isEmpty) return;
+    _annFp = fp;
+    final lastSeen = await UXPrefs.getString(_kAnnSeenFp);
+    final hasNew = (lastSeen == null || lastSeen != fp);
+    if (!mounted) return;
+    setState(() => hasNewAnnouncement = hasNew);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _restorableIndex.dispose(); //
+    _restorableIndex.dispose();
     super.dispose();
   }
 
@@ -1133,40 +1151,37 @@ class _HomeTabsState extends State<HomeTabs>
           height: kNavBarHeight,
           selectedIndex: _index,
           onDestinationSelected: (i) async {
-            // Optional: reset "seen" when leaving the notifications tab
-            if (_index == 1 && i != 1) {
-              await UXPrefs.setString(_kAnnSeenFp, null);
-            }
+            // Correct clearing: when user OPENS the Announcements tab,
+            // mark current fingerprint as "seen" and clear the dot.
             setState(() {
               _index = i;
-              if (i == 1) {
-                hasNewAnnouncement = false; // clear dot when opening tab
-              }
+              if (i == 1) hasNewAnnouncement = false;
             });
+            if (i == 1) {
+              final fp = _annFp;
+              if (fp != null && fp.isNotEmpty) {
+                await UXPrefs.setString(_kAnnSeenFp, fp);
+              }
+            }
             Haptics.tap();
           },
           destinations: [
             const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-            // Bell Icon with red dot
+            // 🔔 with red dot
             NavigationDestination(
               label: '',
               icon: Stack(clipBehavior: Clip.none, children: [
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2,
-                    top: -2,
+                    right: -2, top: -2,
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 10, height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
+                        color: Colors.red, shape: BoxShape.circle,
                         border: Border.all(
-                          color:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? Colors.white
-                                  : Colors.black,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Colors.white : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1177,19 +1192,14 @@ class _HomeTabsState extends State<HomeTabs>
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2,
-                    top: -2,
+                    right: -2, top: -2,
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 10, height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
+                        color: Colors.red, shape: BoxShape.circle,
                         border: Border.all(
-                          color:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? Colors.white
-                                  : Colors.black,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Colors.white : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1198,15 +1208,12 @@ class _HomeTabsState extends State<HomeTabs>
               ]),
             ),
             const NavigationDestination(
-              label: '',
-              icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
+              label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
             ),
             const NavigationDestination(
-              label: '',
-              icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
+              label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
             ),
-            const NavigationDestination(
-                label: '', icon: Icon(Icons.more_horiz)),
+            const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),
       ),

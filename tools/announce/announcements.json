@@ -2,13 +2,13 @@
   {
     "id": "welcome-2026-02-03",
     "title": "Welcome",
-    "text": "Welcome to IALFM Announcements. Check here for updates on schedule changes, events, and reminders.",
-    "published_at": "2026-02-03T17:48:00-0600"
+    "text": "Welcome to IALFM Announcements. Check here for updates on schedule changes, events, and reminders.\n\nIALFM BOD",
+    "sort_by_id": 0
   },
   {
     "id": "friday-2026-02-06",
     "title": "Jumu'ah Reminder",
-    "text": "Khutbah at 1:30 PM",
-    "published_at": "2026-02-06T13:30:00-0600"
+    "text": "Khutbah at 1:30 PM\n\nIALFM BOD",
+    "sort_by_id": 1
   }
 ]

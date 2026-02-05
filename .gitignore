@@ -46,7 +46,6 @@ local.json
 # Local Android res backups (yours from earlier steps)
 android/app/src/main/res_backup_*/
 android/app/src/main/res_backup_overwritten_*/
-
 bundletool*.jar
 
 
@@ -73,3 +72,8 @@ tools/run.trace
 /tools/newsletter/node_modules/
 # Ignore stray APKs dropped at repo root
 *.apk
+
+# --- Node ---
+**/node_modules/
+npm-debug.log*
+yarn-error.log*
