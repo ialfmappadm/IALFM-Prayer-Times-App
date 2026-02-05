@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 
 class VersionInfoPage extends StatefulWidget {
   const VersionInfoPage({super.key});
-
   @override
   State<VersionInfoPage> createState() => _VersionInfoPageState();
 }
@@ -46,14 +44,17 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final cs = theme.colorScheme; // ← use this for readable on dark
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: appBarBg,
         elevation: 0,
         centerTitle: true,
-        title: Text(l10n.version_page_title,
-            style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text(
+          l10n.version_page_title,
+          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+        ),
         systemOverlayStyle: overlay,
       ),
       body: Container(
@@ -68,7 +69,6 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
                 const SizedBox(height: 10),
                 _kv(l10n.version_label, _version, context),
                 _kv(l10n.build_label, _build, context),
-                // Removed the verbose CFBundle/versionName explanatory paragraph
               ],
             ),
           ),
@@ -79,9 +79,15 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
 
   Widget _sectionHeader(String title) {
     const gold = Color(0xFFC7A447);
-    return Text(title,
-        style: const TextStyle(
-            color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4));
+    return Text(
+      title,
+      style: const TextStyle(
+        color: gold,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
+      ),
+    );
   }
 
   Widget _kv(String k, String v, BuildContext context) {
@@ -89,9 +95,33 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 120, child: Text(k, style: const TextStyle(fontWeight: FontWeight.w700))),
-          Expanded(child: Text(v, style: TextStyle(color: cs.onSurface))),
+          // Key
+          SizedBox(
+            width: 120,
+            child: Text(
+              k,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: cs.onSurface,           // ← readable on dark
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          // Value
+          Expanded(
+            child: Text(
+              v,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.90), // ← readable on dark
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -35,6 +35,8 @@ class AboutPage extends StatelessWidget {
           l10n.more_about_app,
           style: TextStyle(
               color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
@@ -63,42 +65,55 @@ class AboutPage extends StatelessWidget {
                 _bullet(context, l10n.about_feature_7),
                 _bullet(context, l10n.about_feature_8),
                 _bullet(context, l10n.about_feature_9),
-                const SizedBox(height: 20),
 
+                const SizedBox(height: 20),
                 _sectionHeader(l10n.about_quick_links),
                 const SizedBox(height: 10),
+
+                // Visit Website
                 _fullWidthButton(
+                  context: context,
                   label: l10n.about_visit_website,
                   icon: Icons.public,
                   onPressed: () => _openExternal(_websiteUrl, context),
                 ),
                 const SizedBox(height: 10),
+
+                // Privacy Policy
                 _fullWidthButton(
+                  context: context,
                   label: l10n.about_view_full_privacy_policy,
                   icon: Icons.privacy_tip_outlined,
                   onPressed: () => _openExternal(_policyUrl, context),
                 ),
                 const SizedBox(height: 10),
+
+                // Contact support
                 _fullWidthButton(
+                  context: context,
                   label: l10n.contact_support,
                   icon: Icons.mail_outline,
                   onPressed: () => _showContactSheet(context),
                 ),
                 const SizedBox(height: 10),
+
+                // App Version (navigate to VersionInfoPage) — readable on dark
                 _fullWidthButton(
+                  context: context,
                   label: l10n.about_app_version_button,
                   icon: Icons.info_outline,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const VersionInfoPage()),
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
                 _sectionHeader(l10n.about_disclaimer),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.about_disclaimer_body),
 
-                // --- GOLD "Last Updated" block (hidden long-press to refresh)
+                // GOLD "Last Updated" block (hidden long‑press to refresh)
                 const SizedBox(height: 24),
                 const ScheduleInfoTile(),
               ],
@@ -109,7 +124,7 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  // helpers (unchanged)
+  // helpers (unchanged except styling)
   static Future<void> _openExternal(String url, BuildContext context) async {
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -193,6 +208,8 @@ class AboutPage extends StatelessWidget {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -224,19 +241,24 @@ class AboutPage extends StatelessWidget {
   }
 
   Widget _fullWidthButton({
+    required BuildContext context,
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
   }) {
+    final Color bg = const Color(0xFFC7A447);
+    final Color fg = Colors.black; // high contrast on gold in both themes
+
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(label),
+        icon: Icon(icon, color: fg),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFC7A447), // gold
-          foregroundColor: Colors.black,
+          backgroundColor: bg,
+          foregroundColor: fg,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );

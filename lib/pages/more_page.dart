@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // <- needed for NotificationSettings & AuthorizationStatus
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
@@ -12,16 +14,15 @@ import '../theme_controller.dart';
 import '../locale_controller.dart';
 import '../ux_prefs.dart';
 import '../services/hijri_override_service.dart';
-import '../services/notification_optin_service.dart';
-import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import '../services/alerts_scheduler.dart';
+import '../services/notification_optin_service.dart';
 import '../models.dart';
 
-// Pages
-import './privacy_policy_page.dart';
-import './about_page.dart';
-import './terms_of_use_page.dart';
-import './version_page.dart';
+// Aliased page imports (avoid symbol ambiguity)
+import './version_page.dart' as version_pg;
+import './about_page.dart' as about_pg;
+import './privacy_policy_page.dart' as privacy_pg;
+import './terms_of_use_page.dart' as terms_pg;
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -30,189 +31,37 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  // Admin PIN for Hijri override
+  // --- State ---
   static const String _adminPin = '3430';
+  static const Color _gold = Color(0xFFC7A447);
 
-  // Expansion toggles
+  bool _notificationsExpanded = false;
   bool _accExpanded = false;
   bool _dateTimeExpanded = false;
   bool _langExpanded = false;
-  bool _notificationsExpanded = false;
   bool _aboutExpanded = false;
 
-  // Local alert toggles (Adhan/Iqamah/Jumu'ah)
-  bool _adhanAlert = false;
-  bool _iqamahAlert = false;
-  bool _jumuahReminder = false;
+  bool _adhanAlert = UXPrefs.adhanAlertEnabled.value;
+  bool _iqamahAlert = UXPrefs.iqamahAlertEnabled.value;
+  bool _jumuahReminder = UXPrefs.jumuahReminderEnabled.value;
 
-  static const Color _gold = Color(0xFFC7A447);
+  // --- OS notifications state label ---
+  Future<String> _readOsNotificationStateLabel() async {
+    try {
+      final androidImpl = FlutterLocalNotificationsPlugin()
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final bool? enabled = await androidImpl?.areNotificationsEnabled();
+      if (enabled == true) return 'Enabled';
+      if (enabled == false) return 'Disabled';
 
-  @override
-  void initState() {
-    super.initState();
-    _adhanAlert = UXPrefs.adhanAlertEnabled.value;
-    _iqamahAlert = UXPrefs.iqamahAlertEnabled.value;
-    _jumuahReminder = UXPrefs.jumuahReminderEnabled.value;
-  }
-
-  Future<bool> _confirmHijriChange(String selectionLabel) async {
-    final l10n = AppLocalizations.of(context);
-    return await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.more_hijri_offset_label),
-        content: Text('${l10n.more_hijri_offset_label}: $selectionLabel ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.btn_cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.btn_save),
-          ),
-        ],
-      ),
-    ).then((v) => v ?? false);
-  }
-
-  Future<bool> _promptAdminPin() async {
-    final controller = TextEditingController();
-    bool ok = false;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Admin Verification'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            maxLength: 8,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              hintText: 'Enter Admin PIN',
-              counterText: '',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(AppLocalizations.of(context).btn_cancel),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: _gold,
-                foregroundColor: Colors.black,
-              ),
-              onPressed: () {
-                ok = (controller.text == _adminPin);
-                Navigator.pop(ctx);
-              },
-              child: Text(AppLocalizations.of(context).btn_save),
-            ),
-          ],
-        );
-      },
-    );
-    if (!ok) {
-      _toast('Invalid PIN');
-    }
-    return ok;
-  }
-
-  Future<bool> _confirmRunOverride() async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Update Hijri Date from Masjid'),
-        content: const Text(
-          'This will update today’s Hijri date based on the masjid’s official setting.\nProceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(context).btn_cancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(context).btn_save),
-          ),
-        ],
-      ),
-    ).then((v) => v ?? false);
-  }
-
-  // (Re)schedule today's alerts based on toggles
-  Future<void> _rescheduleTodayAlerts({
-    required bool adhan,
-    required bool iqamah,
-    required bool jumuah,
-  }) async {
-    final now = DateTime.now();
-    final days = await loadPrayerDays(year: now.year);
-    final todayDate = DateTime(now.year, now.month, now.day);
-
-    PrayerDay? today;
-    for (final d in days) {
-      if (d.date.year == todayDate.year &&
-          d.date.month == todayDate.month &&
-          d.date.day == todayDate.day) {
-        today = d;
-        break;
+      final fcm = await FirebaseMessaging.instance.getNotificationSettings();
+      final auth = fcm.authorizationStatus;
+      if (auth == AuthorizationStatus.authorized || auth == AuthorizationStatus.provisional) {
+        return 'Enabled';
       }
-    }
-    if (today == null) return;
-
-    DateTime? mkTime(DateTime base, String hhmm) {
-      if (hhmm.isEmpty) return null;
-      final parts = hhmm.split(':');
-      if (parts.length != 2) return null;
-      final h = int.tryParse(parts[0]);
-      final m = int.tryParse(parts[1]);
-      if (h == null || m == null) return null;
-      return DateTime(base.year, base.month, base.day, h, m);
-    }
-
-    final base = DateTime(today.date.year, today.date.month, today.date.day);
-    // Adhan
-    final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
-    final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
-    final asrAdhan  = mkTime(base, today.prayers['asr']?.begin  ?? '');
-    final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
-    final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
-    // Iqamah
-    final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
-    final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
-    final asrIqamah  = mkTime(base, today.prayers['asr']?.iqamah  ?? '');
-    final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
-    final ishaIqamah = mkTime(base, today.prayers['isha']?.iqamah ?? '');
-
-    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
-      dateLocal: base,
-      fajrAdhan: fajrAdhan,
-      dhuhrAdhan: dhuhrAdhan,
-      asrAdhan: asrAdhan,
-      maghribAdhan: maghribAdhan,
-      ishaAdhan: ishaAdhan,
-      fajrIqamah: fajrIqamah,
-      dhuhrIqamah: dhuhrIqamah,
-      asrIqamah: asrIqamah,
-      maghribIqamah: maghribIqamah,
-      ishaIqamah: ishaIqamah,
-      adhanEnabled: adhan,
-      iqamahEnabled: iqamah,
-    );
-
-    await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
-      anyDateThisWeekLocal: base,
-      enabled: jumuah,
-    );
+      if (auth == AuthorizationStatus.denied) return 'Disabled';
+    } catch (_) {}
+    return 'Check';
   }
 
   @override
@@ -221,6 +70,7 @@ class _MorePageState extends State<MorePage> {
     final isLight = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
     final l10n = AppLocalizations.of(context);
+
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
@@ -234,6 +84,7 @@ class _MorePageState extends State<MorePage> {
         title: Text(
           l10n.tab_more,
           style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+          maxLines: 1, overflow: TextOverflow.ellipsis,
         ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
@@ -244,7 +95,7 @@ class _MorePageState extends State<MorePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
-              // ============= NOTIFICATIONS =============
+              // ================= NOTIFICATIONS =================
               _sectionHeader(context, l10n.more_notifications),
               _card(
                 context,
@@ -258,109 +109,63 @@ class _MorePageState extends State<MorePage> {
                     leading: _secIcon(FontAwesomeIcons.bell),
                     title: _secTitle(context, l10n.more_notifications),
                     children: [
-                      // Enable / Status
-                      FutureBuilder<NotificationSettings>(
-                        future: NotificationOptInService.getStatus(),
+                      // OS status row
+                      FutureBuilder<String>(
+                        future: _readOsNotificationStateLabel(),
                         builder: (context, snap) {
-                          String value = '…';
-                          VoidCallback onTap = () {};
-                          bool showEnableButton = false;
-
-                          if (snap.hasData) {
-                            final s = snap.data!;
-                            final authorized = NotificationOptInService.isAuthorized(s);
-                            final denied = s.authorizationStatus == AuthorizationStatus.denied;
-                            if (authorized) {
-                              value = l10n.common_enabled;
-                              onTap = () async => NotificationOptInService.openOSSettings();
-                              showEnableButton = false;
-                            } else if (denied) {
-                              value = l10n.common_disabled;
-                              onTap = () async => NotificationOptInService.openOSSettings();
-                              showEnableButton = true;
-                            } else {
-                              value = l10n.common_disabled;
-                              onTap = () async => NotificationOptInService.openOSSettings();
-                              showEnableButton = true;
-                            }
-                          }
-
-                          return Column(
-                            children: [
-                              _pickerRow(
-                                context: context,
-                                icon: FontAwesomeIcons.bell,
-                                label: l10n.more_enable_notifications,
-                                value: value,
-                                onTap: onTap,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () async => NotificationOptInService.openOSSettings(),
-                                        child: Text(l10n.common_open_settings),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    if (showEnableButton)
-                                      Expanded(
-                                        child: FilledButton(
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor: _gold,
-                                            foregroundColor: Colors.black,
-                                          ),
-                                          onPressed: () async {
-                                            final after = await NotificationOptInService.requestPermission();
-                                            if (!context.mounted) return;
-                                            final ok = NotificationOptInService.isAuthorized(after);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(ok ? l10n.common_enabled : l10n.common_disabled)),
-                                            );
-                                            setState(() {});
-                                          },
-                                          child: Text(l10n.common_enable),
-                                        ),
-                                      ),
-                                  ],
+                          final cs = Theme.of(context).colorScheme;
+                          final state = snap.data ?? 'Check';
+                          final enabled = state == 'Enabled';
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                            child: Row(
+                              children: [
+                                FaIcon(FontAwesomeIcons.bell, size: 18, color: cs.onSurface),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Notifications',
+                                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: enabled ? _gold : cs.errorContainer,
+                                    foregroundColor: enabled ? Colors.black : cs.onErrorContainer,
+                                  ),
+                                  onPressed: () => NotificationOptInService.openOSSettings(),
+                                  child: Text(enabled ? 'Enabled' : 'Disabled'),
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),
+
                       const _Hairline(),
-                      // Prayer Alerts
+
+                      // Salah Alerts
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.mosque,
-                        label: l10n.more_prayer_alerts,
+                        label: 'Salah Alerts',
                         value: (_adhanAlert || _iqamahAlert)
                             ? '${l10n.more_adhan}: ${_toggleLabel(_adhanAlert)} · ${l10n.more_iqamah}: ${_toggleLabel(_iqamahAlert)}'
                             : l10n.common_open,
-                        onTap: _configurePrayerAlerts,
+                        onTap: _openSalahSheet,
                       ),
+
                       const _Hairline(),
-                      // Jumu'ah Reminder
+
+                      // Jumu’ah
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.handsPraying,
-                        label: l10n.more_jumuah_reminder,
-                        value: _jumuahReminder ? l10n.more_jumuah_on : l10n.more_jumuah_off,
-                        onTap: () async {
-                          final enabled = await _toggleJumuahReminder();
-                          if (!context.mounted) return;
-                          setState(() => _jumuahReminder = enabled ?? _jumuahReminder);
-                          await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);
-                          await AlertsScheduler.instance.requestPermissions();
-                          await _rescheduleTodayAlerts(
-                            adhan: UXPrefs.adhanAlertEnabled.value,
-                            iqamah: UXPrefs.iqamahAlertEnabled.value,
-                            jumuah: UXPrefs.jumuahReminderEnabled.value,
-                          );
-                        },
+                        label: 'Jumu’ah',
+                        value: _jumuahReminder ? 'On' : 'Off',
+                        onTap: _openJumuahSheet,
+                        alignValueRight: true,
                       ),
                     ],
                   ),
@@ -368,8 +173,9 @@ class _MorePageState extends State<MorePage> {
               ),
 
               const SizedBox(height: 20),
-              // ============= ACCESSIBILITY =============
-              _sectionHeader(context, AppLocalizations.of(context).more_accessibility),
+
+              // ================= ACCESSIBILITY =================
+              _sectionHeader(context, l10n.more_accessibility),
               _card(
                 context,
                 child: Theme(
@@ -380,18 +186,20 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _accExpanded,
                     onExpansionChanged: (v) => setState(() => _accExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.universalAccess),
-                    title: _secTitle(context, AppLocalizations.of(context).more_accessibility),
+                    title: _secTitle(context, l10n.more_accessibility),
                     children: [
                       // Dark Mode
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: ThemeController.themeMode,
                         builder: (context, mode, _) {
-                          final platformDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-                          final isDark = (mode == ThemeMode.dark) || (mode == ThemeMode.system && platformDark);
+                          final platformDark =
+                              MediaQuery.of(context).platformBrightness == Brightness.dark;
+                          final isDark =
+                              (mode == ThemeMode.dark) || (mode == ThemeMode.system && platformDark);
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.moon,
-                            label: AppLocalizations.of(context).more_dark_mode,
+                            label: l10n.more_dark_mode,
                             value: isDark,
                             onChanged: (v) {
                               ThemeController.setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
@@ -400,7 +208,9 @@ class _MorePageState extends State<MorePage> {
                           );
                         },
                       ),
+
                       const _Hairline(),
+
                       // Haptics
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
@@ -408,13 +218,15 @@ class _MorePageState extends State<MorePage> {
                           return _switchRow(
                             context: context,
                             icon: FontAwesomeIcons.mobileScreenButton,
-                            label: AppLocalizations.of(context).more_haptics,
+                            label: l10n.more_haptics,
                             value: enabled,
                             onChanged: (v) async => UXPrefs.setHapticsEnabled(v),
                           );
                         },
                       ),
+
                       const _Hairline(),
+
                       // Text Size
                       ValueListenableBuilder<double>(
                         valueListenable: UXPrefs.textScale,
@@ -422,13 +234,13 @@ class _MorePageState extends State<MorePage> {
                           return _pickerRow(
                             context: context,
                             icon: FontAwesomeIcons.textHeight,
-                            label: AppLocalizations.of(context).more_text_size,
+                            label: l10n.more_text_size,
                             value: UXPrefs.labelForScale(scale),
                             onTap: () async {
                               final options = const <String>['Small', 'Default', 'Large'];
                               final choice = await _chooseOne(
                                 context,
-                                title: AppLocalizations.of(context).more_text_size,
+                                title: l10n.more_text_size,
                                 options: options,
                                 selected: UXPrefs.labelForScale(UXPrefs.textScale.value),
                               );
@@ -437,9 +249,10 @@ class _MorePageState extends State<MorePage> {
                               await UXPrefs.setTextScale(UXPrefs.scaleForLabel(choice));
                               if (!context.mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${AppLocalizations.of(context).more_text_size}: $choice');
+                              _toast('${l10n.more_text_size}: $choice');
                               setState(() {});
                             },
+                              alignValueRight: true
                           );
                         },
                       ),
@@ -449,8 +262,9 @@ class _MorePageState extends State<MorePage> {
               ),
 
               const SizedBox(height: 20),
-              // ============= DATE & TIME =============
-              _sectionHeader(context, AppLocalizations.of(context).more_date_time),
+
+              // ================= DATE & TIME =================
+              _sectionHeader(context, l10n.more_date_time),
               _card(
                 context,
                 child: Theme(
@@ -461,7 +275,7 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _dateTimeExpanded,
                     onExpansionChanged: (v) => setState(() => _dateTimeExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.clock),
-                    title: _secTitle(context, AppLocalizations.of(context).more_date_time),
+                    title: _secTitle(context, l10n.more_date_time),
                     children: [
                       // TIME FORMAT
                       ValueListenableBuilder<bool>(
@@ -472,25 +286,26 @@ class _MorePageState extends State<MorePage> {
                           return _segmentedRow(
                             context: context,
                             icon: FontAwesomeIcons.clock,
-                            label: AppLocalizations.of(context).more_time_format,
+                            label: l10n.more_time_format,
                             segments: segments,
                             index: selectedIndex,
                             onChanged: (i) async {
                               await UXPrefs.setUse24h(i == 1);
                               if (!context.mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${AppLocalizations.of(context).more_time_format}: ${segments[i]}');
+                              _toast('${l10n.more_time_format}: ${segments[i]}');
                               setState(() {});
                             },
                           );
                         },
                       ),
+
                       const _Hairline(),
+
                       // HIJRI OFFSET
                       ValueListenableBuilder<int>(
                         valueListenable: UXPrefs.hijriOffset,
                         builder: (context, offset, _) {
-                          final l10n = AppLocalizations.of(context);
                           final segments = <String>[
                             l10n.more_hijri_offset_minus1,
                             l10n.more_hijri_offset_zero,
@@ -517,12 +332,14 @@ class _MorePageState extends State<MorePage> {
                           );
                         },
                       ),
+
                       const _Hairline(),
+
                       // Admin override
                       _buttonRow(
                         context: context,
-                        icon: FontAwesomeIcons.lock,
-                        label: 'Update Hijri Date from Masjid (Admin)',
+                        icon: FontAwesomeIcons.triangleExclamation,
+                        label: 'Reset Hijri Date',
                         onPressed: () async {
                           UXPrefs.maybeHaptic();
                           final pinOk = await _promptAdminPin();
@@ -550,8 +367,9 @@ class _MorePageState extends State<MorePage> {
               ),
 
               const SizedBox(height: 20),
-              // ============= LANGUAGE =============
-              _sectionHeader(context, AppLocalizations.of(context).more_language),
+
+              // ================= LANGUAGE =================
+              _sectionHeader(context, l10n.more_language),
               _card(
                 context,
                 child: Theme(
@@ -562,15 +380,14 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _langExpanded,
                     onExpansionChanged: (v) => setState(() => _langExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.language),
-                    title: _secTitle(context, AppLocalizations.of(context).more_language),
+                    title: _secTitle(context, l10n.more_language),
                     children: [
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.language,
-                        label: AppLocalizations.of(context).more_language_label,
+                        label: l10n.more_language_label,
                         value: _currentLanguageLabel(context),
                         onTap: () async {
-                          final l10n = AppLocalizations.of(context);
                           final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
                           final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
@@ -581,6 +398,7 @@ class _MorePageState extends State<MorePage> {
                           );
                           if (!context.mounted) return;
                           if (choice == null) return;
+
                           if (choice == l10n.lang_arabic) {
                             LocaleController.setLocale(const Locale('ar'));
                           } else {
@@ -597,8 +415,9 @@ class _MorePageState extends State<MorePage> {
               ),
 
               const SizedBox(height: 20),
-              // ============= ABOUT =============
-              _sectionHeader(context, AppLocalizations.of(context).more_about),
+
+              // ================= ABOUT =================
+              _sectionHeader(context, l10n.more_about),
               _card(
                 context,
                 child: Theme(
@@ -609,59 +428,59 @@ class _MorePageState extends State<MorePage> {
                     initiallyExpanded: _aboutExpanded,
                     onExpansionChanged: (v) => setState(() => _aboutExpanded = v),
                     leading: _secIcon(FontAwesomeIcons.circleInfo),
-                    title: _secTitle(context, AppLocalizations.of(context).more_about),
+                    title: _secTitle(context, l10n.more_about),
                     children: [
-                      // App Version → page
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.tag,
                         label: l10n.more_app_version,
-                        value: AppLocalizations.of(context).common_open,
+                        value: l10n.common_open,
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const VersionInfoPage()),
+                          MaterialPageRoute(builder: (_) => version_pg.VersionInfoPage()),
                         ),
+                        hideValue: true,
                       ),
                       const _Hairline(),
-                      // About App → page
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.info,
-                        label: AppLocalizations.of(context).more_about_app,
-                        value: AppLocalizations.of(context).common_open,
+                        label: l10n.more_about_app,
+                        value: l10n.common_open,
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AboutPage()),
+                          MaterialPageRoute(builder: (_) => about_pg.AboutPage()),
                         ),
+                        hideValue: true,
                       ),
                       const _Hairline(),
-                      // Privacy Policy → page
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.shieldHalved,
-                        label: AppLocalizations.of(context).more_privacy_policy,
-                        value: AppLocalizations.of(context).common_open,
+                        label: l10n.more_privacy_policy,
+                        value: l10n.common_open,
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+                          MaterialPageRoute(builder: (_) => privacy_pg.PrivacyPolicyPage()),
                         ),
+                        hideValue: true,
                       ),
                       const _Hairline(),
-                      // Terms of Use → page
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.scaleBalanced,
                         label: l10n.more_terms_of_use,
-                        value: AppLocalizations.of(context).common_open,
+                        value: l10n.common_open,
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
+                          MaterialPageRoute(builder: (_) => terms_pg.TermsOfUsePage()),
                         ),
+                        hideValue: true,
                       ),
                       const _Hairline(),
-                      // Contact → inline sheet (consistent across pages)
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.envelope,
-                        label: AppLocalizations.of(context).more_contact,
-                        value: AppLocalizations.of(context).common_open,
+                        label: l10n.more_contact,
+                        value: l10n.common_open,
                         onTap: () => _showContactSheet(context),
+                        hideValue: true,
                       ),
                     ],
                   ),
@@ -676,7 +495,273 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ---- Contact sheet (inline, no external dependency) ----
+  // ───────────────────── Sheets & Scheduling ─────────────────────
+
+  Future<void> _openSalahSheet() async {
+    final l10n = AppLocalizations.of(context);
+    bool tempAdhan = _adhanAlert;
+    bool tempIqamah = _iqamahAlert;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Salah Alerts', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.more_adhan_alert_at_time),
+                      value: tempAdhan,
+                      onChanged: (v) => setSheetState(() => tempAdhan = v),
+                    ),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.more_iqamah_alert_5min),
+                      value: tempIqamah,
+                      onChanged: (v) => setSheetState(() => tempIqamah = v),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(l10n.btn_close),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              if (!mounted) return;
+
+                              _adhanAlert = tempAdhan;
+                              _iqamahAlert = tempIqamah;
+                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);
+                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);
+
+                              await AlertsScheduler.instance.requestPermissions();
+                              await _rescheduleToday();
+
+                              if (!mounted) return;
+                              _toast(l10n.common_enabled);
+                              setState(() {});
+                            },
+                            child: Text(l10n.btn_save),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openJumuahSheet() async {
+    bool temp = _jumuahReminder;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Jumu’ah Reminder', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 12),
+                    // concise copy
+                    SwitchListTile.adaptive(
+                      title: const Text('Jumu’ah reminder 1 hour before the Khutbah'),
+                      value: temp,
+                      onChanged: (v) => setSheetState(() => temp = v),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              if (!mounted) return;
+
+                              _jumuahReminder = temp;
+                              await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);
+                              await AlertsScheduler.instance.requestPermissions();
+                              await _rescheduleToday();
+
+                              if (!mounted) return;
+                              setState(() {});
+                            },
+                            child: const Text('Save'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _rescheduleToday() async {
+    final now = DateTime.now();
+    final days = await loadPrayerDays(year: now.year);
+    final todayDate = DateTime(now.year, now.month, now.day);
+
+    PrayerDay? today;
+    for (final d in days) {
+      if (d.date.year == todayDate.year &&
+          d.date.month == todayDate.month &&
+          d.date.day == todayDate.day) {
+        today = d;
+        break;
+      }
+    }
+    if (today == null) return;
+
+    DateTime? mkTime(DateTime base, String hhmm) {
+      if (hhmm.isEmpty) return null;
+      final p = hhmm.split(':');
+      if (p.length != 2) return null;
+      final h = int.tryParse(p[0]);
+      final m = int.tryParse(p[1]);
+      if (h == null || m == null) return null;
+      return DateTime(base.year, base.month, base.day, h, m);
+    }
+
+    final base = DateTime(today.date.year, today.date.month, today.date.day);
+
+    // Adhan
+    final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
+    final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
+    final asrAdhan = mkTime(base, today.prayers['asr']?.begin ?? '');
+    final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
+    final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
+
+    // Iqamah
+    final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
+    final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
+    final asrIqamah = mkTime(base, today.prayers['asr']?.iqamah ?? '');
+    final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
+    final ishaIqamah = mkTime(base, today.prayers['isha']?.iqamah ?? '');
+
+    await AlertsScheduler.instance.schedulePrayerAlertsForDay(
+      dateLocal: base,
+      fajrAdhan: fajrAdhan, dhuhrAdhan: dhuhrAdhan, asrAdhan: asrAdhan,
+      maghribAdhan: maghribAdhan, ishaAdhan: ishaAdhan,
+      fajrIqamah: fajrIqamah, dhuhrIqamah: dhuhrIqamah,
+      asrIqamah: asrIqamah, maghribIqamah: maghribIqamah, ishaIqamah: ishaIqamah,
+      adhanEnabled: _adhanAlert, iqamahEnabled: _iqamahAlert,
+    );
+
+    await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
+      anyDateThisWeekLocal: base, enabled: _jumuahReminder,
+    );
+  }
+
+  // ───────────────────── Helpers (single definitions) ─────────────────────
+
+  Future<bool> _confirmHijriChange(String selectionLabel) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.more_hijri_offset_label),
+        content: Text('${l10n.more_hijri_offset_label}: $selectionLabel ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.btn_cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.btn_save),
+          ),
+        ],
+      ),
+    ).then((v) => v ?? false);
+  }
+
+  Future<bool> _promptAdminPin() async {
+    final controller = TextEditingController();
+    bool ok = false;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Admin Verification'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: true,
+          keyboardType: TextInputType.number,
+          maxLength: 8,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(hintText: 'Enter Admin PIN', counterText: ''),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).btn_cancel)),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+            onPressed: () { ok = (controller.text == _adminPin); Navigator.pop(ctx); },
+            child: Text(AppLocalizations.of(context).btn_save),
+          ),
+        ],
+      ),
+    );
+    if (!ok) _toast('Invalid PIN');
+    return ok;
+  }
+
+  Future<bool> _confirmRunOverride() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Update Hijri Date from Masjid'),
+        content: const Text('This will update today’s Hijri date based on the masjid’s official setting.\nProceed?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).btn_cancel)),
+          FilledButton.tonal(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context).btn_save)),
+        ],
+      ),
+    ).then((v) => v ?? false);
+  }
+
   static Future<void> _showContactSheet(BuildContext context) async {
     const gold = Color(0xFFC7A447);
     await showModalBottomSheet<void>(
@@ -691,8 +776,7 @@ class _MorePageState extends State<MorePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Contact IALFM',
-                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                Text('Contact IALFM', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.feedback_outlined),
@@ -710,10 +794,7 @@ class _MorePageState extends State<MorePage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: gold,
-                      foregroundColor: Colors.black,
-                    ),
+                    style: FilledButton.styleFrom(backgroundColor: gold, foregroundColor: Colors.black),
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text('Close'),
                   ),
@@ -731,56 +812,11 @@ class _MorePageState extends State<MorePage> {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open email app for $to')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open email app for $to')));
     }
   }
 
-  // ---- Jumu'ah reminder small flow ----
-  Future<bool?> _toggleJumuahReminder() async {
-    bool temp = _jumuahReminder;
-    final l10n = AppLocalizations.of(context);
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.more_jumuah_reminder),
-        content: const Text("Send a friendly reminder 1 hour before Jumu’ah."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, temp),
-            child: Text(l10n.btn_cancel),
-          ),
-          StatefulBuilder(
-            builder: (ctx, setDialogState) {
-              return Row(
-                children: [
-                  const SizedBox(width: 12),
-                  Text(l10n.common_enable),
-                  const Spacer(),
-                  Switch.adaptive(
-                    value: temp,
-                    onChanged: (v) => setDialogState(() => temp = v),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () => Navigator.pop(ctx, temp),
-            child: Text(l10n.btn_save),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---- Shared UI helpers ----
+  // ---- Shared UI helpers
   String _toggleLabel(bool v) => v ? 'On' : 'Off';
 
   Widget _sectionHeader(BuildContext context, String title) {
@@ -789,9 +825,8 @@ class _MorePageState extends State<MorePage> {
       padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
       child: Text(
         title,
-        style: const TextStyle(
-          color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4,
-        ),
+        style: const TextStyle(color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+        maxLines: 1, overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -800,31 +835,19 @@ class _MorePageState extends State<MorePage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-
-    final bg = isDark
-        ? AppColors.rowHighlight
-        : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
-    final hairline =
-    isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
-
+    final bg = isDark ? AppColors.rowHighlight : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+    final hairline = isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
     return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: hairline),
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16), border: Border.all(color: hairline)),
       child: child,
     );
   }
 
-  Widget _secIcon(IconData icon) => Padding(
-    padding: const EdgeInsets.only(left: 6),
-    child: FaIcon(icon, size: 18),
-  );
+  Widget _secIcon(IconData icon) => Padding(padding: const EdgeInsets.only(left: 6), child: FaIcon(icon, size: 18));
 
   Widget _secTitle(BuildContext context, String title) {
     final cs = Theme.of(context).colorScheme;
-    return Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700));
+    return Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis);
   }
 
   Widget _switchRow({
@@ -841,36 +864,71 @@ class _MorePageState extends State<MorePage> {
         children: [
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
-          Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
+          Expanded(
+            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
           Switch.adaptive(value: value, onChanged: onChanged),
         ],
       ),
     );
   }
 
+  // Replace existing _pickerRow with this enhanced version
   Widget _pickerRow({
     required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     required VoidCallback onTap,
+    bool alignValueRight = false,  // NEW: force value to far-right when true
+    bool hideValue = false,        // NEW: hide value entirely when true
   }) {
     final cs = Theme.of(context).colorScheme;
-    final showValue = value.trim().isNotEmpty;
+    final showValue = !hideValue && value.trim().isNotEmpty;
+
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Left icon
             FaIcon(icon, size: 18, color: cs.onSurface),
             const SizedBox(width: 12),
-            Expanded(child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700))),
+
+            // Label (flexes on the left)
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // If we need to push value to the far right, insert an extra Spacer
+            if (alignValueRight) const Spacer(),
+
+            // Value (optional)
             if (showValue) ...[
-              Text(value, style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8))),
+              Flexible(
+                child: Align(
+                  alignment: alignValueRight ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    textAlign: alignValueRight ? TextAlign.right : TextAlign.left,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8)),
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
             ],
+
+            // Chevron
             const Icon(Icons.chevron_right, size: 14),
           ],
         ),
@@ -895,42 +953,16 @@ class _MorePageState extends State<MorePage> {
           Row(children: [
             FaIcon(icon, size: 18, color: cs.onSurface),
             const SizedBox(width: 12),
-            Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+            Expanded(
+              child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           ]),
           const SizedBox(height: 10),
           SegmentedButton<int>(
-            segments: List.generate(
-              segments.length,
-                  (i) => ButtonSegment(value: i, label: Text(segments[i])),
-            ),
+            segments: List.generate(segments.length, (i) => ButtonSegment(value: i, label: Text(segments[i]))),
             selected: {index},
             onSelectionChanged: (s) => onChanged(s.first),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buttonRow({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          FaIcon(icon, size: 18, color: cs.onSurface),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-            ),
-          ),
-          FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
         ],
       ),
     );
@@ -960,32 +992,21 @@ class _MorePageState extends State<MorePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     SegmentedButton<int>(
-                      segments: List.generate(
-                        options.length,
-                            (i) => ButtonSegment<int>(value: i, label: Text(options[i])),
-                      ),
+                      segments: List.generate(options.length, (i) => ButtonSegment<int>(value: i, label: Text(options[i]))),
                       selected: {tempIndex},
                       onSelectionChanged: (s) => setModalState(() => tempIndex = s.first),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx, selected),
-                            child: Text(l10n.btn_cancel),
-                          ),
-                        ),
+                        Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, selected), child: Text(l10n.btn_cancel))),
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _gold,
-                              foregroundColor: Colors.black,
-                            ),
+                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
                             onPressed: () => Navigator.pop(ctx, options[tempIndex]),
                             child: Text(l10n.btn_save),
                           ),
@@ -1013,86 +1034,26 @@ class _MorePageState extends State<MorePage> {
     return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
   }
 
-  // ---- Configure Adhan/Iqamah alerts bottom-sheet ----
-  Future<void> _configurePrayerAlerts() async {
-    final l10n = AppLocalizations.of(context);
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        bool tempAdhan = _adhanAlert;
-        bool tempIqamah = _iqamahAlert;
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.more_prayer_alerts,
-                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 12),
-                    SwitchListTile.adaptive(
-                      title: Text(l10n.more_adhan_alert_at_time),
-                      value: tempAdhan,
-                      onChanged: (v) => setModalState(() => tempAdhan = v),
-                    ),
-                    SwitchListTile.adaptive(
-                      title: Text(l10n.more_iqamah_alert_5min),
-                      value: tempIqamah,
-                      onChanged: (v) => setModalState(() => tempIqamah = v),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: Text(l10n.btn_close),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _gold,
-                              foregroundColor: Colors.black,
-                            ),
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              if (!mounted) return;
-                              // Persist toggles
-                              _adhanAlert = tempAdhan;
-                              _iqamahAlert = tempIqamah;
-                              await UXPrefs.setAdhanAlertEnabled(_adhanAlert);
-                              await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);
-                              // Ensure OS permission (as needed)
-                              await AlertsScheduler.instance.requestPermissions();
-                              // Schedule for TODAY using persisted values
-                              await _rescheduleTodayAlerts(
-                                adhan: UXPrefs.adhanAlertEnabled.value,
-                                iqamah: UXPrefs.iqamahAlertEnabled.value,
-                                jumuah: UXPrefs.jumuahReminderEnabled.value,
-                              );
-                              if (!mounted) return;
-                              _toast(l10n.common_enabled);
-                              setState(() {});
-                            },
-                            child: Text(l10n.btn_save),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+  // Small action row used by Admin override
+  Widget _buttonRow({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: [
+          FaIcon(icon, size: 18, color: cs.onSurface),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
+        ],
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart'; // defaultTargetPlatform
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 
@@ -89,6 +88,7 @@ class DirectoryContactPage extends StatelessWidget {
 
   Widget _mapPreview(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
     final image = Image.asset(
       _mapAsset,
       fit: BoxFit.cover,
@@ -117,6 +117,7 @@ class DirectoryContactPage extends StatelessWidget {
             children: [
               // Local map image (16:9)
               AspectRatio(aspectRatio: 16 / 9, child: image),
+
               // Bottom scrim with caption + CTA
               Positioned(
                 left: 0,
@@ -273,10 +274,14 @@ class DirectoryContactPage extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 24),
+
                     // ─── MAP PREVIEW ───
                     _mapPreview(context),
+
                     const SizedBox(height: 32),
+
                     // ─── FEEDBACK HEADER ───
                     Text(
                       "Contact Us & Feedback",
@@ -381,6 +386,7 @@ class _FeedbackFormState extends State<FeedbackForm>
           .showSnackBar(const SnackBar(content: Text("Could not open email app")));
       return;
     }
+
     await _showSuccessDialog();
     if (!mounted) return;
     setState(() {
@@ -393,6 +399,7 @@ class _FeedbackFormState extends State<FeedbackForm>
   Future<void> _showMembershipPrompt() async {
     final cs = Theme.of(context).colorScheme;
     const gold = Color(0xFFC7A447);
+
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -468,9 +475,22 @@ class _FeedbackFormState extends State<FeedbackForm>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final onSurface = cs.onSurface;
+
+    // FIX: unified input colors for dark theme readability
+    final hintStyle = TextStyle(color: onSurface.withValues(alpha: 0.60));
+    final textStyle = TextStyle(color: onSurface);
+    final cursor = onSurface;
+
     final fieldBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.35)), // FIX
     );
+
+    final focusBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: onSurface.withValues(alpha: 0.55)), // FIX
+    );
+
     final valid =
         subjectCtrl.text.trim().isNotEmpty && detailsCtrl.text.trim().isNotEmpty;
 
@@ -479,7 +499,8 @@ class _FeedbackFormState extends State<FeedbackForm>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cs.surface.withValues(alpha: 0.8),
+          // Slight translucency over page gradient; keeps good contrast in dark
+          color: cs.surface.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
         ),
@@ -495,16 +516,22 @@ class _FeedbackFormState extends State<FeedbackForm>
             TextFormField(
               controller: subjectCtrl,
               textInputAction: TextInputAction.next,
+              cursorColor: cursor, // FIX
+              style: textStyle,    // FIX
               decoration: InputDecoration(
                 hintText: "Enter a brief subject line",
+                hintStyle: hintStyle,            // FIX
+                filled: true,                    // FIX
+                fillColor: cs.surface,           // FIX (uses theme surface color)
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
-                focusedBorder:
-                fieldBorder.copyWith(borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5))),
+                focusedBorder: focusBorder,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // FIX
               ),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a subject' : null,
               onChanged: (_) => setState(() {}),
             ),
+
             const SizedBox(height: 16),
 
             // Membership toggle
@@ -530,7 +557,6 @@ class _FeedbackFormState extends State<FeedbackForm>
               onSelectionChanged: (s) {
                 final wasMember = isMember;
                 setState(() => isMember = s.first);
-                // If the user switched from member -> not member, prompt to join.
                 if (wasMember && !isMember) {
                   _showMembershipPrompt();
                 }
@@ -540,6 +566,7 @@ class _FeedbackFormState extends State<FeedbackForm>
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
+
             const SizedBox(height: 16),
 
             // Details (required)
@@ -551,16 +578,22 @@ class _FeedbackFormState extends State<FeedbackForm>
             TextFormField(
               controller: detailsCtrl,
               maxLines: 6,
+              cursorColor: cursor, // FIX
+              style: textStyle,    // FIX
               decoration: InputDecoration(
                 hintText: "Describe the issue or suggestion…",
+                hintStyle: hintStyle,  // FIX
+                filled: true,          // FIX
+                fillColor: cs.surface, // FIX
                 border: fieldBorder,
                 enabledBorder: fieldBorder,
-                focusedBorder:
-                fieldBorder.copyWith(borderSide: BorderSide(color: onSurface.withValues(alpha: 0.5))),
+                focusedBorder: focusBorder,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // FIX
               ),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter details' : null,
               onChanged: (_) => setState(() {}),
             ),
+
             const SizedBox(height: 20),
 
             // Send
@@ -609,7 +642,7 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
       reverseDuration: const Duration(milliseconds: 250),
     );
     _scale = CurvedAnimation(parent: _ac, curve: Curves.easeOutBack);
-    _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+    _fade  = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
     _ac.forward();
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) Navigator.of(context).pop();
@@ -625,6 +658,7 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
     return Center(
       child: FadeTransition(
         opacity: _fade,
@@ -645,17 +679,18 @@ class _SuccessCheckDialogState extends State<_SuccessCheckDialog>
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 56),
-                SizedBox(height: 12),
+              children: [
+                const Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 56),
+                const SizedBox(height: 12),
+                // FIX: readable on dark
                 Text(
                   'Email app opened',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: cs.onSurface),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   "You can send your feedback now.",
-                  style: TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.85)),
                 ),
               ],
             ),
