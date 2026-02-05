@@ -56,39 +56,43 @@ const double kNavBarHeight = 50.0;
 const Duration kFreshCloudStampMaxAge = Duration(hours: 6);
 
 // NEW: debug switch — schedule a local alert 10s after startup (for proving notifications)
-// Toggle to true when you want the heads-up proof; set back to false for normal use.
+// Toggle to true when you want the heads‑up proof; set back to false for normal use.
 const bool kDebugKickLocalAlert10s = false;
 
 // Global ScaffoldMessenger (already present) — used to show SnackBars AFTER first frame.
 final GlobalKey<ScaffoldMessengerState> messengerKey =
-GlobalKey<ScaffoldMessengerState>();
+    GlobalKey<ScaffoldMessengerState>();
 
 // Navigator key for a safe top‑level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // NEW: one-time suppression for the very first "Prayer times updated" SnackBar
-// ------------------------------------------------------------------------------------------------
-const String kFirstStartupSnackSuppressedKey = 'ux.snack.firstStartupSuppressed';
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+const String kFirstStartupSnackSuppressedKey =
+    'ux.snack.firstStartupSuppressed';
 
+// -----------------------------------------------------------------------------
 // Background FCM handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {}
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
-    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple:
-    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
+
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
   final year = (yearStr != null) ? int.tryParse(yearStr) : null;
+
   if (shouldRefresh) {
     await repo.refreshFromFirebase(year: year);
   }
@@ -97,7 +101,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   runZonedGuarded(() async {
     BindingBase.debugZoneErrorsAreFatal = true;
-
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -108,13 +111,14 @@ Future<void> main() async {
     GoogleFonts.config.allowRuntimeFetching = false;
 
     // Firebase init + App Check
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     await FirebaseAppCheck.instance.activate(
       providerAndroid:
-      kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+          kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
       providerApple:
-      kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+          kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -136,8 +140,11 @@ Future<void> main() async {
     await AlertsScheduler.instance.init(androidSmallIcon: 'ic_stat_bell');
 
     // iOS: present notifications while app is in foreground
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true, badge: true, sound: true,
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
     );
 
     runApp(const BootstrapApp());
@@ -163,10 +170,14 @@ Future<void> _postFrameAsync() async {
   cache.maximumSize = (cache.maximumSize * 1.3).round();
 
   // Defer FCM permission + topic subscription ~1.2s after first paint
-  unawaited(Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
+  unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true, badge: true, sound: true, provisional: false,
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
       );
       debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
       await FirebaseMessaging.instance.subscribeToTopic('allUsers');
@@ -175,13 +186,12 @@ Future<void> _postFrameAsync() async {
     }
   }));
 
-  // NEW: single-line debug kick for a local heads-up within ~10 seconds
+  // NEW: single-line debug kick for a local heads‑up within ~10 seconds
   if (kDebugKickLocalAlert10s) {
     unawaited(AlertsScheduler.instance.debugScheduleInSeconds(10));
   }
 }
 
-// ------------------------------------------------------------------------------------------------
 // -- Light Theme
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
@@ -234,7 +244,7 @@ class AppGradients extends ThemeExtension<AppGradients> {
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Bootstrap App
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
@@ -251,8 +261,8 @@ class BootstrapApp extends StatelessWidget {
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
             // Build Manrope‑based text theme using ASSET fonts registered in pubspec.yaml
-            final TextTheme baseLatin =
-            GoogleFonts.manropeTextTheme(ThemeData(brightness: Brightness.light).textTheme)
+            final TextTheme baseLatin = GoogleFonts.manropeTextTheme(
+                    ThemeData(brightness: Brightness.light).textTheme)
                 .copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
@@ -261,22 +271,37 @@ class BootstrapApp extends StatelessWidget {
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall: t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium: t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge: t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall: t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium: t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge: t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall: t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium: t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge: t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium: t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium: t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
-            );
+                  bodySmall:
+                      t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+                  bodyMedium: t.bodyMedium
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  bodyLarge:
+                      t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+                  titleSmall: t.titleSmall
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  titleMedium: t.titleMedium
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  titleLarge: t.titleLarge
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  labelSmall: t.labelSmall
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  labelMedium: t.labelMedium
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  labelLarge: t.labelLarge
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  displaySmall: t.displaySmall
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  displayMedium: t.displayMedium
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  displayLarge: t.displayLarge
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  headlineSmall: t.headlineSmall
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  headlineMedium: t.headlineMedium
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                  headlineLarge: t.headlineLarge
+                      ?.copyWith(fontFamilyFallback: arabicFallback),
+                );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
             final TextTheme chosenDark = addFallbacks(baseLatin);
@@ -291,7 +316,8 @@ class BootstrapApp extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                iconTheme:
+                    WidgetStateProperty.resolveWith<IconThemeData>((states) {
                   final selected = states.contains(WidgetState.selected);
                   return IconThemeData(
                     color: selected
@@ -303,7 +329,9 @@ class BootstrapApp extends StatelessWidget {
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
@@ -325,7 +353,8 @@ class BootstrapApp extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                iconTheme:
+                    WidgetStateProperty.resolveWith<IconThemeData>((states) {
                   final selected = states.contains(WidgetState.selected);
                   return IconThemeData(
                     color: selected
@@ -337,7 +366,9 @@ class BootstrapApp extends StatelessWidget {
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
@@ -361,6 +392,10 @@ class BootstrapApp extends StatelessWidget {
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
+
+              // ✅ Enable app-wide state restoration (restores nav + restorable state)
+              restorationScopeId: 'app',
+
               builder: (context, child) {
                 return ValueListenableBuilder<double>(
                   valueListenable: UXPrefs.textScale,
@@ -385,11 +420,10 @@ class BootstrapApp extends StatelessWidget {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Bootstrap Screen
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
-
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -412,12 +446,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
     _initFuture = _initializeAll();
     _initFuture.whenComplete(() {
       if (mounted) FlutterNativeSplash.remove();
     });
-
     _scheduleMidnightRefresh();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -461,7 +493,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
-          // Post-frame: maybe show heads-up / night-before prompts
+          // Post-frame: maybe show heads‑up / night‑before prompts
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _maybeShowIqamahChangePrompt(r);
           });
@@ -473,6 +505,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
             temperatureF: r.temperatureF,
           );
         }
+
         if (snap.hasError) {
           FlutterNativeSplash.remove();
           return _SplashScaffold(
@@ -482,6 +515,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
             onRetry: () => setState(() => _initFuture = _initializeAll()),
           );
         }
+
         return const SizedBox.shrink();
       },
     );
@@ -498,7 +532,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
     // NEW: Startup refresh only if cloud is NEWER than local (no wasteful downloads)
     final updatedAtStartup = await _maybeStartupRefreshFromCloud(_repo);
-    debugPrint('Startup refresh: ${updatedAtStartup ? 'updated from Firebase' : 'no change'}');
+    debugPrint(
+        'Startup refresh: ${updatedAtStartup ? 'updated from Firebase' : 'no change'}');
 
     // Load local schedule
     final nowLocal = DateTime.now();
@@ -509,11 +544,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
-
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
-    final PrayerDay today =
-        _findByDate(days, todayDate) ??
-            (days.isNotEmpty ? days.first : _dummyDay(todayDate));
+    final PrayerDay today = _findByDate(days, todayDate) ??
+        (days.isNotEmpty ? days.first : _dummyDay(todayDate));
+
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
@@ -553,8 +587,11 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       final String localWhen = (localMeta?['lastUpdated'] ?? '') as String;
 
       // Peek remote metadata (no content download)
-      final ref =
-      FirebaseStorage.instance.ref().child('prayer_times').child('$year.json');
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('prayer_times')
+          .child('$year.json');
+
       FullMetadata meta;
       try {
         meta = await ref.getMetadata();
@@ -573,8 +610,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
       // Compare remote to local: if local empty or remote is newer → download
       final DateTime? localWhenDt = DateTime.tryParse(localWhen)?.toLocal();
-      final bool remoteIsNewer = (localWhenDt == null) || remoteStamp.isAfter(localWhenDt);
-
+      final bool remoteIsNewer =
+          (localWhenDt == null) || remoteStamp.isAfter(localWhenDt);
       if (!remoteIsNewer) return false;
 
       // Download & persist updated file; then show snack (with first-run suppression).
@@ -601,11 +638,13 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       await UXPrefs.setString(_kLastDailyCheckYMD, todayYMD);
 
       final year = DateTime.now().year;
-
       // Peek metadata (no content download)
       // CHANGED: use chained child() to avoid leading-slash issues.
-      final ref =
-      FirebaseStorage.instance.ref().child('prayer_times').child('$year.json');
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('prayer_times')
+          .child('$year.json');
+
       FullMetadata meta;
       try {
         meta = await ref.getMetadata();
@@ -631,7 +670,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
           DateTime.now().difference(stamp.toLocal()) <= kFreshCloudStampMaxAge;
       final isNewer = (lastKnown == null) || stamp.isAfter(lastKnown);
       if (!(isRecent && isNewer)) {
-        debugPrint('[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
+        debugPrint(
+            '[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
         return;
       }
 
@@ -640,11 +680,14 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       if (updated) {
         final metaLocal = await _repo.readMeta();
         final whenStr = (metaLocal?['lastUpdated'] ?? '') as String;
-        await _tryShowUpdatedSnack(whenStr); // safe, one-time-suppressed & post-frame
-        await UXPrefs.setString(_kLastCloudStamp, stamp.toUtc().toIso8601String());
+        await _tryShowUpdatedSnack(
+            whenStr); // safe, one-time-suppressed & post-frame
+        await UXPrefs.setString(
+            _kLastCloudStamp, stamp.toUtc().toIso8601String());
         debugPrint('[DailyCheck] updated from cloud.');
       } else {
-        debugPrint('[DailyCheck] metadata newer but refresh failed → try tomorrow.');
+        debugPrint(
+            '[DailyCheck] metadata newer but refresh failed → try tomorrow.');
       }
     } catch (e, st) {
       debugPrint('Daily cloud check error: $e\n$st');
@@ -795,12 +838,13 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
     // Compute freshness
     final when = DateTime.tryParse(whenStr)?.toLocal();
-    final isFresh =
-        when != null && DateTime.now().difference(when) <= const Duration(minutes: 2);
+    final isFresh = when != null &&
+        DateTime.now().difference(when) <= const Duration(minutes: 2);
     if (!isFresh) return;
 
     // First ever auto‑startup snack? Suppress AND mark as already shown
-    final firstSuppressed = await UXPrefs.getString(kFirstStartupSnackSuppressedKey);
+    final firstSuppressed =
+        await UXPrefs.getString(kFirstStartupSnackSuppressedKey);
     if (firstSuppressed == null) {
       await UXPrefs.setString(kFirstStartupSnackSuppressedKey, '1');
       await UXPrefs.setString(_kLastShownUpdatedAt, whenStr); // <- mark shown
@@ -823,7 +867,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
         ));
       }
     });
-
     await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
     await UXPrefs.setString(_kLastCloudStamp, whenStr);
   }
@@ -860,7 +903,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
   }
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Result wrapper
 class _InitResult {
   final tz.Location location;
@@ -869,7 +912,6 @@ class _InitResult {
   final PrayerDay? tomorrow;
   final double? temperatureF;
   final IqamahChange? upcomingChange;
-
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -880,7 +922,7 @@ class _InitResult {
   });
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Splash
 class _SplashScaffold extends StatelessWidget {
   final String title;
@@ -928,7 +970,7 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Navigation (HomeTabs)
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
@@ -936,7 +978,6 @@ class HomeTabs extends StatefulWidget {
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
-
   const HomeTabs({
     super.key,
     required this.location,
@@ -950,14 +991,28 @@ class HomeTabs extends StatefulWidget {
   State<HomeTabs> createState() => _HomeTabsState();
 }
 
-class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
-  // NEW: the index of the More tab (5th page in your list below)
+class _HomeTabsState extends State<HomeTabs>
+    with WidgetsBindingObserver, RestorationMixin {
+  // More tab index in your pages[] (Prayer, Announcements, Social, Directory, More)
   static const int kMoreTabIndex = 4;
 
-  int _index = 0;
-  bool hasNewAnnouncement = false;
+  // ✅ Restorable selected index
+  final RestorableInt _restorableIndex = RestorableInt(0);
 
+  bool hasNewAnnouncement = false;
   static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
+
+  // ---- RestorationMixin
+  @override
+  String? get restorationId => 'home_tabs';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restorableIndex, 'home_tabs_index');
+  }
+
+  int get _index => _restorableIndex.value;
+  set _index(int v) => _restorableIndex.value = v;
 
   @override
   void initState() {
@@ -987,28 +1042,43 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
       }
     });
 
-    // NEW: honor "return-to-More" intent set by More → App notifications sheet
+    // ✅ Honor the notifications return intent as a backstop on cold start
     _restoreTabIntent();
   }
 
-  // NEW: read and clear the return intent
   Future<void> _restoreTabIntent() async {
     final intent = await UXPrefs.getLastIntendedTab(); // 'more' | null
     if (!mounted) return;
     if (intent == 'more') {
       setState(() => _index = kMoreTabIndex);
-      await UXPrefs.setLastIntendedTab(null); // clear after honoring
+      await UXPrefs.setLastIntendedTab(null);
+
+      // Optional: show a quick status snack after we’re visible (cold start)
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final status = await NotificationOptInService.getStatus();
+        final authorized = NotificationOptInService.isAuthorized(status);
+        messengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text(authorized
+                ? 'Notifications enabled'
+                : 'Notifications disabled'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // event-driven; no RC polling for announcements
+    // event‑driven; no RC polling for announcements
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _restorableIndex.dispose(); // ✅
     super.dispose();
   }
 
@@ -1037,19 +1107,21 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
           height: kNavBarHeight,
           selectedIndex: _index,
           onDestinationSelected: (i) async {
-            // Optional: reset "seen" when leaving the announcements tab
+            // Optional: reset "seen" when leaving the notifications tab
             if (_index == 1 && i != 1) {
               await UXPrefs.setString(_kAnnSeenFp, null);
             }
             setState(() {
               _index = i;
-              if (i == 1) hasNewAnnouncement = false; // clear dot when opening tab
+              if (i == 1) {
+                hasNewAnnouncement = false; // clear dot when opening tab
+              }
             });
             Haptics.tap();
           },
           destinations: [
             const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-            // 🔔 with red dot
+            // Bell Icon with red dot
             NavigationDestination(
               label: '',
               icon: Stack(clipBehavior: Clip.none, children: [
@@ -1065,9 +1137,10 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                         color: Colors.red,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white
-                              : Colors.black,
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Colors.white
+                                  : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1087,9 +1160,10 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                         color: Colors.red,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white
-                              : Colors.black,
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Colors.white
+                                  : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1105,7 +1179,8 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
               label: '',
               icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
             ),
-            const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
+            const NavigationDestination(
+                label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),
       ),
@@ -1113,7 +1188,7 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Helpers (coords & weather)
 class LatLon {
   final double lat;
@@ -1124,9 +1199,9 @@ class LatLon {
 LatLon _coordsForLocation(tz.Location location) {
   final locationName = location.name.toLowerCase();
   if (locationName.contains('america/chicago')) {
-    return const LatLon(33.0354, -97.0830);
+    return const LatLon(33.0354, -97.0830); //IALFM Masjid Coordinates
   }
-  return const LatLon(33.0354, -97.0830);
+  return const LatLon(33.0354, -97.0830); //IALFM Masjid Coodrinates
 }
 
 Future<double?> _fetchTemperatureF({
