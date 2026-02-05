@@ -18,7 +18,7 @@ import '../services/alerts_scheduler.dart';
 import '../services/notification_optin_service.dart';
 import '../models.dart';
 
-// Aliased page imports (avoid symbol ambiguity)
+// Aliased page imports to avoid symbol ambiguity
 import './version_page.dart' as version_pg;
 import './about_page.dart' as about_pg;
 import './privacy_policy_page.dart' as privacy_pg;
@@ -30,7 +30,7 @@ class MorePage extends StatefulWidget {
   State<MorePage> createState() => _MorePageState();
 }
 
-class _MorePageState extends State<MorePage> {
+class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   // --- State ---
   static const String _adminPin = '3430';
   static const Color _gold = Color(0xFFC7A447);
@@ -65,6 +65,26 @@ class _MorePageState extends State<MorePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Rebuild on resume so the FutureBuilder re-runs and status updates
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
@@ -84,7 +104,8 @@ class _MorePageState extends State<MorePage> {
         title: Text(
           l10n.tab_more,
           style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
-          maxLines: 1, overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
@@ -95,7 +116,7 @@ class _MorePageState extends State<MorePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             children: [
-              // ================= NOTIFICATIONS =================
+              // ============= NOTIFICATIONS =============
               _sectionHeader(context, l10n.more_notifications),
               _card(
                 context,
@@ -109,43 +130,25 @@ class _MorePageState extends State<MorePage> {
                     leading: _secIcon(FontAwesomeIcons.bell),
                     title: _secTitle(context, l10n.more_notifications),
                     children: [
-                      // OS status row
+                      // App notifications row → tappable row that opens bottom sheet
                       FutureBuilder<String>(
                         future: _readOsNotificationStateLabel(),
                         builder: (context, snap) {
-                          final cs = Theme.of(context).colorScheme;
-                          final state = snap.data ?? 'Check';
-                          final enabled = state == 'Enabled';
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                            child: Row(
-                              children: [
-                                FaIcon(FontAwesomeIcons.bell, size: 18, color: cs.onSurface),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Notifications',
-                                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-                                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: enabled ? _gold : cs.errorContainer,
-                                    foregroundColor: enabled ? Colors.black : cs.onErrorContainer,
-                                  ),
-                                  onPressed: () => NotificationOptInService.openOSSettings(),
-                                  child: Text(enabled ? 'Enabled' : 'Disabled'),
-                                ),
-                              ],
-                            ),
+                          final state = snap.data ?? 'Check'; // Enabled | Disabled | Check
+                          return _pickerRow(
+                            context: context,
+                            icon: FontAwesomeIcons.bell,
+                            label: 'App notifications',
+                            value: state,
+                            onTap: _openNotificationsSheet,
+                            alignValueRight: true,
                           );
                         },
                       ),
 
                       const _Hairline(),
 
-                      // Salah Alerts
+                      // Salah Alerts (bottom sheet)
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.mosque,
@@ -158,7 +161,7 @@ class _MorePageState extends State<MorePage> {
 
                       const _Hairline(),
 
-                      // Jumu’ah
+                      // Jumu’ah (bottom sheet with concise copy) – right-aligned value
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.handsPraying,
@@ -174,7 +177,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ================= ACCESSIBILITY =================
+              // ============= ACCESSIBILITY =============
               _sectionHeader(context, l10n.more_accessibility),
               _card(
                 context,
@@ -227,7 +230,7 @@ class _MorePageState extends State<MorePage> {
 
                       const _Hairline(),
 
-                      // Text Size
+                      // Text Size (right-align current size)
                       ValueListenableBuilder<double>(
                         valueListenable: UXPrefs.textScale,
                         builder: (context, scale, _) {
@@ -252,7 +255,7 @@ class _MorePageState extends State<MorePage> {
                               _toast('${l10n.more_text_size}: $choice');
                               setState(() {});
                             },
-                              alignValueRight: true
+                            alignValueRight: true,
                           );
                         },
                       ),
@@ -263,7 +266,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ================= DATE & TIME =================
+              // ============= DATE & TIME =============
               _sectionHeader(context, l10n.more_date_time),
               _card(
                 context,
@@ -338,8 +341,8 @@ class _MorePageState extends State<MorePage> {
                       // Admin override
                       _buttonRow(
                         context: context,
-                        icon: FontAwesomeIcons.triangleExclamation,
-                        label: 'Reset Hijri Date',
+                        icon: FontAwesomeIcons.lock,
+                        label: 'Update Hijri Date from Masjid (Admin)',
                         onPressed: () async {
                           UXPrefs.maybeHaptic();
                           final pinOk = await _promptAdminPin();
@@ -368,7 +371,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ================= LANGUAGE =================
+              // ============= LANGUAGE =============
               _sectionHeader(context, l10n.more_language),
               _card(
                 context,
@@ -416,7 +419,7 @@ class _MorePageState extends State<MorePage> {
 
               const SizedBox(height: 20),
 
-              // ================= ABOUT =================
+              // ============= ABOUT =============
               _sectionHeader(context, l10n.more_about),
               _card(
                 context,
@@ -430,55 +433,64 @@ class _MorePageState extends State<MorePage> {
                     leading: _secIcon(FontAwesomeIcons.circleInfo),
                     title: _secTitle(context, l10n.more_about),
                     children: [
+                      // App Version
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.tag,
                         label: l10n.more_app_version,
-                        value: l10n.common_open,
+                        value: '',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => version_pg.VersionInfoPage()),
                         ),
                         hideValue: true,
                       ),
                       const _Hairline(),
+
+                      // About App
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.info,
                         label: l10n.more_about_app,
-                        value: l10n.common_open,
+                        value: '',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => about_pg.AboutPage()),
                         ),
                         hideValue: true,
                       ),
                       const _Hairline(),
+
+                      // Privacy Policy
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.shieldHalved,
                         label: l10n.more_privacy_policy,
-                        value: l10n.common_open,
+                        value: '',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => privacy_pg.PrivacyPolicyPage()),
                         ),
                         hideValue: true,
                       ),
                       const _Hairline(),
+
+                      // Terms of Use
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.scaleBalanced,
                         label: l10n.more_terms_of_use,
-                        value: l10n.common_open,
+                        value: '',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => terms_pg.TermsOfUsePage()),
                         ),
                         hideValue: true,
                       ),
                       const _Hairline(),
+
+                      // Contact
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.envelope,
                         label: l10n.more_contact,
-                        value: l10n.common_open,
+                        value: '',
                         onTap: () => _showContactSheet(context),
                         hideValue: true,
                       ),
@@ -495,7 +507,91 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // ───────────────────── Sheets & Scheduling ─────────────────────
+  // ────────────────────────── Sheets & Scheduling ──────────────────────────
+
+  Future<void> _openNotificationsSheet() async {
+    // Cache from outer context BEFORE awaits to avoid async-context lint
+    final bottomSheetBg = Theme.of(context).bottomSheetTheme.backgroundColor;
+
+    // Read current OS state
+    String state = await _readOsNotificationStateLabel();
+    final bool isEnabled = state == 'Enabled';
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: bottomSheetBg,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        const gold = Color(0xFFC7A447);
+
+        // Keep it simple: one action based on current status
+        Future<void> openSettingsAndRefresh() async {
+          // Close the sheet first so we always land on More (no stale sheet)
+          Navigator.pop(ctx);
+
+          // Record intent so a cold-start comes back to More
+          await UXPrefs.setLastIntendedTab('more');
+
+          // Go to OS settings (no requestPermissions here)
+          await NotificationOptInService.openOSSettings();
+
+          // Warm return: refresh the notifications row value
+          if (!mounted) return;
+          setState(() {}); // FutureBuilder re-runs
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title only (row is the source of truth for status)
+                Text(
+                  'App notifications',
+                  style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 14),
+
+                // Primary action
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold,
+                      foregroundColor: Colors.black,
+                    ),
+                    onPressed: openSettingsAndRefresh,
+                    child: Text(isEnabled ? 'Disable in Settings' : 'Open Settings'),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Close
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(AppLocalizations.of(ctx).btn_close),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // Optional: even if user just closed the sheet, refresh row once
+    if (!mounted) return;
+    setState(() {});
+  }
 
   Future<void> _openSalahSheet() async {
     final l10n = AppLocalizations.of(context);
@@ -516,7 +612,8 @@ class _MorePageState extends State<MorePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Salah Alerts', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    Text('Salah Alerts',
+                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     SwitchListTile.adaptive(
                       title: Text(l10n.more_adhan_alert_at_time),
@@ -540,16 +637,19 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                            style: FilledButton.styleFrom(
+                                backgroundColor: _gold, foregroundColor: Colors.black),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
+                              // Persist
                               _adhanAlert = tempAdhan;
                               _iqamahAlert = tempIqamah;
                               await UXPrefs.setAdhanAlertEnabled(_adhanAlert);
                               await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);
 
+                              // Ensure permission then schedule today
                               await AlertsScheduler.instance.requestPermissions();
                               await _rescheduleToday();
 
@@ -589,9 +689,9 @@ class _MorePageState extends State<MorePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Jumu’ah Reminder', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    Text('Jumu’ah',
+                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
-                    // concise copy
                     SwitchListTile.adaptive(
                       title: const Text('Jumu’ah reminder 1 hour before the Khutbah'),
                       value: temp,
@@ -610,13 +710,15 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                            style: FilledButton.styleFrom(
+                                backgroundColor: _gold, foregroundColor: Colors.black),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
                               _jumuahReminder = temp;
                               await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);
+
                               await AlertsScheduler.instance.requestPermissions();
                               await _rescheduleToday();
 
@@ -642,7 +744,6 @@ class _MorePageState extends State<MorePage> {
     final now = DateTime.now();
     final days = await loadPrayerDays(year: now.year);
     final todayDate = DateTime(now.year, now.month, now.day);
-
     PrayerDay? today;
     for (final d in days) {
       if (d.date.year == todayDate.year &&
@@ -682,19 +783,27 @@ class _MorePageState extends State<MorePage> {
 
     await AlertsScheduler.instance.schedulePrayerAlertsForDay(
       dateLocal: base,
-      fajrAdhan: fajrAdhan, dhuhrAdhan: dhuhrAdhan, asrAdhan: asrAdhan,
-      maghribAdhan: maghribAdhan, ishaAdhan: ishaAdhan,
-      fajrIqamah: fajrIqamah, dhuhrIqamah: dhuhrIqamah,
-      asrIqamah: asrIqamah, maghribIqamah: maghribIqamah, ishaIqamah: ishaIqamah,
-      adhanEnabled: _adhanAlert, iqamahEnabled: _iqamahAlert,
+      fajrAdhan: fajrAdhan,
+      dhuhrAdhan: dhuhrAdhan,
+      asrAdhan: asrAdhan,
+      maghribAdhan: maghribAdhan,
+      ishaAdhan: ishaAdhan,
+      fajrIqamah: fajrIqamah,
+      dhuhrIqamah: dhuhrIqamah,
+      asrIqamah: asrIqamah,
+      maghribIqamah: maghribIqamah,
+      ishaIqamah: ishaIqamah,
+      adhanEnabled: _adhanAlert,
+      iqamahEnabled: _iqamahAlert,
     );
 
     await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
-      anyDateThisWeekLocal: base, enabled: _jumuahReminder,
+      anyDateThisWeekLocal: base,
+      enabled: _jumuahReminder,
     );
   }
 
-  // ───────────────────── Helpers (single definitions) ─────────────────────
+  // ────────────────────────── Admin/Confirm helpers ──────────────────────────
 
   Future<bool> _confirmHijriChange(String selectionLabel) async {
     final l10n = AppLocalizations.of(context);
@@ -709,7 +818,10 @@ class _MorePageState extends State<MorePage> {
             child: Text(l10n.btn_cancel),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+            style: FilledButton.styleFrom(
+              backgroundColor: _gold,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l10n.btn_save),
           ),
@@ -723,28 +835,44 @@ class _MorePageState extends State<MorePage> {
     bool ok = false;
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Admin Verification'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          maxLength: 8,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(hintText: 'Enter Admin PIN', counterText: ''),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).btn_cancel)),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
-            onPressed: () { ok = (controller.text == _adminPin); Navigator.pop(ctx); },
-            child: Text(AppLocalizations.of(context).btn_save),
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Admin Verification'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            maxLength: 8,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              hintText: 'Enter Admin PIN',
+              counterText: '',
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(AppLocalizations.of(ctx).btn_cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: _gold,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () {
+                ok = (controller.text == _adminPin);
+                Navigator.pop(ctx);
+              },
+              child: Text(AppLocalizations.of(ctx).btn_save),
+            ),
+          ],
+        );
+      },
     );
-    if (!ok) _toast('Invalid PIN');
+    if (!ok) {
+      _toast('Invalid PIN');
+    }
     return ok;
   }
 
@@ -753,10 +881,18 @@ class _MorePageState extends State<MorePage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Update Hijri Date from Masjid'),
-        content: const Text('This will update today’s Hijri date based on the masjid’s official setting.\nProceed?'),
+        content: const Text(
+          'This will update today’s Hijri date based on the masjid’s official setting.\nProceed?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).btn_cancel)),
-          FilledButton.tonal(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context).btn_save)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppLocalizations.of(ctx).btn_cancel),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(AppLocalizations.of(ctx).btn_save),
+          ),
         ],
       ),
     ).then((v) => v ?? false);
@@ -776,7 +912,8 @@ class _MorePageState extends State<MorePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Contact IALFM', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                Text('Contact IALFM',
+                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.feedback_outlined),
@@ -794,7 +931,10 @@ class _MorePageState extends State<MorePage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: gold, foregroundColor: Colors.black),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold,
+                      foregroundColor: Colors.black,
+                    ),
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text('Close'),
                   ),
@@ -812,11 +952,14 @@ class _MorePageState extends State<MorePage> {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open email app for $to')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open email app for $to')),
+      );
     }
   }
 
-  // ---- Shared UI helpers
+  // ────────────────────────── Shared UI helpers ──────────────────────────
+
   String _toggleLabel(bool v) => v ? 'On' : 'Off';
 
   Widget _sectionHeader(BuildContext context, String title) {
@@ -825,8 +968,14 @@ class _MorePageState extends State<MorePage> {
       padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
       child: Text(
         title,
-        style: const TextStyle(color: gold, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.4),
-        maxLines: 1, overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: gold,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -835,19 +984,34 @@ class _MorePageState extends State<MorePage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppColors.rowHighlight : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
-    final hairline = isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
+    final bg =
+    isDark ? AppColors.rowHighlight : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+    final hairline = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : cs.outline.withValues(alpha: 0.30);
     return Container(
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16), border: Border.all(color: hairline)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: hairline),
+      ),
       child: child,
     );
   }
 
-  Widget _secIcon(IconData icon) => Padding(padding: const EdgeInsets.only(left: 6), child: FaIcon(icon, size: 18));
+  Widget _secIcon(IconData icon) => Padding(
+    padding: const EdgeInsets.only(left: 6),
+    child: FaIcon(icon, size: 18),
+  );
 
   Widget _secTitle(BuildContext context, String title) {
     final cs = Theme.of(context).colorScheme;
-    return Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis);
+    return Text(
+      title,
+      style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
   }
 
   Widget _switchRow({
@@ -865,7 +1029,12 @@ class _MorePageState extends State<MorePage> {
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text(
+              label,
+              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           Switch.adaptive(value: value, onChanged: onChanged),
         ],
@@ -873,19 +1042,18 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // Replace existing _pickerRow with this enhanced version
+  /// Enhanced picker row with optional right-alignment & hiding of value text
   Widget _pickerRow({
     required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     required VoidCallback onTap,
-    bool alignValueRight = false,  // NEW: force value to far-right when true
-    bool hideValue = false,        // NEW: hide value entirely when true
+    bool alignValueRight = false,  // push value to far right
+    bool hideValue = false,        // suppress value entirely
   }) {
     final cs = Theme.of(context).colorScheme;
     final showValue = !hideValue && value.trim().isNotEmpty;
-
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
@@ -894,11 +1062,8 @@ class _MorePageState extends State<MorePage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Left icon
             FaIcon(icon, size: 18, color: cs.onSurface),
             const SizedBox(width: 12),
-
-            // Label (flexes on the left)
             Expanded(
               child: Text(
                 label,
@@ -907,11 +1072,7 @@ class _MorePageState extends State<MorePage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-
-            // If we need to push value to the far right, insert an extra Spacer
             if (alignValueRight) const Spacer(),
-
-            // Value (optional)
             if (showValue) ...[
               Flexible(
                 child: Align(
@@ -927,11 +1088,37 @@ class _MorePageState extends State<MorePage> {
               ),
               const SizedBox(width: 8),
             ],
-
-            // Chevron
             const Icon(Icons.chevron_right, size: 14),
           ],
         ),
+      ),
+    );
+  }
+
+  // Small action row used by Admin override (and similar one-off actions)
+  Widget _buttonRow({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: [
+          FaIcon(icon, size: 18, color: cs.onSurface),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
+        ],
       ),
     );
   }
@@ -954,12 +1141,20 @@ class _MorePageState extends State<MorePage> {
             FaIcon(icon, size: 18, color: cs.onSurface),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(
+                label,
+                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ]),
           const SizedBox(height: 10),
           SegmentedButton<int>(
-            segments: List.generate(segments.length, (i) => ButtonSegment(value: i, label: Text(segments[i]))),
+            segments: List.generate(
+              segments.length,
+                  (i) => ButtonSegment(value: i, label: Text(segments[i])),
+            ),
             selected: {index},
             onSelectionChanged: (s) => onChanged(s.first),
           ),
@@ -975,7 +1170,6 @@ class _MorePageState extends State<MorePage> {
         required String selected,
       }) async {
     int tempIndex = options.indexOf(selected);
-    final l10n = AppLocalizations.of(context);
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -992,23 +1186,39 @@ class _MorePageState extends State<MorePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        title,
+                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     SegmentedButton<int>(
-                      segments: List.generate(options.length, (i) => ButtonSegment<int>(value: i, label: Text(options[i]))),
+                      segments: List.generate(
+                        options.length,
+                            (i) => ButtonSegment<int>(value: i, label: Text(options[i])),
+                      ),
                       selected: {tempIndex},
                       onSelectionChanged: (s) => setModalState(() => tempIndex = s.first),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, selected), child: Text(l10n.btn_cancel))),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx, selected),
+                            child: Text(AppLocalizations.of(ctx).btn_cancel),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _gold,
+                              foregroundColor: Colors.black,
+                            ),
                             onPressed: () => Navigator.pop(ctx, options[tempIndex]),
-                            child: Text(l10n.btn_save),
+                            child: Text(AppLocalizations.of(ctx).btn_save),
                           ),
                         ),
                       ],
@@ -1032,29 +1242,6 @@ class _MorePageState extends State<MorePage> {
     final l10n = AppLocalizations.of(context);
     final code = LocaleController.locale.value?.languageCode;
     return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
-  }
-
-  // Small action row used by Admin override
-  Widget _buttonRow({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          FaIcon(icon, size: 18, color: cs.onSurface),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
-          ),
-          FilledButton.tonal(onPressed: onPressed, child: const Text('Open')),
-        ],
-      ),
-    );
   }
 }
 

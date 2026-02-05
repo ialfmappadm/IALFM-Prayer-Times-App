@@ -19,6 +19,9 @@ class UXPrefs {
   static const _kIqamahAlertEnabled = 'ux.alerts.iqamahEnabled';
   static const _kJumuahReminderEnabled = 'ux.alerts.jumuahEnabled';
 
+  // NEW: return-to-tab intent (used to restore More tab after OS Settings)
+  static const _kLastIntendedTab = 'ux.lastIntendedTab';
+
   // NEW: Iqamah-change prompt tracking
   static const _kHeadsUpShownSet = 'ux.changeAlert.headsUpShownSet';
   static const _kNightBeforeShownSet = 'ux.changeAlert.nightBeforeShownSet';
@@ -41,6 +44,7 @@ class UXPrefs {
 
   static Future<void> init() async {
     _sp ??= await SharedPreferences.getInstance();
+
     // existing
     hapticsEnabled.value = _sp!.getBool(_kHaptics) ?? false;
     textScale.value = _sp!.getDouble(_kTextScale) ?? 1.0;
@@ -76,9 +80,12 @@ class UXPrefs {
 
   static double scaleForLabel(String label) {
     switch (label.toLowerCase()) {
-      case 'small': return 0.92;
-      case 'large': return 1.12;
-      default: return 1.0;
+      case 'small':
+        return 0.92;
+      case 'large':
+        return 1.12;
+      default:
+        return 1.0;
     }
   }
 
@@ -93,10 +100,14 @@ class UXPrefs {
     _sp ??= await SharedPreferences.getInstance();
     final raw = _sp!.getString(_kThemeMode);
     switch (raw) {
-      case 'light': return ThemeMode.light;
-      case 'dark': return ThemeMode.dark;
-      case 'system': return ThemeMode.system;
-      default: return null;
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+        return ThemeMode.system;
+      default:
+        return null;
     }
   }
 
@@ -104,9 +115,15 @@ class UXPrefs {
     _sp ??= await SharedPreferences.getInstance();
     late final String raw;
     switch (mode) {
-      case ThemeMode.light: raw = 'light'; break;
-      case ThemeMode.dark: raw = 'dark'; break;
-      case ThemeMode.system: raw = 'system'; break;
+      case ThemeMode.light:
+        raw = 'light';
+        break;
+      case ThemeMode.dark:
+        raw = 'dark';
+        break;
+      case ThemeMode.system:
+        raw = 'system';
+        break;
     }
     await _sp!.setString(_kThemeMode, raw);
   }
@@ -146,6 +163,15 @@ class UXPrefs {
   static Future<void> setJumuahReminderEnabled(bool v) async {
     jumuahReminderEnabled.value = v;
     await _sp?.setBool(_kJumuahReminderEnabled, v);
+  }
+
+  // NEW: return-to-tab helpers (used to restore 'More' after OS Settings)
+  static Future<void> setLastIntendedTab(String? tab) async {
+    await setString(_kLastIntendedTab, tab);
+  }
+
+  static Future<String?> getLastIntendedTab() async {
+    return getString(_kLastIntendedTab);
   }
 
   // NEW: “first open of the day” helper

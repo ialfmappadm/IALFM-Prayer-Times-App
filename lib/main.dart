@@ -57,7 +57,7 @@ const Duration kFreshCloudStampMaxAge = Duration(hours: 6);
 
 // NEW: debug switch — schedule a local alert 10s after startup (for proving notifications)
 // Toggle to true when you want the heads-up proof; set back to false for normal use.
-const bool kDebugKickLocalAlert10s = true;
+const bool kDebugKickLocalAlert10s = false;
 
 // Global ScaffoldMessenger (already present) — used to show SnackBars AFTER first frame.
 final GlobalKey<ScaffoldMessengerState> messengerKey =
@@ -951,8 +951,12 @@ class HomeTabs extends StatefulWidget {
 }
 
 class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
+  // NEW: the index of the More tab (5th page in your list below)
+  static const int kMoreTabIndex = 4;
+
   int _index = 0;
   bool hasNewAnnouncement = false;
+
   static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
 
   @override
@@ -966,7 +970,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
         setState(() => hasNewAnnouncement = true);
       }
     });
-
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -975,7 +978,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
         });
       }
     });
-
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
         setState(() {
@@ -984,11 +986,24 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
         });
       }
     });
+
+    // NEW: honor "return-to-More" intent set by More → App notifications sheet
+    _restoreTabIntent();
+  }
+
+  // NEW: read and clear the return intent
+  Future<void> _restoreTabIntent() async {
+    final intent = await UXPrefs.getLastIntendedTab(); // 'more' | null
+    if (!mounted) return;
+    if (intent == 'more') {
+      setState(() => _index = kMoreTabIndex);
+      await UXPrefs.setLastIntendedTab(null); // clear after honoring
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // event‑driven; no RC polling for announcements
+    // event-driven; no RC polling for announcements
   }
 
   @override
@@ -1022,7 +1037,7 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
           height: kNavBarHeight,
           selectedIndex: _index,
           onDestinationSelected: (i) async {
-            // Optional: reset "seen" when leaving the notifications tab
+            // Optional: reset "seen" when leaving the announcements tab
             if (_index == 1 && i != 1) {
               await UXPrefs.setString(_kAnnSeenFp, null);
             }
@@ -1041,14 +1056,18 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2, top: -2,
+                    right: -2,
+                    top: -2,
                     child: Container(
-                      width: 10, height: 10,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle,
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white : Colors.black,
+                              ? Colors.white
+                              : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1059,14 +1078,18 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2, top: -2,
+                    right: -2,
+                    top: -2,
                     child: Container(
-                      width: 10, height: 10,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle,
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white : Colors.black,
+                              ? Colors.white
+                              : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1075,9 +1098,13 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
               ]),
             ),
             const NavigationDestination(
-                label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20)),
+              label: '',
+              icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
+            ),
             const NavigationDestination(
-                label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20)),
+              label: '',
+              icon: FaIcon(FontAwesomeIcons.addressBook, size: 20),
+            ),
             const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),

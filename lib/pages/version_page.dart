@@ -44,7 +44,6 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
-    final cs = theme.colorScheme; // ← use this for readable on dark
 
     return Scaffold(
       appBar: AppBar(
