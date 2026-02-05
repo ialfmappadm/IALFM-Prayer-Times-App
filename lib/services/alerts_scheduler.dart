@@ -6,13 +6,12 @@
 // Uses flutter_local_notifications + timezone (tz).
 //
 // Key points:
-// • Creates a HIGH-importance channel (heads-up popup on Android 8+)  [ref: channels & importance]
+// • Creates a HIGH-importance channel (heads-up popup on Android 8+) [ref: channels & importance]
 // • Requests Android 13+ runtime notification permission via the plugin [ref: POST_NOTIFICATIONS runtime]
 // • Schedules with EXACT first, then falls back to INEXACT if exact alarms are denied on Android 14+
 //   (so you don't need USE_EXACT_ALARM in the manifest). [ref: exact-alarm restriction]
 //
 // Reuse as-is with your existing call sites.
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -90,6 +89,25 @@ class AlertsScheduler {
     }
   }
 
+  /// DEV: dump all pending notifications (IDs, titles, payloads) for audit.
+  Future<List<PendingNotificationRequest>> dumpPending({bool printLog = true}) async {
+    final list = await _fln.pendingNotificationRequests();
+    if (printLog) {
+      debugPrint('[AlertsScheduler] Pending notifications (${list.length}):');
+      for (final p in list) {
+        debugPrint('  • id=${p.id} title="${p.title}" payload="${p.payload}"');
+      }
+    }
+    return list;
+  }
+
+  /// DEV: Android-only quick check if notifications are enabled at the OS level.
+  Future<bool?> areNotificationsEnabledAndroid() async {
+    return await _fln
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.areNotificationsEnabled();
+  }
+
   /// Schedule Adhan & Iqamah alerts for [dateLocal]. Null inputs are skipped.
   Future<void> schedulePrayerAlertsForDay({
     required DateTime dateLocal,
@@ -142,6 +160,11 @@ class AlertsScheduler {
       final alertAt = when.add(offset);
       if (alertAt.isBefore(DateTime.now())) return;
       final tzTime = tz.TZDateTime.from(alertAt, tz.local);
+
+      // DEV log
+      debugPrint('[AlertsScheduler] scheduling => '
+          'title="$title" body="$body" at=${alertAt.toLocal()} (tz: $tzTime) id=$id');
+
       await _safeZonedSchedule(
         id: id,
         title: title,
@@ -245,13 +268,14 @@ class AlertsScheduler {
     final DateTime friday = (delta >= 0)
         ? anyDateThisWeekLocal.add(Duration(days: delta))
         : anyDateThisWeekLocal.add(Duration(days: 7 + delta));
+
     final DateTime reminderAt = DateTime(friday.year, friday.month, friday.day, 12, 30);
     if (reminderAt.isBefore(DateTime.now())) return;
 
     final int id = _idFor(_yyyymmdd(friday), 99); // reserved slot
     await _fln.cancel(id);
-
     final tz.TZDateTime tzTime = tz.TZDateTime.from(reminderAt, tz.local);
+
     const android = AndroidNotificationDetails(
       _channelId,
       _channelName,
@@ -264,6 +288,9 @@ class AlertsScheduler {
     );
     const ios = DarwinNotificationDetails(presentAlert: true, presentSound: true);
     const nDetails = NotificationDetails(android: android, iOS: ios);
+
+    // DEV log
+    debugPrint('[AlertsScheduler] scheduling Jumu’ah => at=${tzTime.toLocal()} id=$id');
 
     await _safeZonedSchedule(
       id: id,
@@ -299,7 +326,8 @@ class AlertsScheduler {
       );
     } on PlatformException catch (e, st) {
       if (kDebugMode) {
-        debugPrint('AlertsScheduler: exact alarm denied (${e.code}). Retrying INEXACT.\n$st');
+        debugPrint(
+            'AlertsScheduler: exact alarm denied (${e.code}). Retrying INEXACT.\n$st');
       }
       await _fln.zonedSchedule(
         id,
@@ -319,6 +347,7 @@ class AlertsScheduler {
   Future<void> debugScheduleInSeconds(int seconds) async {
     assert(_initialized, 'AlertsScheduler.init() must be called first');
     final when = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+
     const android = AndroidNotificationDetails(
       _channelId,
       _channelName,
@@ -339,7 +368,7 @@ class AlertsScheduler {
     );
   }
 
-  // ---- ID helpers
+  // -- ID helpers
   int _yyyymmdd(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
   int _idFor(int baseYMD, int slot) => baseYMD * 100 + slot;
 }

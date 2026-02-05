@@ -341,8 +341,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       // Admin override
                       _buttonRow(
                         context: context,
-                        icon: FontAwesomeIcons.lock,
-                        label: 'Update Hijri Date from Masjid (Admin)',
+                        icon: FontAwesomeIcons.triangleExclamation,
+                        label: 'Reset Hijri Date',
                         onPressed: () async {
                           UXPrefs.maybeHaptic();
                           final pinOk = await _promptAdminPin();

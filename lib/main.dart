@@ -699,11 +699,27 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
     required DateTime nowLocal,
     required PrayerDay today,
   }) async {
+    // App-level authorization
     final status = await NotificationOptInService.getStatus();
     final authorized = NotificationOptInService.isAuthorized(status);
-    if (!authorized) {
+
+    // Fallback: double-check at the plugin level (Android) to avoid stale false negatives.
+    bool finalAuthorized = authorized;
+    try {
+      final enabled = await AlertsScheduler.instance.areNotificationsEnabledAndroid();
+      if (enabled == true && !authorized) {
+        debugPrint('[Alerts] App status said "not authorized", but Android reports '
+            'notifications ENABLED → proceeding.');
+        finalAuthorized = true;
+      }
+    } catch (_) {
+      // ignore; use app-level decision
+    }
+
+    if (!finalAuthorized) {
       if (kDebugMode) {
-        debugPrint('[Alerts] Skipped scheduling: permission not granted');
+        debugPrint('[Alerts] Skipped scheduling: permission not granted '
+            '(appAuthorized=$authorized)');
       }
       return;
     }
@@ -721,12 +737,14 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
 
+    // Adhan
     final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
     final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
     final asrAdhan = mkTime(base, today.prayers['asr']?.begin ?? '');
     final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
     final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
 
+    // Iqamah
     final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
     final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
     final asrIqamah = mkTime(base, today.prayers['asr']?.iqamah ?? '');
@@ -758,6 +776,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       anyDateThisWeekLocal: base,
       enabled: jumuahEnabled,
     );
+
+    // DEV audit: list all pending after scheduling
+    final pending = await AlertsScheduler.instance.dumpPending(printLog: true);
+    debugPrint('[Alerts] Total pending after schedule: ${pending.length}');
   }
 
   // Extracted to avoid very long `_scheduleLocalAlerts`
@@ -996,7 +1018,7 @@ class _HomeTabsState extends State<HomeTabs>
   // More tab index in your pages[] (Prayer, Announcements, Social, Directory, More)
   static const int kMoreTabIndex = 4;
 
-  // ✅ Restorable selected index
+  // Restorable selected index
   final RestorableInt _restorableIndex = RestorableInt(0);
 
   bool hasNewAnnouncement = false;
@@ -1042,7 +1064,7 @@ class _HomeTabsState extends State<HomeTabs>
       }
     });
 
-    // ✅ Honor the notifications return intent as a backstop on cold start
+    // Honor the notifications return intent as a backstop on cold start
     _restoreTabIntent();
   }
 
@@ -1078,7 +1100,7 @@ class _HomeTabsState extends State<HomeTabs>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _restorableIndex.dispose(); // ✅
+    _restorableIndex.dispose(); //
     super.dispose();
   }
 
