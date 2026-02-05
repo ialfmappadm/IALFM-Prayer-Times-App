@@ -9,7 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 class PrayerTimesRepository {
   static const _remoteDir = 'prayer_times';
   static const _localFileName = 'prayer_times_local.json';
-  static const _metaFileName = 'prayer_times_meta.json';
+  static const _metaFileName  = 'prayer_times_meta.json';
 
   FirebaseStorage? _storage; // LAZY: prevents touching Firebase in constructor
   PrayerTimesRepository({FirebaseStorage? storage}) {
@@ -60,11 +60,17 @@ class PrayerTimesRepository {
   /// Returns true if local file was updated; false on any Firebase/network error (fallback to local).
   Future<bool> refreshFromFirebase({int? year}) async {
     final targetYear = year ?? DateTime.now().year;
-    final ref = _fs.ref('$_remoteDir/$targetYear.json');
+
+    // IMPORTANT: Build the ref with child(...) to avoid subtle leading-slash path issues.
+    final ref = _fs.ref().child(_remoteDir).child('$targetYear.json');
     final local = await _localFile();
-    final temp = File('${local.path}.new');
+    final temp  = File('${local.path}.new');
 
     try {
+      // Quick existence check (avoids noisy 404 path confusion; does not fetch contents).
+      // If your object is present, this call succeeds quickly; otherwise we bail out quietly.
+      await ref.getMetadata();
+
       // Small JSON: download in memory (2 MB cap)
       final Uint8List? data = await ref.getData(2 * 1024 * 1024);
       if (data == null) return false;
@@ -84,9 +90,20 @@ class PrayerTimesRepository {
         flush: true,
       );
 
+      // Helpful log (path validation)
+      // You should see this path in your Firebase Storage console.
+      // Example: prayer_times/2026.json
+      // If your file uses a different directory, adjust _remoteDir accordingly.
+      // (This avoids false 404s when a blob exists at another path.)
+      // ignore: avoid_print
+      print('[PrayerTimes] Updated from Storage: $_remoteDir/$targetYear.json');
+
       return true;
-    } on FirebaseException {
-      // object-not-found, permission-denied, appcheck, etc. — fall back to local
+    } on FirebaseException catch (e) {
+      // Common cases: object-not-found (404), permission-denied/appcheck (403), etc.
+      // We fall back to local JSON without crashing.
+      // ignore: avoid_print
+      print('[PrayerTimes] Storage fetch failed (${e.code}). Path: $_remoteDir/$targetYear.json');
       return false;
     } catch (_) {
       return false;

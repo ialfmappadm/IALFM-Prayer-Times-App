@@ -1,59 +1,59 @@
 // lib/services/alerts_scheduler.dart
 //
 // Schedules local notifications for:
-// • Prayer Alerts: Adhan (at time) & Iqamah (5 minutes before) for the current day
-// • Jumu'ah Reminder: Fridays 12:30 PM local time (1 hour before 1:30 PM)
+// • Prayer Alerts: Adhan (at time) & Iqamah (~5 minutes before) for the current day
+// • Jumu'ah Reminder: Fridays 12:30 PM local time
 // Uses flutter_local_notifications + timezone (tz).
 //
-// Notes:
-// • Call AlertsScheduler.instance.init() once at startup (after tz initialized).
-// • Re-schedule every midnight (you already have a midnight timer).
-// • Call schedulePrayerAlertsForDay(...) and scheduleJumuahReminderForWeek(...)
-//   when toggles change or when the day's prayer times refresh.
+// Key points:
+// • Creates a HIGH-importance channel (heads-up popup on Android 8+)  [ref: channels & importance]
+// • Requests Android 13+ runtime notification permission via the plugin [ref: POST_NOTIFICATIONS runtime]
+// • Schedules with EXACT first, then falls back to INEXACT if exact alarms are denied on Android 14+
+//   (so you don't need USE_EXACT_ALARM in the manifest). [ref: exact-alarm restriction]
+//
+// Reuse as-is with your existing call sites.
+
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-/// Convenience: ensure tz.local is correctly set in your app.
-/// You already call tz initialization and use America/Chicago.
-/// This service assumes DateTime values you pass are in local time.
 class AlertsScheduler {
   AlertsScheduler._();
   static final AlertsScheduler instance = AlertsScheduler._();
 
   final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
-  static const String _channelId   = 'ialfm_alerts';
+
+  static const String _channelId = 'ialfm_alerts';
   static const String _channelName = 'Prayer & Jumu’ah Alerts';
   static const String _channelDesc = 'Adhan/Iqamah alerts and Friday Jumu’ah reminder';
+
   bool _initialized = false;
 
-  /// Initialize the local notifications plugin.
-  /// - [androidSmallIcon] should be a drawable resource name without extension (e.g., 'ic_stat_bell').
+  /// Initialize local notifications and create the Android channel.
+  /// [androidSmallIcon] must exist in res/drawable as a monochrome icon (e.g., ic_stat_bell).
   Future<void> init({String androidSmallIcon = 'ic_stat_bell'}) async {
     if (_initialized) return;
 
-    const AndroidInitializationSettings androidInit =
-    AndroidInitializationSettings('ic_stat_bell'); // fallback
-
-    final DarwinInitializationSettings iosInit = DarwinInitializationSettings(
+    final androidInit = AndroidInitializationSettings(androidSmallIcon);
+    const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
-      // onDidReceiveLocalNotification -> not needed for iOS < 10 support here
     );
-
     final initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+
     await _fln.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse r) {
+      onDidReceiveNotificationResponse: (r) {
         if (kDebugMode) {
-          debugPrint('[AlertsScheduler] Notification tapped. payload=${r.payload}');
+          debugPrint('[AlertsScheduler] tapped. payload=${r.payload}');
         }
       },
     );
 
-    // Create Android channel with High importance.
+    // Create a High-importance channel to enable heads-up popups on Android 8+.
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
@@ -63,35 +63,26 @@ class AlertsScheduler {
       playSound: true,
     );
     await _fln
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
     _initialized = true;
   }
 
-  /// Request iOS/Android-13+ runtime notification permissions
-  /// (local notifications use the same OS permission).
+  /// Request iOS/Android 13+ runtime notification permission.
   Future<void> requestPermissions() async {
     await _fln
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission(); // Android 13+
     await _fln
-        .resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  /// Cancel ALL scheduled notifications managed by this app.
-  Future<void> cancelAll() async {
-    await _fln.cancelAll();
-  }
+  Future<void> cancelAll() async => _fln.cancelAll();
 
   /// Cancel all schedules for a specific day (by ID pattern).
-  /// We build IDs as: yyyymmdd * 100 + slot (0..N).
-  /// If you call [schedulePrayerAlertsForDay] again for the same date, it's good practice to cancel first.
+  /// IDs: yyyymmdd * 100 + slot (0..N).
   Future<void> cancelAllForDate(DateTime dateLocal) async {
     final dayBase = _yyyymmdd(dateLocal);
     for (int slot = 0; slot < 50; slot++) {
@@ -99,10 +90,7 @@ class AlertsScheduler {
     }
   }
 
-  /// Schedule Adhan & Iqamah alerts for the given [dateLocal].
-  /// Pass local DateTimes for each prayer time; if null, nothing is scheduled for that slot.
-  ///
-  /// [adhanEnabled] and [iqamahEnabled] control whether to schedule Adhan / Iqamah alerts.
+  /// Schedule Adhan & Iqamah alerts for [dateLocal]. Null inputs are skipped.
   Future<void> schedulePrayerAlertsForDay({
     required DateTime dateLocal,
     // Adhan times
@@ -122,13 +110,13 @@ class AlertsScheduler {
   }) async {
     assert(_initialized, 'AlertsScheduler.init() must be called first');
 
-    // Wipe existing for the day, then reschedule.
+    // Clear prior schedules for this day to avoid duplicates.
     await cancelAllForDate(dateLocal);
 
     final base = _yyyymmdd(dateLocal);
     int slot = 0;
 
-    final android = AndroidNotificationDetails(
+    const android = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDesc,
@@ -139,10 +127,9 @@ class AlertsScheduler {
       ticker: 'IALFM Alert',
     );
     const ios = DarwinNotificationDetails(presentAlert: true, presentSound: true);
-    final nDetails = NotificationDetails(android: android, iOS: ios);
+    const nDetails = NotificationDetails(android: android, iOS: ios);
 
-    /// Schedules a notification at `when + offset`.
-    /// Skips if the computed time is in the past.
+    // helper to schedule if time is in future, with an optional offset
     Future<void> scheduleWithOffset({
       required String title,
       required String body,
@@ -155,21 +142,17 @@ class AlertsScheduler {
       final alertAt = when.add(offset);
       if (alertAt.isBefore(DateTime.now())) return;
       final tzTime = tz.TZDateTime.from(alertAt, tz.local);
-      await _fln.zonedSchedule(
-        id,
-        title,
-        body,
-        tzTime,
-        nDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: null,
+      await _safeZonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        when: tzTime,
+        details: nDetails,
         payload: payload,
       );
     }
 
-    // ——— Adhan alerts (at time)
+    // Adhan (at time)
     if (adhanEnabled) {
       await scheduleWithOffset(
         title: 'Adhan Reminder',
@@ -208,7 +191,7 @@ class AlertsScheduler {
       );
     }
 
-    // ——— Iqamah alerts (5 minutes before)
+    // Iqamah (~5 minutes before)
     const iqamahLead = Duration(minutes: -5);
     if (iqamahEnabled) {
       await scheduleWithOffset(
@@ -249,9 +232,7 @@ class AlertsScheduler {
     }
   }
 
-  /// Schedule the Jumu’ah reminder for the given week.
-  /// This will schedule a single reminder at Friday **12:30 PM** local time.
-  /// Call once per week (or re‑call freely; it cancels same‑day/ID before scheduling).
+  /// Jumu’ah reminder on Friday 12:30 PM (this week).
   Future<void> scheduleJumuahReminderForWeek({
     required DateTime anyDateThisWeekLocal,
     bool enabled = true,
@@ -259,21 +240,19 @@ class AlertsScheduler {
     assert(_initialized, 'AlertsScheduler.init() must be called first');
     if (!enabled) return;
 
-    // DateTime.weekday: Monday=1 ... Sunday=7; Friday=5
+    // Monday=1 ... Friday=5 ... Sunday=7
     final int delta = 5 - anyDateThisWeekLocal.weekday;
-    final DateTime friday =
-    (delta >= 0) ? anyDateThisWeekLocal.add(Duration(days: delta))
+    final DateTime friday = (delta >= 0)
+        ? anyDateThisWeekLocal.add(Duration(days: delta))
         : anyDateThisWeekLocal.add(Duration(days: 7 + delta));
-
-    // 12:30 PM local
     final DateTime reminderAt = DateTime(friday.year, friday.month, friday.day, 12, 30);
     if (reminderAt.isBefore(DateTime.now())) return;
 
-    final int id = _idFor(_yyyymmdd(friday), 99); // reserved slot for Jumu’ah
-    await _fln.cancel(id); // replace same-day reminder if present
+    final int id = _idFor(_yyyymmdd(friday), 99); // reserved slot
+    await _fln.cancel(id);
 
     final tz.TZDateTime tzTime = tz.TZDateTime.from(reminderAt, tz.local);
-    final android = AndroidNotificationDetails(
+    const android = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDesc,
@@ -284,26 +263,83 @@ class AlertsScheduler {
       ticker: 'IALFM Jumu’ah',
     );
     const ios = DarwinNotificationDetails(presentAlert: true, presentSound: true);
-    final nDetails = NotificationDetails(android: android, iOS: ios);
-    const String title = "Jumu’ah Reminder";
-    const String body  =
-        "Jumu'ah Mubarak! Don't forget to perform Ghusl and head to the Masjid early for Khutbah, in shā’ Allāh!";
+    const nDetails = NotificationDetails(android: android, iOS: ios);
 
-    await _fln.zonedSchedule(
-      id,
-      title,
-      body,
-      tzTime,
-      nDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: null,
+    await _safeZonedSchedule(
+      id: id,
+      title: "Jumu’ah Reminder",
+      body:
+      "Jumu'ah Mubarak! Don't forget to perform Ghusl and head to the Masjid early for Khutbah, in shā’ Allāh!",
+      when: tzTime,
+      details: nDetails,
       payload: 'jumuah_reminder',
     );
   }
 
-  // ── ID helpers ─────────────────────────────────────────────────────────────
+  // Android-safe wrapper: try EXACT first, if denied fallback to INEXACT (Android 14).
+  Future<void> _safeZonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime when,
+    required NotificationDetails details,
+    String? payload,
+  }) async {
+    try {
+      await _fln.zonedSchedule(
+        id,
+        title,
+        body,
+        when,
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: null,
+        payload: payload,
+      );
+    } on PlatformException catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('AlertsScheduler: exact alarm denied (${e.code}). Retrying INEXACT.\n$st');
+      }
+      await _fln.zonedSchedule(
+        id,
+        title,
+        body,
+        when,
+        details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: null,
+        payload: payload,
+      );
+    }
+  }
+
+  // Debug helper: schedule a test in [seconds].
+  Future<void> debugScheduleInSeconds(int seconds) async {
+    assert(_initialized, 'AlertsScheduler.init() must be called first');
+    final when = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+    const android = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDesc,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const ios = DarwinNotificationDetails(presentAlert: true, presentSound: true);
+    const nDetails = NotificationDetails(android: android, iOS: ios);
+
+    await _safeZonedSchedule(
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      title: 'Test Notification',
+      body: 'This is a test scheduled ${seconds}s ago.',
+      when: when,
+      details: nDetails,
+      payload: 'debug_test',
+    );
+  }
+
+  // ---- ID helpers
   int _yyyymmdd(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
   int _idFor(int baseYMD, int slot) => baseYMD * 100 + slot;
 }

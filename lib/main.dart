@@ -8,19 +8,16 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
-
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // cloud metadata peek
-
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
-
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -30,33 +27,24 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-
 // Repository (Storage -> local persist)
 import 'prayer_times_firebase.dart';
-
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
-
 // Haptics
 import 'utils/haptics.dart';
-
 // Notifications opt-in + local scheduler
 import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
-
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-
 // Warm-ups (images + glyphs)
 import 'warm_up.dart';
-
 // Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 // Iqamah change detector (local JSON only)
 import 'services/iqamah_change_service.dart';
-
 // Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
 import 'widgets/iqamah_change_sheet.dart';
 
@@ -67,11 +55,22 @@ const double kNavBarHeight = 50.0;
 // Daily check guard: only fetch if cloud stamp is new AND recent
 const Duration kFreshCloudStampMaxAge = Duration(hours: 6);
 
+// NEW: debug switch — schedule a local alert 10s after startup (for proving notifications)
+// Toggle to true when you want the heads-up proof; set back to false for normal use.
+const bool kDebugKickLocalAlert10s = true;
+
+// Global ScaffoldMessenger (already present) — used to show SnackBars AFTER first frame.
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
 
 // Navigator key for a safe top‑level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
+
+// ------------------------------------------------------------------------------------------------
+// NEW: one-time suppression for the very first "Prayer times updated" SnackBar
+// ------------------------------------------------------------------------------------------------
+const String kFirstStartupSnackSuppressedKey = 'ux.snack.firstStartupSuppressed';
+// ------------------------------------------------------------------------------------------------
 
 // Background FCM handler
 @pragma('vm:entry-point')
@@ -98,6 +97,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   runZonedGuarded(() async {
     BindingBase.debugZoneErrorsAreFatal = true;
+
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -157,6 +157,7 @@ Future<void> _postFrameAsync() async {
   if (ctx != null) {
     await warmUpAboveTheFold(ctx);
   }
+
   // Slightly increase image cache to avoid early evictions of small assets
   final cache = PaintingBinding.instance.imageCache;
   cache.maximumSize = (cache.maximumSize * 1.3).round();
@@ -173,9 +174,15 @@ Future<void> _postFrameAsync() async {
       debugPrint('Deferred FCM setup error: $e\n$st');
     }
   }));
+
+  // NEW: single-line debug kick for a local heads-up within ~10 seconds
+  if (kDebugKickLocalAlert10s) {
+    unawaited(AlertsScheduler.instance.debugScheduleInSeconds(10));
+  }
 }
 
-// ---------------- Light Color Scheme ----------------
+// ------------------------------------------------------------------------------------------------
+// -- Light Theme
 const ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF0A2C42),
@@ -212,60 +219,67 @@ const LinearGradient pageGradientLight = LinearGradient(
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient page;
   const AppGradients({required this.page});
+
   @override
   AppGradients copyWith({Gradient? page}) =>
       AppGradients(page: page ?? this.page);
+
   @override
   AppGradients lerp(ThemeExtension<AppGradients>? other, double t) {
     if (other is! AppGradients) return this;
     return t < 0.5 ? this : other;
   }
+
   static const light = AppGradients(page: pageGradientLight);
   static const dark = AppGradients(page: AppColors.pageGradient);
 }
 
-// ---------------- Bootstrap App ----------------
+// ------------------------------------------------------------------------------------------------
+// Bootstrap App
 class BootstrapApp extends StatelessWidget {
   const BootstrapApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Ensure GoogleFonts never tries HTTP; will use your asset TTFs
     GoogleFonts.config.allowRuntimeFetching = false;
+
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
-            // Build Manrope-based text theme using ASSET fonts registered in pubspec.yaml
+            // Build Manrope‑based text theme using ASSET fonts registered in pubspec.yaml
             final TextTheme baseLatin =
             GoogleFonts.manropeTextTheme(ThemeData(brightness: Brightness.light).textTheme)
                 .copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             );
+
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall: t.bodySmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium: t.bodyMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge: t.bodyLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall: t.titleSmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium: t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge: t.titleLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall: t.labelSmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium: t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge: t.labelLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall: t.displaySmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium:t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge: t.displayLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall:t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge:t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall: t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium: t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge: t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall: t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium: t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge: t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall: t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium: t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge: t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium: t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium: t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
-            final TextTheme chosenDark  = addFallbacks(baseLatin);
+            final TextTheme chosenDark = addFallbacks(baseLatin);
 
             final ThemeData baseLight = ThemeData(
               useMaterial3: true,
@@ -371,14 +385,17 @@ class BootstrapApp extends StatelessWidget {
   }
 }
 
-// ---------------- Bootstrap Screen ----------------
+// ------------------------------------------------------------------------------------------------
+// Bootstrap Screen
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
+
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
 
-class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingObserver {
+class _BootstrapScreenState extends State<_BootstrapScreen>
+    with WidgetsBindingObserver {
   late Future<_InitResult> _initFuture;
   final PrayerTimesRepository _repo = PrayerTimesRepository();
   Timer? _midnightTimer;
@@ -395,11 +412,14 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
     _initFuture = _initializeAll();
     _initFuture.whenComplete(() {
       if (mounted) FlutterNativeSplash.remove();
     });
+
     _scheduleMidnightRefresh();
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Badge handled in HomeTabs
     });
@@ -476,37 +496,9 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       location = tz.getLocation('America/Chicago');
     }
 
-    // Pull latest prayer times from Firebase (best‑effort) once at startup
-    try {
-      final updated = await _repo.refreshFromFirebase(year: DateTime.now().year);
-      debugPrint('Startup refresh: ${updated ? 'updated from Firebase' : 'no remote / kept local'}');
-
-      // Discreet update SnackBar — only once per 'lastUpdated' and only if fresh (<= 2 min)
-      if (updated) {
-        final meta = await _repo.readMeta();
-        final whenStr = (meta?['lastUpdated'] ?? '') as String;
-        final when = DateTime.tryParse(whenStr)?.toLocal();
-
-        final isFresh = when != null &&
-            DateTime.now().difference(when) <= const Duration(minutes: 2);
-
-        final lastShown = await UXPrefs.getString(_kLastShownUpdatedAt);
-
-        if (isFresh && whenStr.isNotEmpty && whenStr != lastShown) {
-          messengerKey.currentState?.showSnackBar(
-            const SnackBar(
-              content: Text('Prayer times updated'),
-              duration: Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
-          await UXPrefs.setString(_kLastCloudStamp, whenStr); // record baseline
-        }
-      }
-    } catch (e, st) {
-      debugPrint('Startup refresh error: $e\n$st');
-    }
+    // NEW: Startup refresh only if cloud is NEWER than local (no wasteful downloads)
+    final updatedAtStartup = await _maybeStartupRefreshFromCloud(_repo);
+    debugPrint('Startup refresh: ${updatedAtStartup ? 'updated from Firebase' : 'no change'}');
 
     // Load local schedule
     final nowLocal = DateTime.now();
@@ -517,6 +509,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
+
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today =
         _findByDate(days, todayDate) ??
@@ -550,26 +543,75 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     );
   }
 
-  // ---- Daily cloud metadata peek ----
+  // NEW: Only refresh from Firebase at startup if remote metadata is NEWER than local.
+  Future<bool> _maybeStartupRefreshFromCloud(PrayerTimesRepository repo) async {
+    try {
+      final int year = DateTime.now().year;
+
+      // Read local lastUpdated from your persisted meta (if any)
+      final localMeta = await repo.readMeta();
+      final String localWhen = (localMeta?['lastUpdated'] ?? '') as String;
+
+      // Peek remote metadata (no content download)
+      final ref =
+      FirebaseStorage.instance.ref().child('prayer_times').child('$year.json');
+      FullMetadata meta;
+      try {
+        meta = await ref.getMetadata();
+      } on FirebaseException catch (e) {
+        if (e.code == 'object-not-found') {
+          // Nothing in cloud → skip quietly
+          debugPrint('[StartupCheck] cloud object missing → skip.');
+          return false;
+        }
+        return false;
+      }
+
+      final DateTime? remoteStampUtc = meta.updated ?? meta.timeCreated;
+      if (remoteStampUtc == null) return false;
+      final remoteStamp = remoteStampUtc.toLocal();
+
+      // Compare remote to local: if local empty or remote is newer → download
+      final DateTime? localWhenDt = DateTime.tryParse(localWhen)?.toLocal();
+      final bool remoteIsNewer = (localWhenDt == null) || remoteStamp.isAfter(localWhenDt);
+
+      if (!remoteIsNewer) return false;
+
+      // Download & persist updated file; then show snack (with first-run suppression).
+      final updated = await repo.refreshFromFirebase(year: year);
+      if (updated) {
+        final metaLocal = await repo.readMeta();
+        final whenStr = (metaLocal?['lastUpdated'] ?? '') as String;
+        await _tryShowUpdatedSnack(whenStr);
+        return true;
+      }
+    } catch (e, st) {
+      debugPrint('Startup cloud check error: $e\n$st');
+    }
+    return false;
+  }
+
+  // -- Daily cloud metadata peek
   Future<void> _maybeDailyCloudCheck() async {
     try {
       // only once per day
       final todayYMD = _ymd(DateTime.now());
       final lastYMD = await UXPrefs.getString(_kLastDailyCheckYMD);
       if (lastYMD == todayYMD) return;
-
       await UXPrefs.setString(_kLastDailyCheckYMD, todayYMD);
 
       final year = DateTime.now().year;
 
       // Peek metadata (no content download)
-      final ref = FirebaseStorage.instance.ref('prayer_times/$year.json');
+      // CHANGED: use chained child() to avoid leading-slash issues.
+      final ref =
+      FirebaseStorage.instance.ref().child('prayer_times').child('$year.json');
       FullMetadata meta;
       try {
         meta = await ref.getMetadata();
       } on FirebaseException catch (e) {
         if (e.code == 'object-not-found') {
-          // nothing in cloud → keep using local, do nothing
+          // Nothing in cloud → keep using local (quietly skip; no 404 spam).
           debugPrint('[DailyCheck] cloud object missing → skip.');
           return;
         }
@@ -585,9 +627,9 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
           : null;
 
       // Only care if stamp is recent (few hours) and newer than we know
-      final isRecent = DateTime.now().difference(stamp.toLocal()) <= kFreshCloudStampMaxAge;
+      final isRecent =
+          DateTime.now().difference(stamp.toLocal()) <= kFreshCloudStampMaxAge;
       final isNewer = (lastKnown == null) || stamp.isAfter(lastKnown);
-
       if (!(isRecent && isNewer)) {
         debugPrint('[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
         return;
@@ -598,21 +640,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       if (updated) {
         final metaLocal = await _repo.readMeta();
         final whenStr = (metaLocal?['lastUpdated'] ?? '') as String;
-        final when = DateTime.tryParse(whenStr)?.toLocal();
-        final isFresh = when != null &&
-            DateTime.now().difference(when) <= const Duration(minutes: 2);
-        final lastShown = await UXPrefs.getString(_kLastShownUpdatedAt);
-
-        if (isFresh && whenStr.isNotEmpty && whenStr != lastShown) {
-          messengerKey.currentState?.showSnackBar(
-            const SnackBar(
-              content: Text('Prayer times updated'),
-              duration: Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
-        }
+        await _tryShowUpdatedSnack(whenStr); // safe, one-time-suppressed & post-frame
         await UXPrefs.setString(_kLastCloudStamp, stamp.toUtc().toIso8601String());
         debugPrint('[DailyCheck] updated from cloud.');
       } else {
@@ -623,7 +651,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     }
   }
 
-  // ---- Local alerts scheduling
+  // -- Local alerts scheduling
   Future<void> _scheduleLocalAlerts({
     required DateTime nowLocal,
     required PrayerDay today,
@@ -636,6 +664,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       }
       return;
     }
+
     // Parse "HH:mm" -> DateTime
     DateTime? mkTime(DateTime base, String hhmm) {
       if (hhmm.isEmpty) return null;
@@ -648,11 +677,13 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     }
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
+
     final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
     final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
     final asrAdhan = mkTime(base, today.prayers['asr']?.begin ?? '');
     final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
     final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
+
     final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
     final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
     final asrIqamah = mkTime(base, today.prayers['asr']?.iqamah ?? '');
@@ -719,7 +750,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
     );
   }
 
-  // ---- Iqamah change prompt helpers (unified sheet)
+  // -- Iqamah change prompt helpers (unified sheet)
   Future<void> _maybeShowIqamahChangePrompt(_InitResult r) async {
     final ch = r.upcomingChange;
     if (ch == null || !ch.anyChange) return;
@@ -740,6 +771,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       }
       return;
     }
+
     if (delta == 1) {
       final afterCutoff = IqamahChangeService.isAfterMaghrib(
         today: r.today,
@@ -752,6 +784,48 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
       }
       return;
     }
+  }
+
+  // NEW: Safe, one‑time‑suppressed SnackBar for "Prayer times updated".
+  // • Suppresses the very first auto Snack after install/clear‑data AND marks it as shown.
+  // • Only shows if the 'lastUpdated' stamp is fresh (<= 2 min).
+  // • Shows after first frame via messengerKey to avoid Scaffold assertion.
+  Future<void> _tryShowUpdatedSnack(String whenStr) async {
+    if (whenStr.isEmpty) return;
+
+    // Compute freshness
+    final when = DateTime.tryParse(whenStr)?.toLocal();
+    final isFresh =
+        when != null && DateTime.now().difference(when) <= const Duration(minutes: 2);
+    if (!isFresh) return;
+
+    // First ever auto‑startup snack? Suppress AND mark as already shown
+    final firstSuppressed = await UXPrefs.getString(kFirstStartupSnackSuppressedKey);
+    if (firstSuppressed == null) {
+      await UXPrefs.setString(kFirstStartupSnackSuppressedKey, '1');
+      await UXPrefs.setString(_kLastShownUpdatedAt, whenStr); // <- mark shown
+      await UXPrefs.setString(_kLastCloudStamp, whenStr);
+      return; // swallow first startup snack only
+    }
+
+    // De‑duplicate by lastShown
+    final lastShown = await UXPrefs.getString(_kLastShownUpdatedAt);
+    if (lastShown == whenStr) return;
+
+    // Show safely AFTER a frame, using the root messenger
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ms = messengerKey.currentState;
+      if (ms != null) {
+        ms.showSnackBar(const SnackBar(
+          content: Text('Prayer times updated'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
+
+    await UXPrefs.setString(_kLastShownUpdatedAt, whenStr);
+    await UXPrefs.setString(_kLastCloudStamp, whenStr);
   }
 
   PrayerDay? _findByDate(List<PrayerDay> days, DateTime target) {
@@ -786,7 +860,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen> with WidgetsBindingO
   }
 }
 
-// ---------------- Result wrapper ----------------
+// ------------------------------------------------------------------------------------------------
+// Result wrapper
 class _InitResult {
   final tz.Location location;
   final DateTime nowLocal;
@@ -794,6 +869,7 @@ class _InitResult {
   final PrayerDay? tomorrow;
   final double? temperatureF;
   final IqamahChange? upcomingChange;
+
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -804,7 +880,8 @@ class _InitResult {
   });
 }
 
-// ---------------- Splash ----------------
+// ------------------------------------------------------------------------------------------------
+// Splash
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -815,6 +892,7 @@ class _SplashScaffold extends StatelessWidget {
     this.subtitle,
     this.onRetry,
   });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -850,13 +928,15 @@ class _SplashScaffold extends StatelessWidget {
   }
 }
 
-// ---------------- Navigation (HomeTabs) ----------------
+// ------------------------------------------------------------------------------------------------
+// Navigation (HomeTabs)
 class HomeTabs extends StatefulWidget {
   final tz.Location location;
   final DateTime nowLocal;
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
+
   const HomeTabs({
     super.key,
     required this.location,
@@ -865,6 +945,7 @@ class HomeTabs extends StatefulWidget {
     required this.tomorrow,
     required this.temperatureF,
   });
+
   @override
   State<HomeTabs> createState() => _HomeTabsState();
 }
@@ -872,7 +953,6 @@ class HomeTabs extends StatefulWidget {
 class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
   int _index = 0;
   bool hasNewAnnouncement = false;
-
   static const _kAnnSeenFp = 'ux.ann.lastSeenFp';
 
   @override
@@ -886,21 +966,29 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
         setState(() => hasNewAnnouncement = true);
       }
     });
+
     FirebaseMessaging.onMessageOpenedApp.listen((m) {
       if (m.data['newAnnouncement'] == 'true') {
-        setState(() { _index = 1; hasNewAnnouncement = false; });
+        setState(() {
+          _index = 1;
+          hasNewAnnouncement = false;
+        });
       }
     });
+
     FirebaseMessaging.instance.getInitialMessage().then((m) {
       if (m?.data['newAnnouncement'] == 'true') {
-        setState(() { _index = 1; hasNewAnnouncement = false; });
+        setState(() {
+          _index = 1;
+          hasNewAnnouncement = false;
+        });
       }
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // event-driven; no RC polling for announcements
+    // event‑driven; no RC polling for announcements
   }
 
   @override
@@ -924,6 +1012,7 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
       const DirectoryPage(),
       const MorePage(),
     ];
+
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: RepaintBoundary(
@@ -937,7 +1026,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
             if (_index == 1 && i != 1) {
               await UXPrefs.setString(_kAnnSeenFp, null);
             }
-
             setState(() {
               _index = i;
               if (i == 1) hasNewAnnouncement = false; // clear dot when opening tab
@@ -946,7 +1034,6 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
           },
           destinations: [
             const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-
             // 🔔 with red dot
             NavigationDestination(
               label: '',
@@ -960,7 +1047,8 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                       decoration: BoxDecoration(
                         color: Colors.red, shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.light ? Colors.white : Colors.black,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Colors.white : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -977,7 +1065,8 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                       decoration: BoxDecoration(
                         color: Colors.red, shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.light ? Colors.white : Colors.black,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Colors.white : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -985,9 +1074,10 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
                   ),
               ]),
             ),
-
-            const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20)),
-            const NavigationDestination(label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20)),
+            const NavigationDestination(
+                label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20)),
+            const NavigationDestination(
+                label: '', icon: FaIcon(FontAwesomeIcons.addressBook, size: 20)),
             const NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),
@@ -996,7 +1086,8 @@ class _HomeTabsState extends State<HomeTabs> with WidgetsBindingObserver {
   }
 }
 
-// ---- Helpers (coords & weather)
+// ------------------------------------------------------------------------------------------------
+// Helpers (coords & weather)
 class LatLon {
   final double lat;
   final double lon;
@@ -1038,7 +1129,7 @@ Future<double?> _fetchTemperatureF({
   return null;
 }
 
-// ---- Hijri resolver
+// -- Hijri resolver
 Future<HijriYMD> _appHijri(DateTime g) async {
   final h = HijriCalendar.fromDate(g);
   return HijriYMD(h.hYear, h.hMonth, h.hDay);
