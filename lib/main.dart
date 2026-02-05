@@ -553,10 +553,13 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
     // Weather (non‑blocking)
     final coords = _coordsForLocation(location);
+
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
-    ).timeout(const Duration(seconds: 5), onTimeout: () => null);
+    ).timeout(const Duration(seconds: 10), onTimeout: () => null);
+
+    debugPrint('[Weather] final currentTempF=${currentTempF?.toStringAsFixed(1) ?? 'null (will use default)'}');
 
     // Schedule local alerts (only if OS notifications are enabled)
     await _scheduleLocalAlerts(nowLocal: nowLocal, today: today);
@@ -576,6 +579,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       upcomingChange: upcoming,
     );
   }
+
 
   // NEW: Only refresh from Firebase at startup if remote metadata is NEWER than local.
   Future<bool> _maybeStartupRefreshFromCloud(PrayerTimesRepository repo) async {
@@ -1238,17 +1242,28 @@ Future<double?> _fetchTemperatureF({
       'temperature_unit': 'fahrenheit',
       'timezone': 'auto',
     });
-    final resp = await http.get(uri);
+
+    debugPrint('[Weather] GET $uri');
+    final resp = await http.get(uri).timeout(const Duration(seconds: 10));
+
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final cw = data['current_weather'] as Map<String, dynamic>?;
       final t = cw?['temperature'];
-      if (t is num) return t.toDouble();
+      if (t is num) {
+        final val = t.toDouble();
+        debugPrint('[Weather] current_temperature_f=$val');
+        return val;
+      } else {
+        debugPrint('[Weather] current_weather.temperature missing or not a number. body=${resp.body}');
+      }
     } else {
-      debugPrint('Weather HTTP ${resp.statusCode}: ${resp.body}');
+      debugPrint('[Weather] HTTP ${resp.statusCode}: ${resp.body}');
     }
+  } on TimeoutException {
+    debugPrint('[Weather] request timeout after 10s');
   } catch (e, st) {
-    debugPrint('Weather fetch error: $e\n$st');
+    debugPrint('[Weather] fetch error: $e\n$st');
   }
   return null;
 }
