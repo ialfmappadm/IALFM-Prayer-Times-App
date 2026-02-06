@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
 
 
+
   # UI/time utilities
   google_fonts: ^8.0.0
   # Use canonical package instead of a fork
@@ -24,7 +25,6 @@ dependencies:
   package_info_plus: ^9.0.0
   flutter_local_notifications: ^18.0.1
   permission_handler: ^12.0.1
-
 
   # ----- Firebase (aligned with latest FlutterFire 2025/26) -----
   # firebase_core 4.3.x -> Firebase iOS SDK ~12.6.x; matches current Flutter stable toolchain
