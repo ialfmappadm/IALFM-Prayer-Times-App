@@ -62,7 +62,7 @@ const bool kDebugKickLocalAlert10s = false;
 
 // Global ScaffoldMessenger (already present) — used to show SnackBars AFTER first frame.
 final GlobalKey<ScaffoldMessengerState> messengerKey =
-    GlobalKey<ScaffoldMessengerState>();
+GlobalKey<ScaffoldMessengerState>();
 
 // Navigator key for a safe top‑level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
@@ -84,9 +84,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (_) {}
   await FirebaseAppCheck.instance.activate(
     providerAndroid:
-        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple:
-        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
 
   final repo = PrayerTimesRepository();
@@ -117,9 +117,9 @@ Future<void> main() async {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     await FirebaseAppCheck.instance.activate(
       providerAndroid:
-          kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+      kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
       providerApple:
-          kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+      kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -172,20 +172,21 @@ Future<void> _postFrameAsync() async {
 
   // Defer FCM permission + topic subscription ~1.2s after first paint
   unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
-    try {
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-      debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
-      await FirebaseMessaging.instance.subscribeToTopic('allUsers');
-    } catch (e, st) {
-      debugPrint('Deferred FCM setup error: $e\n$st');
-    }
-  }));
+    Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
+      try {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
+        await FirebaseMessaging.instance.subscribeToTopic('allUsers');
+      } catch (e, st) {
+        debugPrint('Deferred FCM setup error: $e\n$st');
+      }
+    }),
+  );
 
   // NEW: single-line debug kick for a local heads‑up within ~10 seconds
   if (kDebugKickLocalAlert10s) {
@@ -263,7 +264,7 @@ class BootstrapApp extends StatelessWidget {
           builder: (context, appLocale, __) {
             // Build Manrope‑based text theme using ASSET fonts registered in pubspec.yaml
             final TextTheme baseLatin = GoogleFonts.manropeTextTheme(
-                    ThemeData(brightness: Brightness.light).textTheme)
+                ThemeData(brightness: Brightness.light).textTheme)
                 .copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
@@ -272,37 +273,37 @@ class BootstrapApp extends StatelessWidget {
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-                  bodySmall:
-                      t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
-                  bodyMedium: t.bodyMedium
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  bodyLarge:
-                      t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
-                  titleSmall: t.titleSmall
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  titleMedium: t.titleMedium
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  titleLarge: t.titleLarge
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  labelSmall: t.labelSmall
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  labelMedium: t.labelMedium
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  labelLarge: t.labelLarge
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  displaySmall: t.displaySmall
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  displayMedium: t.displayMedium
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  displayLarge: t.displayLarge
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  headlineSmall: t.headlineSmall
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  headlineMedium: t.headlineMedium
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                  headlineLarge: t.headlineLarge
-                      ?.copyWith(fontFamilyFallback: arabicFallback),
-                );
+              bodySmall:
+              t.bodySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:
+              t.bodyMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge:
+              t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:
+              t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium:
+              t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge:
+              t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:
+              t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium:
+              t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge:
+              t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall:
+              t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium:
+              t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge:
+              t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall:
+              t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium:
+              t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge:
+              t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+            );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
             final TextTheme chosenDark = addFallbacks(baseLatin);
@@ -318,7 +319,7 @@ class BootstrapApp extends StatelessWidget {
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                 iconTheme:
-                    WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                WidgetStateProperty.resolveWith<IconThemeData>((states) {
                   final selected = states.contains(WidgetState.selected);
                   return IconThemeData(
                     color: selected
@@ -330,14 +331,11 @@ class BootstrapApp extends StatelessWidget {
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600),
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.light,
@@ -355,7 +353,7 @@ class BootstrapApp extends StatelessWidget {
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                 iconTheme:
-                    WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                WidgetStateProperty.resolveWith<IconThemeData>((states) {
                   final selected = states.contains(WidgetState.selected);
                   return IconThemeData(
                     color: selected
@@ -367,14 +365,11 @@ class BootstrapApp extends StatelessWidget {
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600),
+                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
@@ -435,6 +430,9 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
   final PrayerTimesRepository _repo = PrayerTimesRepository();
   Timer? _midnightTimer;
 
+  // NEW: keep the last successfully built result (prevents black flash on resume)
+  _InitResult? _lastGood;
+
   // Daily check prefs keys
   static const _kLastDailyCheckYMD = 'ux.schedule.lastDailyCheckYMD';
   static const _kLastCloudStamp = 'ux.schedule.lastCloudStamp';
@@ -465,10 +463,26 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
     super.dispose();
   }
 
+  // NEW: rehydrate from local JSON without disturbing the current UI
+  Future<void> _rehydrateLocalSilently() async {
+    try {
+      final r = await _initializeAll(skipCloud: true);
+      if (!mounted) return;
+      setState(() {
+        _lastGood = r; // swap in the new schedule when ready
+      });
+    } catch (e, st) {
+      debugPrint('Silent rehydrate failed: $e\n$st');
+      // Keep showing previous UI; we'll try again next resume.
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Once per day (first foreground after midnight), do a cheap metadata peek
     if (state == AppLifecycleState.resumed) {
+      // 1) Refresh from LOCAL only (no cloud hit) but KEEP showing the previous UI
+      unawaited(_rehydrateLocalSilently());
+      // 2) Keep your once-per-day cloud peek (unchanged behavior)
       unawaited(_maybeDailyCloudCheck());
     }
   }
@@ -494,6 +508,9 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.done && snap.hasData) {
           final r = snap.data!;
+          // NEW: remember the last good result for future resumes
+          _lastGood = r;
+
           // Post-frame: maybe show heads‑up / night‑before prompts
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _maybeShowIqamahChangePrompt(r);
@@ -517,12 +534,25 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
           );
         }
 
+        // NEW: While initial load is pending but we have a prior good UI, show that
+        if (_lastGood != null) {
+          final r = _lastGood!;
+          return HomeTabs(
+            location: r.location,
+            nowLocal: r.nowLocal,
+            today: r.today,
+            tomorrow: r.tomorrow,
+            temperatureF: r.temperatureF,
+          );
+        }
+
+        // Initial boot splash (first ever run)
         return const SizedBox.shrink();
       },
     );
   }
 
-  Future<_InitResult> _initializeAll() async {
+  Future<_InitResult> _initializeAll({bool skipCloud = false}) async {
     // Timezone init (central time)
     tz.Location location;
     try {
@@ -532,7 +562,10 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
     }
 
     // NEW: Startup refresh only if cloud is NEWER than local (no wasteful downloads)
-    final updatedAtStartup = await _maybeStartupRefreshFromCloud(_repo);
+    bool updatedAtStartup = false;
+    if (!skipCloud) {
+      updatedAtStartup = await _maybeStartupRefreshFromCloud(_repo);
+    }
     debugPrint(
         'Startup refresh: ${updatedAtStartup ? 'updated from Firebase' : 'no change'}');
 
@@ -580,7 +613,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       upcomingChange: upcoming,
     );
   }
-
 
   // NEW: Only refresh from Firebase at startup if remote metadata is NEWER than local.
   Future<bool> _maybeStartupRefreshFromCloud(PrayerTimesRepository repo) async {
@@ -675,8 +707,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
           DateTime.now().difference(stamp.toLocal()) <= kFreshCloudStampMaxAge;
       final isNewer = (lastKnown == null) || stamp.isAfter(lastKnown);
       if (!(isRecent && isNewer)) {
-        debugPrint(
-            '[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
+        debugPrint('[DailyCheck] no action (recent=$isRecent, newer=$isNewer).');
         return;
       }
 
@@ -871,7 +902,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
 
     // First ever auto‑startup snack? Suppress AND mark as already shown
     final firstSuppressed =
-        await UXPrefs.getString(kFirstStartupSnackSuppressedKey);
+    await UXPrefs.getString(kFirstStartupSnackSuppressedKey);
     if (firstSuppressed == null) {
       await UXPrefs.setString(kFirstStartupSnackSuppressedKey, '1');
       await UXPrefs.setString(_kLastShownUpdatedAt, whenStr); // <- mark shown
@@ -914,18 +945,18 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     final begin = fmt(date);
     final Map<String, PrayerTime> prayers = {
-      'fajr': PrayerTime(begin: begin, iqamah: ''),
-      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
-      'asr': PrayerTime(begin: begin, iqamah: ''),
+      'fajr':    PrayerTime(begin: begin, iqamah: ''),
+      'dhuhr':   PrayerTime(begin: begin, iqamah: ''),
+      'asr':     PrayerTime(begin: begin, iqamah: ''),
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
-      'isha': PrayerTime(begin: begin, iqamah: ''),
+      'isha':    PrayerTime(begin: begin, iqamah: ''),
     };
     return PrayerDay(
       date: date,
       prayers: prayers,
       sunrise: begin,
-      sunset: begin,
-      serial: 0,
+      sunset:  begin,
+      serial:  0,
     );
   }
 }
@@ -1020,9 +1051,6 @@ class HomeTabs extends StatefulWidget {
 
 class _HomeTabsState extends State<HomeTabs>
     with WidgetsBindingObserver, RestorationMixin {
-  // More tab index in your pages[] (Prayer, Announcements, Social, Directory, More)
-  //static const int kMoreTabIndex = 4;
-
   // Restorable selected index
   final RestorableInt _restorableIndex = RestorableInt(0);
 
@@ -1232,9 +1260,9 @@ class LatLon {
 LatLon _coordsForLocation(tz.Location location) {
   final locationName = location.name.toLowerCase();
   if (locationName.contains('america/chicago')) {
-    return const LatLon(33.0354, -97.0830); //IALFM Masjid Coordinates
+    return const LatLon(33.0354, -97.0830); // IALFM Masjid Coordinates
   }
-  return const LatLon(33.0354, -97.0830); //IALFM Masjid Coodrinates
+  return const LatLon(33.0354, -97.0830); // IALFM Masjid Coodrinates (fallback)
 }
 
 Future<double?> _fetchTemperatureF({
