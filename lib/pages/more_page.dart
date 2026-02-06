@@ -134,12 +134,19 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       FutureBuilder<String>(
                         future: _readOsNotificationStateLabel(),
                         builder: (context, snap) {
-                          final state = snap.data ?? 'Check'; // Enabled | Disabled | Check
+                          final l10n = AppLocalizations.of(context);
+                          final state = snap.data ?? 'Check';
+                          final valueLabel = switch (state) {
+                            'Enabled'  => l10n.common_enabled,
+                            'Disabled' => l10n.common_disabled,
+                            _          => l10n.common_check,
+                          };
+
                           return _pickerRow(
                             context: context,
                             icon: FontAwesomeIcons.bell,
-                            label: 'App notifications',
-                            value: state,
+                            label: l10n.more_app_notifications, // ← the key you just added to ARB
+                            value: valueLabel,
                             onTap: _openNotificationsSheet,
                             alignValueRight: true,
                           );
@@ -152,12 +159,15 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.mosque,
-                        label: 'Salah Alerts',
+                        label: l10n.more_prayer_alerts,
                         value: (_adhanAlert || _iqamahAlert)
-                            ? '${l10n.more_adhan}: ${_toggleLabel(_adhanAlert)} · ${l10n.more_iqamah}: ${_toggleLabel(_iqamahAlert)}'
+                            ? '${l10n.more_adhan}: ${_toggleLabel(l10n, _adhanAlert)} · '
+                            '${l10n.more_iqamah}: ${_toggleLabel(l10n, _iqamahAlert)}'
                             : l10n.common_open,
                         onTap: _openSalahSheet,
+                        alignValueRight: true,
                       ),
+
 
                       const _Hairline(),
 
@@ -165,8 +175,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.handsPraying,
-                        label: 'Jumu’ah',
-                        value: _jumuahReminder ? 'On' : 'Off',
+                        label: l10n.more_jumuah_reminder,
+                        value: _jumuahReminder ? l10n.common_on : l10n.common_off, // localized
                         onTap: _openJumuahSheet,
                         alignValueRight: true,
                       ),
@@ -342,7 +352,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       _buttonRow(
                         context: context,
                         icon: FontAwesomeIcons.triangleExclamation,
-                        label: 'Reset Hijri Date',
+                        label: l10n.more_hijri_reset_label,
                         onPressed: () async {
                           UXPrefs.maybeHaptic();
                           final pinOk = await _promptAdminPin();
@@ -411,6 +421,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                           _toast('${l10n.more_language}: $choice');
                           setState(() {});
                         },
+                        alignValueRight: true,
                       ),
                     ],
                   ),
@@ -525,22 +536,15 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       backgroundColor: bottomSheetBg,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
         const gold = Color(0xFFC7A447);
 
-        // Keep it simple: one action based on current status
         Future<void> openSettingsAndRefresh() async {
-          // Close the sheet first so we always land on More (no stale sheet)
           Navigator.pop(ctx);
-
-          // Record intent so a cold-start comes back to More
           await UXPrefs.setLastIntendedTab('more');
-
-          // Go to OS settings (no requestPermissions here)
           await NotificationOptInService.openOSSettings();
-
-          // Warm return: refresh the notifications row value
           if (!mounted) return;
-          setState(() {}); // FutureBuilder re-runs
+          setState(() {}); // refresh the row
         }
 
         return SafeArea(
@@ -549,36 +553,33 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Title only (row is the source of truth for status)
                 Text(
-                  'App notifications',
+                  l10n.more_app_notifications_title, // was: 'App notifications'
                   style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 14),
-
-                // Primary action
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: gold,
-                      foregroundColor: Colors.black,
+                      backgroundColor: gold, foregroundColor: Colors.black,
                     ),
                     onPressed: openSettingsAndRefresh,
-                    child: Text(isEnabled ? 'Disable in Settings' : 'Open Settings'),
+                    child: Text(
+                      isEnabled
+                          ? l10n.more_notifications_disable_in_settings  // was: 'Disable in Settings'
+                          : l10n.more_notifications_open_settings,       // was: 'Open Settings'
+                    ),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
-                // Close
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: Text(AppLocalizations.of(ctx).btn_close),
+                    child: Text(l10n.btn_close),
                   ),
                 ),
               ],
@@ -604,6 +605,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return SafeArea(
@@ -681,6 +683,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
+
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return SafeArea(
@@ -689,11 +693,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Jumu’ah',
-                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
+                    Text(
+                      l10n.more_jumuah_reminder,
+                      style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: 12),
                     SwitchListTile.adaptive(
-                      title: const Text('Jumu’ah reminder 1 hour before the Khutbah'),
+                      title: Text(l10n.more_jumuah_reminder_label),
                       value: temp,
                       onChanged: (v) => setSheetState(() => temp = v),
                       contentPadding: EdgeInsets.zero,
@@ -704,28 +710,26 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Close'),
+                            child: Text(l10n.btn_close), // no `const`
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
                             style: FilledButton.styleFrom(
-                                backgroundColor: _gold, foregroundColor: Colors.black),
+                              backgroundColor: _gold, foregroundColor: Colors.black,
+                            ),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               if (!mounted) return;
-
                               _jumuahReminder = temp;
                               await UXPrefs.setJumuahReminderEnabled(_jumuahReminder);
-
                               await AlertsScheduler.instance.requestPermissions();
                               await _rescheduleToday();
-
                               if (!mounted) return;
                               setState(() {});
                             },
-                            child: const Text('Save'),
+                            child: Text(l10n.btn_save), // no `const`
                           ),
                         ),
                       ],
@@ -960,7 +964,11 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
   // ────────────────────────── Shared UI helpers ──────────────────────────
 
-  String _toggleLabel(bool v) => v ? 'On' : 'Off';
+
+    String _toggleLabel(AppLocalizations l10n, bool v) =>
+      v ? l10n.common_on : l10n.common_off;
+
+
 
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
