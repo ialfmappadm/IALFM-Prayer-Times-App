@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
-
 import '../utils/time_utils.dart';
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
@@ -26,14 +25,13 @@ const _kLightPanelTop    = Color(0xFFDDEAF3);
 const _kLightPanelBottom = Color(0xFFCBDCE8);
 const _kLightGoldDigits  = Color(0xFF9C7C2C);
 
-const double kTempFallbackF   = 72.0;
-const double _kHeaderHeight   = 116.0;
+const double kTempFallbackF = 72.0;
+const double _kHeaderHeight = 116.0;
 const bool   enableDstPreviewToggle = false;
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ✨ EDIT THESE to change the countdown digit sizes (light & dark)
-const double kCountdownDigitSizeLight = 56; // default was 40
-const double kCountdownDigitSizeDark  = 56; // default was 42
+const double kCountdownDigitSizeLight = 56;
+const double kCountdownDigitSizeDark  = 56;
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PrayerPage extends StatefulWidget {
@@ -42,7 +40,6 @@ class PrayerPage extends StatefulWidget {
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
-
   const PrayerPage({
     super.key,
     required this.location,
@@ -69,10 +66,7 @@ class _PrayerPageState extends State<PrayerPage> {
     // Post-frame warm-ups — lint-safe guards around context after awaits.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      try {
-        await warmUpAboveTheFold(context);
-      } catch (_) {}
-
+      try { await warmUpAboveTheFold(context); } catch (_) {}
       if (!mounted) return;
       try {
         final isLight = Theme.of(context).brightness == Brightness.light;
@@ -98,7 +92,6 @@ class _PrayerPageState extends State<PrayerPage> {
         oldWidget.today.date != widget.today.date ||
             oldWidget.tomorrow?.date != widget.tomorrow?.date;
     final locChanged = oldWidget.location.name != widget.location.name;
-
     if (dayChanged || locChanged) {
       _initTracker();
       if (mounted) setState(() {});
@@ -108,43 +101,39 @@ class _PrayerPageState extends State<PrayerPage> {
   String _titleCase(String s) {
     final x = s.toLowerCase();
     switch (x) {
-      case 'fajr': return 'Fajr';
-      case 'sunrise': return 'Sunrise';
-      case 'dhuhr': return 'Dhuhr';
-      case 'asr': return 'Asr';
-      case 'maghrib': return 'Maghrib';
-      case 'isha': return 'Isha';
+      case 'fajr':     return 'Fajr';
+      case 'sunrise':  return 'Sunrise';
+      case 'dhuhr':    return 'Dhuhr';
+      case 'asr':      return 'Asr';
+      case 'maghrib':  return 'Maghrib';
+      case 'isha':     return 'Isha';
       case "jummua'h":
       case "jummu'ah":
       case 'jummuah':
-      case 'jumuah': return "Jumu'ah";
-      default: return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
+      case 'jumuah':   return "Jumu'ah";
+      default:         return s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
     }
   }
 
-  // Parse "HH:mm" to DateTime for a given base date
-  DateTime? _mkTime(DateTime base, String hhmm) {
+  // Parse "HH:mm" as TZDateTime on the mosque's zone for a given base date
+  tz.TZDateTime? _mkTimeTz(tz.Location loc, DateTime base, String hhmm) {
     if (hhmm.isEmpty) return null;
     final parts = hhmm.split(':');
     if (parts.length != 2) return null;
     final h = int.tryParse(parts[0]);
     final m = int.tryParse(parts[1]);
     if (h == null || m == null) return null;
-    return DateTime(base.year, base.month, base.day, h, m);
+    return tz.TZDateTime(loc, base.year, base.month, base.day, h, m);
   }
 
   Widget _guarded(Widget Function() build) {
-    try {
-      return build();
-    } catch (e, st) {
+    try { return build(); }
+    catch (e, st) {
       debugPrint('PrayerPage child build error: $e\n$st');
       return Container(
         color: Colors.red.shade900,
         padding: const EdgeInsets.all(16),
-        child: const Text(
-          'Error building widget.',
-          style: TextStyle(color: Colors.white),
-        ),
+        child: const Text('Error building widget.', style: TextStyle(color: Colors.white)),
       );
     }
   }
@@ -152,8 +141,6 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-
-    // Gradient extension (lint-clean)
     final ag = Theme.of(context).extension<AppGradients>();
     final bgGradient = (ag != null) ? ag.page : AppColors.pageGradient;
 
@@ -165,7 +152,7 @@ class _PrayerPageState extends State<PrayerPage> {
       );
     }
 
-    // Table styles (unchanged)
+    // Table text styles (unchanged)
     final headerTextStyle = TextStyle(
       color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
       fontSize: 16, fontWeight: FontWeight.w600,
@@ -178,23 +165,24 @@ class _PrayerPageState extends State<PrayerPage> {
       color: isLight ? _kLightTextPrimary : AppColors.textPrimary,
       fontSize: 16, fontWeight: FontWeight.w600,
     );
-
     final bannerTitle = PrayerLabels.countdownHeader(context, next.name);
 
-    // DST / schedule
-    final bool sysIsDst = widget.location
-        .timeZone(widget.nowLocal.millisecondsSinceEpoch)
-        .isDst;
+    // ── DST (live, zone‑aware) ────────────────────────────────────────────────
+    final tz.TZDateTime nowTz = tz.TZDateTime.now(widget.location);
+    final bool sysIsDst = () {
+      // Compare today's offset to Jan 1 in same zone — flips naturally on DST days
+      final jan1 = tz.TZDateTime(widget.location, nowTz.year, 1, 1);
+      return nowTz.timeZoneOffset != jan1.timeZoneOffset;
+    }();
     final bool effectiveIsDst = _dstPreview ?? sysIsDst;
+    // ─────────────────────────────────────────────────────────────────────────
 
     // After today's Isha adhan begins, switch Fajr/Sunrise to "tomorrow"
-    final DateTime now = DateTime.now();
-    final DateTime base =
-    DateTime(widget.today.date.year, widget.today.date.month, widget.today.date.day);
-    final DateTime? ishaAdhanToday =
-    _mkTime(base, widget.today.prayers['isha']?.begin ?? '');
-    final bool afterIshaAdhan =
-        (ishaAdhanToday != null) && now.isAfter(ishaAdhanToday);
+    final DateTime base = DateTime(
+        widget.today.date.year, widget.today.date.month, widget.today.date.day);
+    final tz.TZDateTime? ishaAdhanTodayTz =
+    _mkTimeTz(widget.location, base, widget.today.prayers['isha']?.begin ?? '');
+    final bool afterIshaAdhan = (ishaAdhanTodayTz != null) && nowTz.isAfter(ishaAdhanTodayTz);
 
     final bool useTomorrowFajr    = afterIshaAdhan && widget.tomorrow != null;
     final bool useTomorrowSunrise = afterIshaAdhan && widget.tomorrow != null;
@@ -240,9 +228,7 @@ class _PrayerPageState extends State<PrayerPage> {
           });
           final mode = _dstPreview == null
               ? 'Auto (System)'
-              : (_dstPreview!
-              ? 'Forced ON (Preview)'
-              : 'Forced OFF (Preview)');
+              : (_dstPreview! ? 'Forced ON (Preview)' : 'Forced OFF (Preview)');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('DST mode: $mode'),
@@ -270,9 +256,7 @@ class _PrayerPageState extends State<PrayerPage> {
       title: bannerTitle,
       onNextChanged: (newName) {
         if (_next?.name != newName && mounted) {
-          setState(() {
-            _next = _tracker.current;
-          });
+          setState(() { _next = _tracker.current; });
         }
       },
     );
@@ -302,10 +286,8 @@ class _PrayerPageState extends State<PrayerPage> {
             child: Row(
               children: [
                 Icon(
-                  Icons.access_time_filled,
-                  size: 18,
-                  color: effectiveIsDst
-                      ? const Color(0xFFC7A447)
+                  Icons.access_time_filled, size: 18,
+                  color: effectiveIsDst ? const Color(0xFFC7A447)
                       : (isLight ? Colors.black : Colors.white),
                 ),
                 const SizedBox(width: 10),
@@ -313,8 +295,7 @@ class _PrayerPageState extends State<PrayerPage> {
                   child: Text(
                     'Daylight Saving Time',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 15, fontWeight: FontWeight.w600,
                       color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
                     ),
                   ),
@@ -322,14 +303,10 @@ class _PrayerPageState extends State<PrayerPage> {
                 Switch(
                   value: (_dstPreview != null) ? _dstPreview! : sysIsDst,
                   onChanged: (val) {
-                    setState(() {
-                      _dstPreview = val ? true : false;
-                    });
+                    setState(() { _dstPreview = val ? true : false; });
                     final mode = _dstPreview == null
                         ? 'Auto (System)'
-                        : (_dstPreview!
-                        ? 'Forced ON (Preview)'
-                        : 'Forced OFF (Preview)');
+                        : (_dstPreview! ? 'Forced ON (Preview)' : 'Forced OFF (Preview)');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('DST mode: $mode'),
@@ -344,10 +321,10 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
 
-        // Countdown (isolated)
+        // Countdown
         countdownSection,
 
-        // Salah Table (isolated)
+        // Salah Table
         Expanded(
           child: _guarded(
                 () => RepaintBoundary(
@@ -362,14 +339,14 @@ class _PrayerPageState extends State<PrayerPage> {
                   headerGreen: false,
                   headerBackgroundGradient: isLight ? null : AppColors.headerGradient,
                   headerBackgroundColor: isLight ? Colors.white : null,
-                  rowOddColor: isLight ? _kLightCard : AppColors.bgSecondary,
+                  rowOddColor:  isLight ? _kLightCard : AppColors.bgSecondary,
                   rowEvenColor: isLight ? _kLightRowAlt : AppColors.bgSecondary,
                   highlightColor: AppColors.rowHighlight,
                   highlightColorLight: _kLightHighlight,
                   rowDividerColorLight: _kLightDivider.withValues(alpha: 0.16),
                   headerStyle: headerTextStyle,
-                  nameStyle: nameTextStyle,
-                  adhanStyle: valueTextStyle,
+                  nameStyle:   nameTextStyle,
+                  adhanStyle:  valueTextStyle,
                   iqamahStyle: valueTextStyle,
                   order: order,
                 ),
@@ -398,13 +375,13 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner (unchanged behavior; lint-clean)
+// CountdownBanner (unchanged behavior; lint‑clean)
+
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
   final bool isLight;
   final String title;
   final void Function(String newNextName)? onNextChanged;
-
   const CountdownBanner({
     super.key,
     required this.tracker,
@@ -414,30 +391,19 @@ class CountdownBanner extends StatefulWidget {
   });
 
   static const TextStyle kTitleLight = TextStyle(
-    color: _kLightTextMuted,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
+    color: _kLightTextMuted, fontSize: 14, fontWeight: FontWeight.w600,
   );
-
-  static const TextStyle kTitleDark = TextStyle(
-    color: AppColors.textSecondary,
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
+  static const TextStyle kTitleDark  = TextStyle(
+    color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w600,
   );
-
   static const TextStyle kDigitsLight = TextStyle(
-    color: _kLightGoldDigits,
-    fontSize: kCountdownDigitSizeLight,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 1.0,
+    color: _kLightGoldDigits, fontSize: kCountdownDigitSizeLight,
+    fontWeight: FontWeight.w700, letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
-
-  static const TextStyle kDigitsDark = TextStyle(
-    color: AppColors.countdownText,
-    fontSize: kCountdownDigitSizeDark,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 1.0,
+  static const TextStyle kDigitsDark  = TextStyle(
+    color: AppColors.countdownText, fontSize: kCountdownDigitSizeDark,
+    fontWeight: FontWeight.w400, letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
 
@@ -454,8 +420,7 @@ class _CountdownBannerState extends State<CountdownBanner>
   bool _tickerModeEnabled = true;
   bool _firstStart = true;
 
-  bool get _shouldTick =>
-      _life == AppLifecycleState.resumed && _tickerModeEnabled;
+  bool get _shouldTick => _life == AppLifecycleState.resumed && _tickerModeEnabled;
 
   @override
   void initState() {
@@ -515,6 +480,7 @@ class _CountdownBannerState extends State<CountdownBanner>
     final safe = rem.isNegative ? Duration.zero : rem;
     final newDigits = formatCountdown(safe);
     final name = widget.tracker.current.name;
+
     if (name != _lastNextName) {
       _lastNextName = name;
       widget.onNextChanged?.call(name);
@@ -550,11 +516,8 @@ class _CountdownBannerState extends State<CountdownBanner>
         children: [
           Text(title, style: CountdownBanner.kTitleLight),
           const SizedBox(height: 1),
-          Text(
-            _digits,
-            textWidthBasis: TextWidthBasis.longestLine,
-            style: CountdownBanner.kDigitsLight,
-          ),
+          Text(_digits, textWidthBasis: TextWidthBasis.longestLine,
+              style: CountdownBanner.kDigitsLight),
         ],
       ),
     );
@@ -566,11 +529,8 @@ class _CountdownBannerState extends State<CountdownBanner>
         children: [
           Text(title, style: CountdownBanner.kTitleDark),
           const SizedBox(height: 1),
-          Text(
-            _digits,
-            textWidthBasis: TextWidthBasis.longestLine,
-            style: CountdownBanner.kDigitsDark,
-          ),
+          Text(_digits, textWidthBasis: TextWidthBasis.longestLine,
+              style: CountdownBanner.kDigitsDark),
         ],
       ),
     );
