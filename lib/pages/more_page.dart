@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+import 'dart:io' show Platform;
+import 'package:ialfm_prayer_times/services/exact_alarms.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
@@ -546,7 +548,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
           if (!mounted) return;
           setState(() {}); // refresh the row
         }
-
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -574,6 +575,26 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
+                // EXACT Alarms setting path button on Android only
+                if (Platform.isAndroid) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.alarm_on_outlined),
+                      label: Text(AppLocalizations.of(context).allowExactAlarms),
+                      onPressed: () async {
+                        Navigator.pop(ctx);              // close sheet
+                        await openExactAlarmsSettings(); // system page
+                        if (!mounted) return;
+
+                        // Optional: re-schedule and refresh UI after the user returns
+                        await _rescheduleToday();
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
@@ -965,7 +986,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   // ────────────────────────── Shared UI helpers ──────────────────────────
 
 
-    String _toggleLabel(AppLocalizations l10n, bool v) =>
+  String _toggleLabel(AppLocalizations l10n, bool v) =>
       v ? l10n.common_on : l10n.common_off;
 
 
