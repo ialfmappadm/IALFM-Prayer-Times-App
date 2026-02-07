@@ -227,7 +227,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
                       const _Hairline(),
 
-                      // Haptics
+                      /* TEMP: hide Haptics for this release
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
                         builder: (context, enabled, _) {
@@ -240,8 +240,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                           );
                         },
                       ),
-
                       const _Hairline(),
+                      */
 
                       // Text Size (right-align current size)
                       ValueListenableBuilder<double>(
