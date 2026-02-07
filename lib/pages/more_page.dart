@@ -20,7 +20,6 @@ import '../services/alerts_scheduler.dart';
 import '../services/notification_optin_service.dart';
 import '../models.dart';
 
-
 // Aliased page imports to avoid symbol ambiguity
 import './version_page.dart' as version_pg;
 import './about_page.dart' as about_pg;
@@ -34,7 +33,14 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
-  // --- State ---
+  // ======= Comfortable layout tuning (matches Directory’s balanced styling) =======
+  static const double _kListPadV = 16;   // ListView vertical padding
+  static const double _kSectionGap = 12; // Gap between sections
+  static const double _kHeaderVPad = 6;  // Section header top/bottom pad
+  static const VisualDensity _kTileDensity =
+  VisualDensity(horizontal: -1, vertical: -1.25); // ExpansionTile header density
+
+  // ----- State -----
   static const String _adminPin = '3430';
   static const Color _gold = Color(0xFFC7A447);
 
@@ -48,6 +54,11 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   bool _iqamahAlert = UXPrefs.iqamahAlertEnabled.value;
   bool _jumuahReminder = UXPrefs.jumuahReminderEnabled.value;
 
+  // Scroll + About anchor (for auto‑scroll)
+  final _listController = ScrollController();
+  final _aboutSectionKey = GlobalKey(); // key on the ABOUT card container
+  final _aboutTileKey = GlobalKey();
+
   // --- OS notifications state label ---
   Future<String> _readOsNotificationStateLabel() async {
     try {
@@ -59,7 +70,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
       final fcm = await FirebaseMessaging.instance.getNotificationSettings();
       final auth = fcm.authorizationStatus;
-      if (auth == AuthorizationStatus.authorized || auth == AuthorizationStatus.provisional) {
+      if (auth == AuthorizationStatus.authorized ||
+          auth == AuthorizationStatus.provisional) {
         return 'Enabled';
       }
       if (auth == AuthorizationStatus.denied) return 'Disabled';
@@ -76,24 +88,24 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _listController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      // Rebuild on resume so the FutureBuilder re-runs and status updates
-      setState(() {});
+      setState(() {}); // force FutureBuilder to refresh labels
     }
   }
 
+  // ────────────────────────── BUILD ──────────────────────────
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final gradients = theme.extension<AppGradients>();
     final l10n = AppLocalizations.of(context);
-
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
     final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
@@ -117,14 +129,18 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
         decoration: BoxDecoration(gradient: gradients?.page ?? AppColors.pageGradient),
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            controller: _listController,
+            padding: const EdgeInsets.fromLTRB(20, _kListPadV, 20, _kListPadV),
             children: [
               // ============= NOTIFICATIONS =============
               _sectionHeader(context, l10n.more_notifications),
               _card(
                 context,
                 child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                    visualDensity: _kTileDensity,
+                  ),
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
@@ -140,25 +156,22 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                           final l10n = AppLocalizations.of(context);
                           final state = snap.data ?? 'Check';
                           final valueLabel = switch (state) {
-                            'Enabled'  => l10n.common_enabled,
+                            'Enabled' => l10n.common_enabled,
                             'Disabled' => l10n.common_disabled,
-                            _          => l10n.common_check,
+                            _ => l10n.common_check,
                           };
-
                           return _pickerRow(
                             context: context,
                             icon: FontAwesomeIcons.bell,
-                            label: l10n.more_app_notifications, // ← the key you just added to ARB
+                            label: l10n.more_app_notifications,
                             value: valueLabel,
                             onTap: _openNotificationsSheet,
                             alignValueRight: true,
                           );
                         },
                       ),
-
                       const _Hairline(),
-
-                      // Salah Alerts (bottom sheet)
+                      // Salah Alerts
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.mosque,
@@ -170,16 +183,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         onTap: _openSalahSheet,
                         alignValueRight: true,
                       ),
-
-
                       const _Hairline(),
-
-                      // Jumu’ah (bottom sheet with concise copy) – right-aligned value
+                      // Jumu’ah
                       _pickerRow(
                         context: context,
                         icon: FontAwesomeIcons.handsPraying,
                         label: l10n.more_jumuah_reminder,
-                        value: _jumuahReminder ? l10n.common_on : l10n.common_off, // localized
+                        value: _jumuahReminder ? l10n.common_on : l10n.common_off,
                         onTap: _openJumuahSheet,
                         alignValueRight: true,
                       ),
@@ -188,14 +198,17 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: _kSectionGap),
 
               // ============= ACCESSIBILITY =============
               _sectionHeader(context, l10n.more_accessibility),
               _card(
                 context,
                 child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                    visualDensity: _kTileDensity,
+                  ),
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
@@ -224,10 +237,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                           );
                         },
                       ),
-
                       const _Hairline(),
-
-                      /* TEMP: hide Haptics for this release
+                      // Haptics
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
                         builder: (context, enabled, _) {
@@ -241,9 +252,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         },
                       ),
                       const _Hairline(),
-                      */
-
-                      // Text Size (right-align current size)
+                      // Text Size
                       ValueListenableBuilder<double>(
                         valueListenable: UXPrefs.textScale,
                         builder: (context, scale, _) {
@@ -253,6 +262,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             label: l10n.more_text_size,
                             value: UXPrefs.labelForScale(scale),
                             onTap: () async {
+                              // Capture messenger BEFORE any await
+                              final messenger = ScaffoldMessenger.of(context);
                               final options = const <String>['Small', 'Default', 'Large'];
                               final choice = await _chooseOne(
                                 context,
@@ -260,12 +271,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                                 options: options,
                                 selected: UXPrefs.labelForScale(UXPrefs.textScale.value),
                               );
-                              if (!context.mounted) return;
-                              if (choice == null) return;
+                              if (!mounted || choice == null) return;
                               await UXPrefs.setTextScale(UXPrefs.scaleForLabel(choice));
-                              if (!context.mounted) return;
+                              if (!mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${l10n.more_text_size}: $choice');
+                              messenger.showSnackBar(
+                                SnackBar(content: Text('${l10n.more_text_size}: $choice')),
+                              );
                               setState(() {});
                             },
                             alignValueRight: true,
@@ -277,14 +289,17 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: _kSectionGap),
 
               // ============= DATE & TIME =============
               _sectionHeader(context, l10n.more_date_time),
               _card(
                 context,
                 child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                    visualDensity: _kTileDensity,
+                  ),
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
@@ -306,22 +321,25 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             segments: segments,
                             index: selectedIndex,
                             onChanged: (i) async {
+                              // Capture messenger BEFORE await
+                              final messenger = ScaffoldMessenger.of(context);
                               await UXPrefs.setUse24h(i == 1);
-                              if (!context.mounted) return;
+                              if (!mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${l10n.more_time_format}: ${segments[i]}');
+                              messenger.showSnackBar(
+                                SnackBar(content: Text('${l10n.more_time_format}: ${segments[i]}')),
+                              );
                               setState(() {});
                             },
                           );
                         },
                       ),
-
                       const _Hairline(),
-
                       // HIJRI OFFSET
                       ValueListenableBuilder<int>(
                         valueListenable: UXPrefs.hijriOffset,
                         builder: (context, offset, _) {
+                          final l10n = AppLocalizations.of(context);
                           final segments = <String>[
                             l10n.more_hijri_offset_minus1,
                             l10n.more_hijri_offset_zero,
@@ -335,35 +353,36 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             segments: segments,
                             index: selectedIndex,
                             onChanged: (i) async {
+                              // Capture messenger BEFORE await
+                              final messenger = ScaffoldMessenger.of(context);
                               final newOffset = i - 1;
                               final ok = await _confirmHijriChange(segments[i]);
-                              if (!context.mounted) return;
-                              if (!ok) return;
+                              if (!mounted || !ok) return;
                               await UXPrefs.setHijriOffset(newOffset);
-                              if (!context.mounted) return;
+                              if (!mounted) return;
                               UXPrefs.maybeHaptic();
-                              _toast('${l10n.more_hijri_offset_label}: ${segments[i]}');
+                              messenger.showSnackBar(
+                                SnackBar(content: Text('${l10n.more_hijri_offset_label}: ${segments[i]}')),
+                              );
                               setState(() {});
                             },
                           );
                         },
                       ),
-
                       const _Hairline(),
-
                       // Admin override
                       _buttonRow(
                         context: context,
                         icon: FontAwesomeIcons.triangleExclamation,
                         label: l10n.more_hijri_reset_label,
                         onPressed: () async {
+                          // Capture messenger BEFORE awaits
+                          final messenger = ScaffoldMessenger.of(context);
                           UXPrefs.maybeHaptic();
                           final pinOk = await _promptAdminPin();
-                          if (!context.mounted) return;
-                          if (!pinOk) return;
+                          if (!mounted || !pinOk) return;
                           final sure = await _confirmRunOverride();
-                          if (!context.mounted) return;
-                          if (!sure) return;
+                          if (!mounted || !sure) return;
 
                           final result = await HijriOverrideService.applyIfPresent(
                             resolveAppHijri: (g) async {
@@ -372,8 +391,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             },
                             log: true,
                           );
-                          if (!context.mounted) return;
-                          _toast(result.toString());
+                          if (!mounted) return;
+                          messenger.showSnackBar(SnackBar(content: Text(result.toString())));
                           setState(() {});
                         },
                       ),
@@ -382,14 +401,17 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: _kSectionGap),
 
               // ============= LANGUAGE =============
               _sectionHeader(context, l10n.more_language),
               _card(
                 context,
                 child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                    visualDensity: _kTileDensity,
+                  ),
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 12),
                     childrenPadding: const EdgeInsets.only(bottom: 8),
@@ -404,6 +426,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         label: l10n.more_language_label,
                         value: _currentLanguageLabel(context),
                         onTap: () async {
+                          // Capture messenger BEFORE await
+                          final messenger = ScaffoldMessenger.of(context);
                           final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
                           final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
@@ -412,8 +436,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             options: options,
                             selected: selectedNow,
                           );
-                          if (!context.mounted) return;
-                          if (choice == null) return;
+                          if (!mounted || choice == null) return;
 
                           if (choice == l10n.lang_arabic) {
                             LocaleController.setLocale(const Locale('ar'));
@@ -421,7 +444,9 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             LocaleController.setLocale(const Locale('en'));
                           }
                           UXPrefs.maybeHaptic();
-                          _toast('${l10n.more_language}: $choice');
+                          messenger.showSnackBar(
+                            SnackBar(content: Text('${l10n.more_language}: $choice')),
+                          );
                           setState(() {});
                         },
                         alignValueRight: true,
@@ -431,84 +456,94 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: _kSectionGap),
 
-              // ============= ABOUT =============
+              // ============= ABOUT (auto‑scroll on expand) =============
               _sectionHeader(context, l10n.more_about),
-              _card(
-                context,
-                child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                    childrenPadding: const EdgeInsets.only(bottom: 8),
-                    initiallyExpanded: _aboutExpanded,
-                    onExpansionChanged: (v) => setState(() => _aboutExpanded = v),
-                    leading: _secIcon(FontAwesomeIcons.circleInfo),
-                    title: _secTitle(context, l10n.more_about),
-                    children: [
-                      // App Version
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.tag,
-                        label: l10n.more_app_version,
-                        value: '',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => version_pg.VersionInfoPage()),
+              Container( // key on the container wrapping the card (more reliable anchor)
+                key: _aboutSectionKey,
+                child: _card(
+                  context,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
+                      visualDensity: _kTileDensity,
+                    ),
+                    child: ExpansionTile(
+                      key: _aboutTileKey,
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                      childrenPadding: const EdgeInsets.only(bottom: 8),
+                      initiallyExpanded: _aboutExpanded,
+                      onExpansionChanged: (v) {
+                        setState(() => _aboutExpanded = v);
+                        if (v) _scrollToAbout(); // no await; lint‑safe
+                      },
+                      leading: _secIcon(FontAwesomeIcons.circleInfo),
+                      title: _secTitle(context, l10n.more_about),
+                      children: [
+                        // App Version
+                        _pickerRow(
+                          context: context,
+                          icon: FontAwesomeIcons.tag,
+                          label: l10n.more_app_version,
+                          value: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => version_pg.VersionInfoPage()),
+                          ),
+                          hideValue: true,
                         ),
-                        hideValue: true,
-                      ),
-                      const _Hairline(),
+                        const _Hairline(),
 
-                      // About App
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.info,
-                        label: l10n.more_about_app,
-                        value: '',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => about_pg.AboutPage()),
+                        // About App
+                        _pickerRow(
+                          context: context,
+                          icon: FontAwesomeIcons.info,
+                          label: l10n.more_about_app,
+                          value: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => about_pg.AboutPage()),
+                          ),
+                          hideValue: true,
                         ),
-                        hideValue: true,
-                      ),
-                      const _Hairline(),
+                        const _Hairline(),
 
-                      // Privacy Policy
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.shieldHalved,
-                        label: l10n.more_privacy_policy,
-                        value: '',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => privacy_pg.PrivacyPolicyPage()),
+                        // Privacy Policy
+                        _pickerRow(
+                          context: context,
+                          icon: FontAwesomeIcons.shieldHalved,
+                          label: l10n.more_privacy_policy,
+                          value: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => privacy_pg.PrivacyPolicyPage()),
+                          ),
+                          hideValue: true,
                         ),
-                        hideValue: true,
-                      ),
-                      const _Hairline(),
+                        const _Hairline(),
 
-                      // Terms of Use
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.scaleBalanced,
-                        label: l10n.more_terms_of_use,
-                        value: '',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => terms_pg.TermsOfUsePage()),
+                        // Terms of Use
+                        _pickerRow(
+                          context: context,
+                          icon: FontAwesomeIcons.scaleBalanced,
+                          label: l10n.more_terms_of_use,
+                          value: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => terms_pg.TermsOfUsePage()),
+                          ),
+                          hideValue: true,
                         ),
-                        hideValue: true,
-                      ),
-                      const _Hairline(),
+                        const _Hairline(),
 
-                      // Contact
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.envelope,
-                        label: l10n.more_contact,
-                        value: '',
-                        onTap: () => _showContactSheet(context),
-                        hideValue: true,
-                      ),
-                    ],
+                        // Contact Sheet
+                        _pickerRow(
+                          context: context,
+                          icon: FontAwesomeIcons.envelope,
+                          label: l10n.more_contact,
+                          value: '',
+                          onTap: () => _showContactSheet(context),
+                          hideValue: true,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -524,13 +559,9 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   // ────────────────────────── Sheets & Scheduling ──────────────────────────
 
   Future<void> _openNotificationsSheet() async {
-    // Cache from outer context BEFORE awaits to avoid async-context lint
-    final bottomSheetBg = Theme.of(context).bottomSheetTheme.backgroundColor;
-
-    // Read current OS state
-    String state = await _readOsNotificationStateLabel();
+    final bottomSheetBg = Theme.of(context).bottomSheetTheme.backgroundColor; // capture first
+    final String state = await _readOsNotificationStateLabel();
     final bool isEnabled = state == 'Enabled';
-
     if (!mounted) return;
 
     await showModalBottomSheet<void>(
@@ -549,6 +580,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
           if (!mounted) return;
           setState(() {}); // refresh the row
         }
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -556,7 +588,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  l10n.more_app_notifications_title, // was: 'App notifications'
+                  l10n.more_app_notifications_title,
                   style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -571,12 +603,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                     onPressed: openSettingsAndRefresh,
                     child: Text(
                       isEnabled
-                          ? l10n.more_notifications_disable_in_settings  // was: 'Disable in Settings'
-                          : l10n.more_notifications_open_settings,       // was: 'Open Settings'
+                          ? l10n.more_notifications_disable_in_settings
+                          : l10n.more_notifications_open_settings,
                     ),
                   ),
                 ),
-                // EXACT Alarms setting path button on Android only
+
+                // EXACT Alarms setting path on Android only
                 if (Platform.isAndroid) ...[
                   const SizedBox(height: 10),
                   SizedBox(
@@ -585,17 +618,16 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       icon: const Icon(Icons.alarm_on_outlined),
                       label: Text(AppLocalizations.of(context).allowExactAlarms),
                       onPressed: () async {
-                        Navigator.pop(ctx);              // close sheet
+                        Navigator.pop(ctx); // close sheet
                         await openExactAlarmsSettings(); // system page
                         if (!mounted) return;
-
-                        // Optional: re-schedule and refresh UI after the user returns
                         await _rescheduleToday();
                         setState(() {});
                       },
                     ),
                   ),
                 ],
+
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
@@ -611,9 +643,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       },
     );
 
-    // Optional: even if user just closed the sheet, refresh row once
     if (!mounted) return;
-    setState(() {});
+    setState(() {}); // refresh row even if dismissed
   }
 
   Future<void> _openSalahSheet() async {
@@ -627,7 +658,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
-
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return SafeArea(
@@ -643,11 +673,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                       title: Text(l10n.more_adhan_alert_at_time),
                       value: tempAdhan,
                       onChanged: (v) => setSheetState(() => tempAdhan = v),
+                      contentPadding: EdgeInsets.zero,
                     ),
                     SwitchListTile.adaptive(
                       title: Text(l10n.more_iqamah_alert_5min),
                       value: tempIqamah,
                       onChanged: (v) => setSheetState(() => tempIqamah = v),
+                      contentPadding: EdgeInsets.zero,
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -664,21 +696,21 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             style: FilledButton.styleFrom(
                                 backgroundColor: _gold, foregroundColor: Colors.black),
                             onPressed: () async {
+                              // Capture messenger BEFORE awaits
+                              final messenger = ScaffoldMessenger.of(context);
+
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
-                              // Persist
                               _adhanAlert = tempAdhan;
                               _iqamahAlert = tempIqamah;
                               await UXPrefs.setAdhanAlertEnabled(_adhanAlert);
                               await UXPrefs.setIqamahAlertEnabled(_iqamahAlert);
-
-                              // Ensure permission then schedule today
                               await AlertsScheduler.instance.requestPermissions();
                               await _rescheduleToday();
-
                               if (!mounted) return;
-                              _toast(l10n.common_enabled);
+
+                              messenger.showSnackBar(SnackBar(content: Text(l10n.common_enabled)));
                               setState(() {});
                             },
                             child: Text(l10n.btn_save),
@@ -698,7 +730,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
   Future<void> _openJumuahSheet() async {
     bool temp = _jumuahReminder;
-
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -706,7 +737,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         final l10n = AppLocalizations.of(ctx);
-
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return SafeArea(
@@ -715,10 +745,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      l10n.more_jumuah_reminder,
-                      style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-                    ),
+                    Text(l10n.more_jumuah_reminder,
+                        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     SwitchListTile.adaptive(
                       title: Text(l10n.more_jumuah_reminder_label),
@@ -732,7 +760,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: Text(l10n.btn_close), // no `const`
+                            child: Text(l10n.btn_close),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -751,7 +779,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                               if (!mounted) return;
                               setState(() {});
                             },
-                            child: Text(l10n.btn_save), // no `const`
+                            child: Text(l10n.btn_save),
                           ),
                         ),
                       ],
@@ -775,8 +803,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       if (d.date.year == todayDate.year &&
           d.date.month == todayDate.month &&
           d.date.day == todayDate.day) {
-        today = d;
-        break;
+        today = d; break;
       }
     }
     if (today == null) return;
@@ -792,14 +819,12 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     }
 
     final base = DateTime(today.date.year, today.date.month, today.date.day);
-
     // Adhan
     final fajrAdhan = mkTime(base, today.prayers['fajr']?.begin ?? '');
     final dhuhrAdhan = mkTime(base, today.prayers['dhuhr']?.begin ?? '');
     final asrAdhan = mkTime(base, today.prayers['asr']?.begin ?? '');
     final maghribAdhan = mkTime(base, today.prayers['maghrib']?.begin ?? '');
     final ishaAdhan = mkTime(base, today.prayers['isha']?.begin ?? '');
-
     // Iqamah
     final fajrIqamah = mkTime(base, today.prayers['fajr']?.iqamah ?? '');
     final dhuhrIqamah = mkTime(base, today.prayers['dhuhr']?.iqamah ?? '');
@@ -822,7 +847,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       adhanEnabled: _adhanAlert,
       iqamahEnabled: _iqamahAlert,
     );
-
     await AlertsScheduler.instance.scheduleJumuahReminderForWeek(
       anyDateThisWeekLocal: base,
       enabled: _jumuahReminder,
@@ -857,6 +881,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   }
 
   Future<bool> _promptAdminPin() async {
+    final messenger = ScaffoldMessenger.of(context); // capture BEFORE awaits
     final controller = TextEditingController();
     bool ok = false;
     await showDialog<void>(
@@ -897,12 +922,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       },
     );
     if (!ok) {
-      _toast('Invalid PIN');
+      messenger.showSnackBar(const SnackBar(content: Text('Invalid PIN')));
     }
     return ok;
   }
 
   Future<bool> _confirmRunOverride() async {
+    final l10n = AppLocalizations.of(context);
     return await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -913,11 +939,11 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx).btn_cancel),
+            child: Text(l10n.btn_cancel),
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(ctx).btn_save),
+            child: Text(l10n.btn_save),
           ),
         ],
       ),
@@ -974,11 +1000,11 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   }
 
   static Future<void> _launchMail(String to, BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context); // capture BEFORE await
     final uri = Uri.parse('mailto:$to');
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Could not open email app for $to')),
       );
     }
@@ -986,16 +1012,20 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
   // ────────────────────────── Shared UI helpers ──────────────────────────
 
+  String _toggleLabel(AppLocalizations l10n, bool v) => v ? l10n.common_on : l10n.common_off;
 
-  String _toggleLabel(AppLocalizations l10n, bool v) =>
-      v ? l10n.common_on : l10n.common_off;
-
-
+  /// Shared label style so sub-option rows match across pages.
+  TextStyle _rowLabelStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final base = theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
+    return base.copyWith(color: cs.onSurface, fontWeight: FontWeight.w700);
+  }
 
   Widget _sectionHeader(BuildContext context, String title) {
     const gold = Color(0xFFC7A447);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
+      padding: const EdgeInsets.fromLTRB(2, _kHeaderVPad, 2, _kHeaderVPad),
       child: Text(
         title,
         style: const TextStyle(
@@ -1014,11 +1044,11 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final bg =
-    isDark ? AppColors.rowHighlight : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
-    final hairline = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : cs.outline.withValues(alpha: 0.30);
+    final bg = isDark
+        ? AppColors.rowHighlight
+        : Color.alphaBlend(cs.primary.withValues(alpha: 0.05), cs.surface);
+    final hairline =
+    isDark ? Colors.white.withValues(alpha: 0.08) : cs.outline.withValues(alpha: 0.30);
     return Container(
       decoration: BoxDecoration(
         color: bg,
@@ -1055,32 +1085,32 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
-        children: [
+        children: {
           FaIcon(icon, size: 18, color: cs.onSurface),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+              style: _rowLabelStyle(context), // ← unified label style
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Switch.adaptive(value: value, onChanged: onChanged),
-        ],
+        }.toList(),
       ),
     );
   }
 
-  /// Enhanced picker row with optional right-alignment & hiding of value text
+  /// Enhanced picker row with optional right‑alignment & hiding of value text
   Widget _pickerRow({
     required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     required VoidCallback onTap,
-    bool alignValueRight = false,  // push value to far right
-    bool hideValue = false,        // suppress value entirely
+    bool alignValueRight = false,
+    bool hideValue = false,
   }) {
     final cs = Theme.of(context).colorScheme;
     final showValue = !hideValue && value.trim().isNotEmpty;
@@ -1097,7 +1127,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                style: _rowLabelStyle(context), // ← unified label style
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1125,7 +1155,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     );
   }
 
-  // Small action row used by Admin override (and similar one-off actions)
   Widget _buttonRow({
     required BuildContext context,
     required IconData icon,
@@ -1142,7 +1171,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+              style: _rowLabelStyle(context), // ← unified label style
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1173,7 +1202,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                style: _rowLabelStyle(context), // ← unified label style
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1206,6 +1235,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return SafeArea(
@@ -1237,7 +1267,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx, selected),
-                            child: Text(AppLocalizations.of(ctx).btn_cancel),
+                            child: Text(l10n.btn_cancel),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1248,7 +1278,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                               foregroundColor: Colors.black,
                             ),
                             onPressed: () => Navigator.pop(ctx, options[tempIndex]),
-                            child: Text(AppLocalizations.of(ctx).btn_save),
+                            child: Text(l10n.btn_save),
                           ),
                         ),
                       ],
@@ -1263,15 +1293,37 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     );
   }
 
-  void _toast(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   String _currentLanguageLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final code = LocaleController.locale.value?.languageCode;
     return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
+  }
+
+  // Smoothly scroll About into view after it expands (lint‑clean, no async/await)
+  void _scrollToAbout() {
+    void tryScroll({Duration duration = const Duration(milliseconds: 250)}) {
+      // Always read a *fresh* context at the moment we scroll.
+      final ctx = _aboutTileKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: duration,
+          curve: Curves.easeInOutCubic,
+          alignment: 0.0, // adjust to 0.02 if you want a hair of spacing under the AppBar
+        );
+      }
+    }
+
+    // 1) Right after the first re-layout (expansion has just begun).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      tryScroll(duration: const Duration(milliseconds: 250));
+    });
+
+    // 2) Near the end of the ExpansionTile animation.
+    Future.delayed(const Duration(milliseconds: 220), tryScroll);
+
+    // 3) Optional final nudge for slower devices / longer animations.
+    Future.delayed(const Duration(milliseconds: 400), tryScroll);
   }
 }
 
