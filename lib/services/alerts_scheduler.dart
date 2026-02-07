@@ -214,40 +214,40 @@ class AlertsScheduler {
       );
     }
 
-    // Iqamah (~5 minutes before)
+    // Iqamah (5 minutes before)
     const iqamahLead = Duration(minutes: -5);
     if (iqamahEnabled) {
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
-        body: 'Fajr Iqamah in ~5 minutes.',
+        body: 'Fajr Iqamah in 5 minutes.',
         when: fajrIqamah,
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
-        body: 'Dhuhr Iqamah in ~5 minutes.',
+        body: 'Dhuhr Iqamah in 5 minutes.',
         when: dhuhrIqamah,
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
-        body: 'Asr Iqamah in ~5 minutes.',
+        body: 'Asr Iqamah in 5 minutes.',
         when: asrIqamah,
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
-        body: 'Maghrib Iqamah in ~5 minutes.',
+        body: 'Maghrib Iqamah in 5 minutes.',
         when: maghribIqamah,
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
-        body: 'Isha Iqamah in ~5 minutes.',
+        body: 'Isha Iqamah in 5 minutes.',
         when: ishaIqamah,
         offset: iqamahLead,
         id: _idFor(base, slot++),
