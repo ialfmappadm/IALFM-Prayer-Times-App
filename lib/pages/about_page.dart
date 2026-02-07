@@ -2,11 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// If you use flutter_gen, change this import to your generated path.
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 import './version_page.dart';
 import '../widgets/schedule_info_tile.dart';
+import 'package:ialfm_prayer_times/pages/terms_of_use_page.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -34,7 +38,10 @@ class AboutPage extends StatelessWidget {
         title: Text(
           l10n.more_about_app,
           style: TextStyle(
-              color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+            color: titleColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -49,11 +56,17 @@ class AboutPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // --- Overview ---
                 _sectionHeader(l10n.about_overview),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.about_overview_body),
+                // If you also want to hide the short offline sentence, comment this line:
+                // const SizedBox(height: 8),
+                // _bodyText(context, l10n.about_offline_hint),
+
                 const SizedBox(height: 18),
 
+                // --- Key features ---
                 _sectionHeader(l10n.about_key_features),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.about_feature_1),
@@ -65,12 +78,50 @@ class AboutPage extends StatelessWidget {
                 _bullet(context, l10n.about_feature_7),
                 _bullet(context, l10n.about_feature_8),
                 _bullet(context, l10n.about_feature_9),
+                // You asked to remove the “Works offline for daily ṣalāh times” bullet:
+                // _bullet(context, l10n.about_feature_offline),
+                _bullet(context, l10n.about_feature_lightweight),
+                _bullet(context, l10n.about_feature_privacy),
+                _bullet(context, l10n.about_feature_exact),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
+
+                // --- Android timing note (single Learn more button lives here) ---
+                _sectionHeader(l10n.about_timing_note_title),
+                const SizedBox(height: 6),
+                _bodyText(context, l10n.about_timing_note_body),
+                const SizedBox(height: 8),
+                _fullWidthButton(
+                  context: context,
+                  label: l10n.about_learn_more,
+                  icon: Icons.info_outline,
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TermsOfUsePage(
+                        initialSection: TermsSection.delivery,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // --- Disclaimer ---
+                _sectionHeader(l10n.about_disclaimer),
+                const SizedBox(height: 8),
+                _bodyText(context, l10n.about_disclaimer_body),
+
+                const SizedBox(height: 24),
+
+                // --- Last Updated (keep this where users expect it) ---
+                const ScheduleInfoTile(),
+
+                const SizedBox(height: 24),
+
+                // --- Quick Links (moved down beneath "Last Updated") ---
                 _sectionHeader(l10n.about_quick_links),
                 const SizedBox(height: 10),
 
-                // Visit Website
                 _fullWidthButton(
                   context: context,
                   label: l10n.about_visit_website,
@@ -79,7 +130,6 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Privacy Policy
                 _fullWidthButton(
                   context: context,
                   label: l10n.about_view_full_privacy_policy,
@@ -88,7 +138,6 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Contact support
                 _fullWidthButton(
                   context: context,
                   label: l10n.contact_support,
@@ -97,7 +146,6 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // App Version (navigate to VersionInfoPage) — readable on dark
                 _fullWidthButton(
                   context: context,
                   label: l10n.about_app_version_button,
@@ -106,16 +154,6 @@ class AboutPage extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const VersionInfoPage()),
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                _sectionHeader(l10n.about_disclaimer),
-                const SizedBox(height: 8),
-                _bodyText(context, l10n.about_disclaimer_body),
-
-                // GOLD "Last Updated" block (hidden long‑press to refresh)
-                const SizedBox(height: 24),
-                const ScheduleInfoTile(),
               ],
             ),
           ),
@@ -124,7 +162,7 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  // helpers (unchanged except styling)
+  // helpers
   static Future<void> _openExternal(String url, BuildContext context) async {
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -151,9 +189,13 @@ class AboutPage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.contact_title,
-                    style: TextStyle(
-                        color: cs.onSurface, fontWeight: FontWeight.w800)),
+                Text(
+                  l10n.contact_title,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.feedback_outlined),
@@ -246,8 +288,8 @@ class AboutPage extends StatelessWidget {
     required IconData icon,
     required VoidCallback onPressed,
   }) {
-    final Color bg = const Color(0xFFC7A447);
-    final Color fg = Colors.black; // high contrast on gold in both themes
+    const Color bg = Color(0xFFC7A447);
+    const Color fg = Colors.black;
 
     return SizedBox(
       width: double.infinity,

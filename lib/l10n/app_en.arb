@@ -159,6 +159,19 @@
   "terms_privacy_header": "Privacy",
   "terms_privacy_body": "Your use of the app is also subject to our Privacy Policy.",
   "view_privacy_policy_website": "View Privacy Policy (Website)",
+  "about_offline_hint": "Prayer times continue to work even without internet access.",
+
+  "about_timing_note_title": "Delivery timing on Android",
+  "about_timing_note_body": "To save battery, Android’s power optimizations (Doze / App Standby) may delay non‑exact notifications on some devices. To improve punctual delivery for prayer alerts, you can enable “Allow exact alarms” in Settings.",
+  "about_learn_more": "Learn more",
+
+  "terms_delivery_header": "Notification delivery & timing",
+  "terms_delivery_body": "Android may defer non‑exact alarms while the device is idle to save battery. Where supported, the app requests the “Allow exact alarms” special access to deliver time‑critical alerts, but OEM and power‑saving settings may still affect delivery on some devices.",
+
+  "about_feature_offline": "Works offline for daily ṣalāh times",
+  "about_feature_lightweight": "Lightweight app; minimal permissions",
+  "about_feature_privacy": "No account required; privacy‑minded defaults",
+  "about_feature_exact": "Supports “Allow exact alarms” for punctual alerts (Android 12+)",
 
   "contact_title": "Contact IALFM",
   "contact_support": "Contact Support",

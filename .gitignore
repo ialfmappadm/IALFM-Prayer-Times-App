@@ -77,3 +77,7 @@ tools/run.trace
 **/node_modules/
 npm-debug.log*
 yarn-error.log*
+
+# doze collect logs
+tools/doze_min_*/
+tools/doze_*_*.txt

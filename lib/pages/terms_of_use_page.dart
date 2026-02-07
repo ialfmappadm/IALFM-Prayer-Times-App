@@ -2,16 +2,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// If you use flutter_gen, change the import accordingly.
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
 
-class TermsOfUsePage extends StatelessWidget {
-  const TermsOfUsePage({super.key});
+/// The sections we can jump to when opening the Terms page.
+enum TermsSection { none, delivery, privacy, contact }
+
+class TermsOfUsePage extends StatefulWidget {
+  const TermsOfUsePage({
+    super.key,
+    this.initialSection = TermsSection.none,
+  });
+
+  final TermsSection initialSection;
 
   static const _websiteUrl = 'https://www.ialfm.org';
-  static const _policyUrl  = 'https://www.ialfm.org/ialfm-mobile-app-privacy-policy/';
+  static const _policyUrl =
+      'https://www.ialfm.org/ialfm-mobile-app-privacy-policy/';
+
+  @override
+  State<TermsOfUsePage> createState() => _TermsOfUsePageState();
+}
+
+class _TermsOfUsePageState extends State<TermsOfUsePage> {
+  final _scrollController = ScrollController();
+  final _deliveryKey = GlobalKey(); // anchor for “Notification delivery & timing”
+
+  @override
+  void initState() {
+    super.initState();
+    // Scroll after first layout if a target section was requested.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (widget.initialSection == TermsSection.delivery &&
+          _deliveryKey.currentContext != null) {
+        await Scrollable.ensureVisible(
+          _deliveryKey.currentContext!,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+          alignment: 0.0,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +58,8 @@ class TermsOfUsePage extends StatelessWidget {
     final gradients = theme.extension<AppGradients>();
     final appBarBg = isLight ? Colors.white : AppColors.bgPrimary;
     final titleColor = isLight ? const Color(0xFF0F2432) : Colors.white;
-    final overlay = isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
+    final overlay =
+    isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light;
 
     return Scaffold(
       appBar: AppBar(
@@ -30,7 +68,11 @@ class TermsOfUsePage extends StatelessWidget {
         centerTitle: true,
         title: Text(
           l10n.more_terms_of_use,
-          style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: titleColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         iconTheme: IconThemeData(color: titleColor),
         systemOverlayStyle: overlay,
@@ -39,61 +81,107 @@ class TermsOfUsePage extends StatelessWidget {
         decoration: BoxDecoration(gradient: gradients?.page),
         child: SafeArea(
           child: SingleChildScrollView(
+            controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Agreement
                 _sectionHeader(l10n.terms_agreement),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.terms_agreement_body),
 
                 const SizedBox(height: 16),
+
+                // Acceptable use
                 _sectionHeader(l10n.terms_acceptable_use),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_acceptable_b1),
                 _bullet(context, l10n.terms_acceptable_b2),
 
                 const SizedBox(height: 16),
+
+                // Content & links
                 _sectionHeader(l10n.terms_content_links),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_links_b1),
                 _bullet(context, l10n.terms_links_b2),
 
                 const SizedBox(height: 16),
+
+                // Donations
                 _sectionHeader(l10n.terms_donations),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_donations_b1),
 
                 const SizedBox(height: 16),
+
+                // No warranty
                 _sectionHeader(l10n.terms_no_warranty),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_no_warranty_b1),
                 _bullet(context, l10n.terms_no_warranty_b2),
 
                 const SizedBox(height: 16),
+
+                // Liability
                 _sectionHeader(l10n.terms_liability),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_liability_b1),
 
                 const SizedBox(height: 16),
+
+                // IP
                 _sectionHeader(l10n.terms_ip),
                 const SizedBox(height: 8),
                 _bullet(context, l10n.terms_ip_b1),
                 _bullet(context, l10n.terms_ip_b2),
 
                 const SizedBox(height: 16),
+
+                // Privacy (with policy link)
                 _sectionHeader(l10n.terms_privacy_header),
                 const SizedBox(height: 8),
                 _bodyText(context, l10n.terms_privacy_body),
                 const SizedBox(height: 8),
-                _linkButton(context, l10n.view_privacy_policy_website, _policyUrl),
+                _linkButton(
+                  context,
+                  l10n.view_privacy_policy_website,
+                  TermsOfUsePage._policyUrl,
+                ),
 
                 const SizedBox(height: 16),
+
+                // Notification delivery & timing (TARGET)
+                Container(
+                  key: _deliveryKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(l10n.terms_delivery_header),
+                      const SizedBox(height: 8),
+                      _bodyText(context, l10n.terms_delivery_body),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Contact / website
                 _sectionHeader(l10n.contact_title),
                 const SizedBox(height: 8),
-                _linkButton(context, l10n.contact_support, null, onTap: () => _showContactSheet(context)),
+                _linkButton(
+                  context,
+                  l10n.contact_support,
+                  null,
+                  onTap: () => _showContactSheet(context),
+                ),
                 const SizedBox(height: 10),
-                _linkButton(context, l10n.about_visit_website, _websiteUrl),
+                _linkButton(
+                  context,
+                  l10n.about_visit_website,
+                  TermsOfUsePage._websiteUrl,
+                ),
               ],
             ),
           ),
@@ -102,18 +190,7 @@ class TermsOfUsePage extends StatelessWidget {
     );
   }
 
-  // ---- Private helpers ----
-  static Future<void> _openExternal(String url, BuildContext context) async {
-    final uri = Uri.parse(url);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!context.mounted) return;
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open: $url')),
-      );
-    }
-  }
-
+  // ---- Helpers (same style as your pages) ----
   static Future<void> _showContactSheet(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     const gold = Color(0xFFC7A447);
@@ -129,8 +206,11 @@ class TermsOfUsePage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.contact_title,
-                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                Text(
+                  l10n.contact_title,
+                  style:
+                  TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 10),
                 ListTile(
                   leading: const Icon(Icons.feedback_outlined),
@@ -185,6 +265,8 @@ class TermsOfUsePage extends StatelessWidget {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -215,7 +297,23 @@ class TermsOfUsePage extends StatelessWidget {
     );
   }
 
-  Widget _linkButton(BuildContext context, String label, String? url, {VoidCallback? onTap}) {
+  static Future<void> _openExternal(String url, BuildContext context) async {
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open: $url')),
+      );
+    }
+  }
+
+  Widget _linkButton(
+      BuildContext context,
+      String label,
+      String? url, {
+        VoidCallback? onTap,
+      }) {
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
