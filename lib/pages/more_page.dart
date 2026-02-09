@@ -117,7 +117,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          l10n.tab_more,
+          l10n.tab_settings, // ← localized Settings title
           style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.w600),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -238,7 +238,8 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         },
                       ),
                       const _Hairline(),
-                      // Haptics
+                      /*
+                      // Haptics (hidden)
                       ValueListenableBuilder<bool>(
                         valueListenable: UXPrefs.hapticsEnabled,
                         builder: (context, enabled, _) {
@@ -251,6 +252,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                           );
                         },
                       ),
+                      */
                       const _Hairline(),
                       // Text Size
                       ValueListenableBuilder<double>(
@@ -376,11 +378,13 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         icon: FontAwesomeIcons.triangleExclamation,
                         label: l10n.more_hijri_reset_label,
                         onPressed: () async {
-                          // Capture messenger BEFORE awaits
-                          final messenger = ScaffoldMessenger.of(context);
+                          final messenger = ScaffoldMessenger.of(context); // BEFORE awaits
                           UXPrefs.maybeHaptic();
-                          final pinOk = await _promptAdminPin();
-                          if (!mounted || !pinOk) return;
+
+                          // Tri-state PIN result: true=ok, false=invalid, null=canceled
+                          final pinResult = await _promptAdminPin();
+                          if (!mounted || pinResult != true) return;
+
                           final sure = await _confirmRunOverride();
                           if (!mounted || !sure) return;
 
@@ -392,7 +396,10 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             log: true,
                           );
                           if (!mounted) return;
-                          messenger.showSnackBar(SnackBar(content: Text(result.toString())));
+
+                          // Friendly outcome
+                          final msg = _formatHijriOverrideResult(result);
+                          messenger.showSnackBar(SnackBar(content: Text(msg)));
                           setState(() {});
                         },
                       ),
@@ -426,8 +433,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                         label: l10n.more_language_label,
                         value: _currentLanguageLabel(context),
                         onTap: () async {
-                          // Capture messenger BEFORE await
-                          final messenger = ScaffoldMessenger.of(context);
+                          final messenger = ScaffoldMessenger.of(context); // BEFORE await
                           final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
                           final selectedNow = _currentLanguageLabel(context);
                           final choice = await _chooseOne(
@@ -571,7 +577,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         final l10n = AppLocalizations.of(ctx);
-        const gold = Color(0xFFC7A447);
 
         Future<void> openSettingsAndRefresh() async {
           Navigator.pop(ctx);
@@ -598,7 +603,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                   width: double.infinity,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: gold, foregroundColor: Colors.black,
+                      backgroundColor: _gold, foregroundColor: Colors.black,
                     ),
                     onPressed: openSettingsAndRefresh,
                     child: Text(
@@ -696,9 +701,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                             style: FilledButton.styleFrom(
                                 backgroundColor: _gold, foregroundColor: Colors.black),
                             onPressed: () async {
-                              // Capture messenger BEFORE awaits
-                              final messenger = ScaffoldMessenger.of(context);
-
+                              final messenger = ScaffoldMessenger.of(context); // BEFORE awaits
                               Navigator.pop(ctx);
                               if (!mounted) return;
 
@@ -855,103 +858,275 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
   // ────────────────────────── Admin/Confirm helpers ──────────────────────────
 
+  // Bottom‑sheet confirm for Hijri offset
   Future<bool> _confirmHijriChange(String selectionLabel) async {
-    final l10n = AppLocalizations.of(context);
-    return await showDialog<bool>(
+    final theme = Theme.of(context);
+    final bg = theme.bottomSheetTheme.backgroundColor; // keep your sheet surface
+    return await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.more_hijri_offset_label),
-        content: Text('${l10n.more_hijri_offset_label}: $selectionLabel ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.btn_cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: Colors.black,
+      showDragHandle: true,
+      backgroundColor: bg,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Text(
+                  l10n.more_hijri_offset_label,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+
+                // Body text (visible in dark mode)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${l10n.more_hijri_offset_label}: $selectionLabel ?',
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.85), // ← fixed colon
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Actions row (Cancel / Save)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.btn_cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _gold,
+                          foregroundColor: Colors.black, // high contrast on gold
+                        ),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.btn_save),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.btn_save),
           ),
-        ],
-      ),
+        );
+      },
     ).then((v) => v ?? false);
   }
 
-  Future<bool> _promptAdminPin() async {
+  // Bottom‑sheet Admin PIN (tri‑state: true=ok, false=invalid, null=cancel)
+  Future<bool?> _promptAdminPin() async {
     final messenger = ScaffoldMessenger.of(context); // capture BEFORE awaits
+    final theme = Theme.of(context);
+    final bg = theme.bottomSheetTheme.backgroundColor;
+
     final controller = TextEditingController();
-    bool ok = false;
-    await showDialog<void>(
+
+    final result = await showModalBottomSheet<bool?>(
       context: context,
+      showDragHandle: true,
+      isScrollControlled: true,           // lift with keyboard
+      backgroundColor: bg,
       builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Admin Verification'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            maxLength: 8,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              hintText: 'Enter Admin PIN',
-              counterText: '',
+        final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
+
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16, right: 16, top: 8,
+              bottom: 16 + MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Admin Verification',
+                  style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  maxLength: 8,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  cursorColor: cs.primary,
+                  style: TextStyle(color: cs.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Enter Admin PIN',
+                    hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.70)),
+                    counterText: '',
+                    filled: true,
+                    fillColor: cs.surface.withValues(alpha: 0.05),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.30)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cs.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, null), // cancel → null (no snackbar)
+                        child: Text(l10n.btn_cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _gold, foregroundColor: Colors.black,
+                        ),
+                        onPressed: () {
+                          final ok = (controller.text == _adminPin);
+                          Navigator.pop(ctx, ok); // true/false
+                        },
+                        child: Text(l10n.btn_save),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(AppLocalizations.of(ctx).btn_cancel),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: _gold,
-                foregroundColor: Colors.black,
-              ),
-              onPressed: () {
-                ok = (controller.text == _adminPin);
-                Navigator.pop(ctx);
-              },
-              child: Text(AppLocalizations.of(ctx).btn_save),
-            ),
-          ],
         );
       },
     );
-    if (!ok) {
+
+    // Only show “Invalid PIN” if user tapped Save (false).
+    if (result == false) {
       messenger.showSnackBar(const SnackBar(content: Text('Invalid PIN')));
     }
-    return ok;
+    return result;  // true (ok) / false (invalid) / null (cancel)
   }
 
+  // Bottom‑sheet confirm for Admin override (dark‑mode friendly)
   Future<bool> _confirmRunOverride() async {
-    final l10n = AppLocalizations.of(context);
-    return await showDialog<bool>(
+    final theme = Theme.of(context);
+    final bg = theme.bottomSheetTheme.backgroundColor;
+    return await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Update Hijri Date from Masjid'),
-        content: const Text(
-          'This will update today’s Hijri date based on the masjid’s official setting.\nProceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.btn_cancel),
+      showDragHandle: true,
+      backgroundColor: bg,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        final l10n = AppLocalizations.of(ctx);
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Update Hijri Date from Masjid',
+                  style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'This will update today’s Hijri date based on the masjid’s official setting.\nProceed?',
+                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l10n.btn_cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _gold, foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l10n.btn_save),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.btn_save),
-          ),
-        ],
-      ),
+        );
+      },
     ).then((v) => v ?? false);
   }
 
+  /// Creates human‑friendly messages from HijriOverrideService results.
+  /// - If the cloud file is missing → "Hijri date adjustment is not required."
+  /// - If success → "Hijri date updated successfully." (+ Δ if present)
+  /// - Otherwise → generic friendly error with a short reason.
+  String _formatHijriOverrideResult(Object? result) {
+    final s = result?.toString() ?? '';
+
+    final success = s.contains('success=true');
+
+    // Firebase Storage "object not found" cases
+    final notFound = s.contains('object-not-found') ||
+        s.contains('No object exists') ||
+        s.contains('not found');
+
+    if (notFound) {
+      return 'Hijri date adjustment is not required.';
+    }
+
+    if (success) {
+      final m = RegExp(r'delta=\s*([+\-]?\d+)').firstMatch(s);
+      if (m != null) {
+        final d = int.tryParse(m.group(1)!);
+        if (d != null && d != 0) {
+          final sign = d > 0 ? '+' : '';
+          return 'Hijri date updated successfully (Δ $sign$d day${d.abs() == 1 ? '' : 's'}).';
+        }
+      }
+      return 'Hijri date updated successfully.';
+    }
+
+    if (s.isNotEmpty) {
+      final short = s.split(':').last.trim();
+      return short.isEmpty
+          ? 'Could not update Hijri date. Please try again later.'
+          : 'Could not update Hijri date: $short';
+    }
+    return 'Could not update Hijri date. Please try again later.';
+  }
+
   static Future<void> _showContactSheet(BuildContext context) async {
-    const gold = Color(0xFFC7A447);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -984,7 +1159,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                   width: double.infinity,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: gold,
+                      backgroundColor: _gold,
                       foregroundColor: Colors.black,
                     ),
                     onPressed: () => Navigator.pop(ctx),
@@ -1014,7 +1189,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
 
   String _toggleLabel(AppLocalizations l10n, bool v) => v ? l10n.common_on : l10n.common_off;
 
-  /// Shared label style so sub-option rows match across pages.
+  /// Shared label style so sub‑option rows match across pages.
   TextStyle _rowLabelStyle(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -1314,7 +1489,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
       }
     }
 
-    // 1) Right after the first re-layout (expansion has just begun).
+    // 1) Right after the first re‑layout (expansion has just begun).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       tryScroll(duration: const Duration(milliseconds: 250));
     });

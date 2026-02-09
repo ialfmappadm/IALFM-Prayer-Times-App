@@ -3,6 +3,10 @@
 
   "tab_more": "More",
   "tab_directory": "Directory",
+  "tab_settings": "Settings",
+  "@tab_settings": {
+    "description": "Title for the Settings page (previously called More)."
+  },
 
   "more_accessibility": "Accessibility",
   "more_notifications": "Notifications",

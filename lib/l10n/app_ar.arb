@@ -4,7 +4,10 @@
 
   "tab_more": "المزيد",
   "tab_directory": "الدليل",
-
+  "tab_settings": "الإعدادات",
+  "@tab_settings": {
+    "description": "عنوان صفحة الإعدادات."
+  },
   "more_accessibility": "إمكانية الوصول",
   "more_notifications": "الإشعارات",
   "more_app_notifications": "إشعارات التطبيق",
