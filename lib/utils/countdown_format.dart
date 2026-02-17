@@ -20,7 +20,7 @@ enum CountdownStyle {
   /// Thin dot separator: "2h·5m", "42s"
   dotUnits,
 
-  /// ✅ Digital clock (your original): "HH:MM:SS" — always shows seconds
+  /// Digital clock (your original): "HH:MM:SS" — always shows seconds
   digitalHms,
 
   /// Digital HH:MM (no seconds): "HH:MM"
@@ -89,7 +89,7 @@ String formatCountdownStyled(
       if (totalSec < 60) return '${s}s';
       if (h == 0) return '${m}m';
       final mm = zeroPadMinutesForColon ? two(m) : '$m';
-      return '${h}h:$mm' 'm';
+      return '${h}h:${mm}m';
 
     case CountdownStyle.dotUnits:
       if (totalSec < 60) return '${s}s';

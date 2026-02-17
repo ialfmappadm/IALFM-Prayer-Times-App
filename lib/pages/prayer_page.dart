@@ -13,7 +13,7 @@ import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 import '../localization/prayer_labels.dart';
 import '../widgets/dst_pill_stealth.dart';
-import 'dart:ui' show ImageFilter; // for ImageFilter.blur
+import 'dart:ui' show ImageFilter, FontFeature; // for ImageFilter.blur
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIGHT THEME CONSTANTS (unchanged)
@@ -456,14 +456,20 @@ class CountdownBanner extends StatefulWidget {
   static const TextStyle kTitleDark = TextStyle(
     color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600,
   );
+
   static const TextStyle kDigitsLight = TextStyle(
-    color: _kLightGoldDigits, fontSize: kCountdownDigitSizeLight,
-    fontWeight: FontWeight.w700, letterSpacing: 1.0,
+    color: _kLightGoldDigits,
+    fontSize: kCountdownDigitSizeLight,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
+
   static const TextStyle kDigitsDark = TextStyle(
-    color: AppColors.countdownText, fontSize: kCountdownDigitSizeDark,
-    fontWeight: FontWeight.w700, letterSpacing: 1.0,
+    color: AppColors.countdownText,
+    fontSize: kCountdownDigitSizeDark,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
 
@@ -561,8 +567,6 @@ class _CountdownBannerState extends State<CountdownBanner>
   Widget build(BuildContext context) {
     final isLight = widget.isLight;
     final title = widget.title;
-    final cs = Theme.of(context).colorScheme; // for dark primaryContainer
-
     final light = Container(
       decoration: const BoxDecoration(
         color: _kLightPanel,
