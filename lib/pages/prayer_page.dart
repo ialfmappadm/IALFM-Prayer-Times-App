@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../utils/time_utils.dart';
 import '../utils/clock_skew.dart';
+import '../utils/countdown_format.dart' as cdf;
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
 import '../models.dart';
@@ -428,7 +429,7 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner (adds optional nowProvider for DST-aware, drift-corrected time)
+// CountdownBanner (human-friendly text: "H hours : M mins" or "S secs")
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
   final bool isLight;
@@ -448,6 +449,7 @@ class CountdownBanner extends StatefulWidget {
     this.nowProvider,
   });
 
+  // Keep your existing styles
   static const TextStyle kTitleLight = TextStyle(
     color: _kLightTextMuted, fontSize: 14, fontWeight: FontWeight.w600,
   );
@@ -529,21 +531,22 @@ class _CountdownBannerState extends State<CountdownBanner>
     }
   }
 
+
   void _tickOnce() {
-    // Use the injected (DST-aware, skew-corrected) time if provided; else fallback.
+    // Use provided (DST-aware, drift-corrected) time if available; else fallback.
     final now = widget.nowProvider?.call() ?? DateTime.now();
     final rem = widget.tracker.tick(now);
     final safe = rem.isNegative ? Duration.zero : rem;
-    final newDigits = formatCountdown(safe);
+    final newText = cdf.formatCountdownStyled(safe);
     final name = widget.tracker.current.name;
 
     if (name != _lastNextName) {
       _lastNextName = name;
       widget.onNextChanged?.call(name);
     }
-    if (newDigits != _digits) {
+    if (newText != _digits) {
       if (!mounted) return;
-      setState(() => _digits = newDigits);
+      setState(() => _digits = newText);
     }
   }
 
