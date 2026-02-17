@@ -20,7 +20,6 @@ import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
 // UI & pages
-import 'app_colors.dart';
 import 'models.dart';
 import 'pages/prayer_page.dart';
 import 'widgets/announcements_tab.dart';
@@ -28,6 +27,7 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
+import 'utils/clock_skew.dart';
 // Repository (Storage -> local persist)
 import 'prayer_times_firebase.dart';
 // Hijri override
@@ -48,6 +48,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'services/iqamah_change_service.dart';
 // Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
 import 'widgets/iqamah_change_sheet.dart';
+
+import 'dart:ui' as ui show TextDirection;
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -161,24 +163,24 @@ Future<void> main() async {
 
 // Async work after first frame (warm-ups + deferred topic subscription)
 Future<void> _postFrameAsync() async {
-  final ctx = navKey.currentContext;
-  if (ctx != null) {
-    await warmUpAboveTheFold(ctx);
-  }
-
-  // Slightly increase image cache to avoid early evictions of small assets
+  unawaited(ClockSkew.calibrate()); // ← one‑line drift guard
+  // Reacquire and use BuildContext inside helpers so we never hold it across awaits.
+  await _warmImages();  // uses ctx immediately, then awaits
+  // Non-context work
   final cache = PaintingBinding.instance.imageCache;
   cache.maximumSize = (cache.maximumSize * 1.3).round();
 
-  // Defer FCM permission + topic subscription ~1.2s after first paint
+  await warmIntl();                      // pre-warm EN+AR formats (from warm_up.dart)
+  await _preReadPrefsAndRemoteConfig();  // pre-read prefs & kick RC in background
+
+  await _warmSalahRow(); // reacquires ctx and uses it immediately, then awaits
+
+  // Defer FCM permission + topic subscription (~1.2s after first paint)
   unawaited(
     Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
       try {
         final settings = await FirebaseMessaging.instance.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-          provisional: false,
+          alert: true, badge: true, sound: true, provisional: false,
         );
         debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
         await FirebaseMessaging.instance.subscribeToTopic('allUsers');
@@ -188,9 +190,44 @@ Future<void> _postFrameAsync() async {
     }),
   );
 
-  // NEW: single-line debug kick for a local heads‑up within ~10 seconds
   if (kDebugKickLocalAlert10s) {
     unawaited(AlertsScheduler.instance.debugScheduleInSeconds(10));
+  }
+}
+
+// Uses a local ctx and awaits immediately (no ctx after an async gap)
+Future<void> _warmImages() async {
+  final ctx = navKey.currentContext;
+  if (ctx == null) return;
+  await warmUpAboveTheFold(ctx);
+}
+
+// Uses a local ctx and awaits immediately (no ctx after an async gap)
+Future<void> _warmSalahRow() async {
+  final ctx = navKey.currentContext;
+  if (ctx == null) return;
+  final isLight = Theme.of(ctx).brightness == Brightness.light;
+  await warmUpSalahRow(ctx, isLight: isLight);
+}
+
+// NEW: keep first-tap clean by pre-reading prefs + kicking RC post-frame
+Future<void> _preReadPrefsAndRemoteConfig() async {
+  try {
+    // Touch a few commonly-read prefs so first interaction doesn’t do I/O
+    await UXPrefs.getString('flutter.ux.ann.lastSeenFp');
+    await UXPrefs.getString('ux.snack.firstStartupSuppressed');
+
+    // Seed Remote Config defaults and fetch in the background
+    final rc = FirebaseRemoteConfig.instance;
+    await rc.setDefaults({
+      'ann_fp': '',               // announcements fingerprint
+      'feature_x_enabled': false, // example feature flag
+    });
+
+    // Don’t block UI—fire and forget
+    unawaited(rc.fetchAndActivate());
+  } catch (e, st) {
+    debugPrint('preReadPrefs/RC error: $e\n$st');
   }
 }
 
@@ -220,10 +257,48 @@ const ColorScheme lightColorScheme = ColorScheme(
   scrim: Color(0xFF000000),
 );
 
+const ColorScheme darkColorScheme = ColorScheme(
+  brightness: Brightness.dark,
+  primary: Color(0xFF0A2C42),      // Navy
+  onPrimary: Color(0xFFE7EEF4),
+  primaryContainer: Color(0xFF0F1A22),
+  onPrimaryContainer: Color(0xFFE7EEF4),
+
+  secondary: Color(0xFFC7A447),    // Gold
+  onSecondary: Color(0xFF1A1400),
+
+  surface: Color(0xFF0A1116),      // inky canvas
+  onSurface: Color(0xFFE8EDF3),
+
+  outline: Color(0x14FFFFFF),      // white @ ~8%
+  outlineVariant: Color(0x1AFFFFFF),
+
+  error: Color(0xFFF29682),
+  onError: Color(0xFF2B0D08),
+  errorContainer: Color(0xFF3A1E1B),
+  onErrorContainer: Color(0xFFFAD9D3),
+
+  inverseSurface: Color(0xFFE8EDF3),
+  onInverseSurface: Color(0xFF0A1116),
+
+  shadow: Color(0xFF000000),
+  scrim: Color(0xFF000000),
+);
+
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
   colors: [Color(0xFFF6F9FC), Color(0xFFFFFFFF)],
+);
+
+const LinearGradient pageGradientDark = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [
+    Color(0xFF0A101B), // inky top (blue-true)
+    Color(0xFF0D1626), // bottom lift
+  ],
+  stops: [0.0, 1.0],
 );
 
 // ThemeExtension for gradient
@@ -243,7 +318,7 @@ class AppGradients extends ThemeExtension<AppGradients> {
   }
 
   static const light = AppGradients(page: pageGradientLight);
-  static const dark = AppGradients(page: AppColors.pageGradient);
+  static const dark  = AppGradients(page: pageGradientDark);
 }
 
 // -----------------------------------------------------------------------------
@@ -342,26 +417,58 @@ class BootstrapApp extends StatelessWidget {
               ],
             );
 
+            const ColorScheme darkColorScheme = ColorScheme(
+              brightness: Brightness.dark,
+              primary: Color(0xFF0A1E3A),      // Navy
+              onPrimary: Color(0xFFE7EEF4),
+              primaryContainer: Color(0xFF0F1A22),
+              onPrimaryContainer: Color(0xFFE7EEF4),
+
+              secondary: Color(0xFFC7A447),    // Gold
+              onSecondary: Color(0xFF1A1400),
+
+              surface: Color(0xFF0A101B),      // inky canvas
+              onSurface: Color(0xFFE8EDF3),
+
+              outline: Color(0x14FFFFFF),      // white @ ~8%
+              outlineVariant: Color(0x1AFFFFFF),
+
+              error: Color(0xFFF29682),
+              onError: Color(0xFF2B0D08),
+              errorContainer: Color(0xFF3A1E1B),
+              onErrorContainer: Color(0xFFFAD9D3),
+
+              inverseSurface: Color(0xFFE8EDF3),
+              onInverseSurface: Color(0xFF0A1116),
+
+              shadow: Color(0xFF000000),
+              scrim: Color(0xFF000000),
+            );
+
             final ThemeData baseDark = ThemeData(
               brightness: Brightness.dark,
               useMaterial3: true,
-              scaffoldBackgroundColor: AppColors.bgPrimary,
+              colorScheme: darkColorScheme, // the const scheme defined above in BootstrapApp
+              scaffoldBackgroundColor: darkColorScheme.surface,
               textTheme: chosenDark,
+
+              // Keep your existing nav bar look
               navigationBarTheme: NavigationBarThemeData(
-                backgroundColor: AppColors.bgPrimary,
+                backgroundColor: darkColorScheme.surface,
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme:
-                WidgetStateProperty.resolveWith<IconThemeData>((states) {
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
                   final selected = states.contains(WidgetState.selected);
                   return IconThemeData(
                     color: selected
                         ? Colors.white.withValues(alpha: 0.95)
-                        : Colors.white.withValues(alpha: 0.70),
+                        : Colors.white.withValues(alpha: 0.72),
                   );
                 }),
               ),
+
+              // Make snackbars readable in dark (kept from your current code)
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
@@ -371,10 +478,78 @@ class BootstrapApp extends StatelessWidget {
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+
+              // ---- New: pin common interaction widgets for dark ----
+              // Tiles (ListTile + ExpansionTile) should keep onSurface for text/icons even when expanded/pressed.
+              listTileTheme: ListTileThemeData(
+                textColor: darkColorScheme.onSurface,
+                iconColor: darkColorScheme.onSurface,
+              ),
+              expansionTileTheme: ExpansionTileThemeData(
+                textColor: darkColorScheme.onSurface,
+                iconColor: darkColorScheme.onSurface,
+                collapsedTextColor: darkColorScheme.onSurface,
+                collapsedIconColor: darkColorScheme.onSurface,
+              ),
+
+              // Buttons — keep readable foregrounds on dark and predictable overlays.
+              textButtonTheme: TextButtonThemeData(
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
+                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                ),
+              ),
+              outlinedButtonTheme: OutlinedButtonThemeData(
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
+                  side: WidgetStateProperty.all(
+                      BorderSide(color: darkColorScheme.outline.withValues(alpha: 0.50))),
+                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                ),
+              ),
+              // Applies to both FilledButton and FilledButton.tonal unless locally overridden.
+              filledButtonTheme: FilledButtonThemeData(
+                style: ButtonStyle(
+                  // Use gold by default for primary filled buttons; your sheets already
+                  // specify gold explicitly, so this just unifies elsewhere.
+                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.disabled)) {
+                      return darkColorScheme.surface.withValues(alpha: 0.38);
+                    }
+                    return darkColorScheme.secondary; // gold
+                  }),
+                  foregroundColor: WidgetStateProperty.all(Colors.black),
+                  overlayColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.06)),
+                ),
+              ),
+              segmentedButtonTheme: SegmentedButtonThemeData(
+                style: ButtonStyle(
+                  // Ensure labels stay readable on the dark card background
+                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
+                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                ),
+              ),
+
+              // Bottom sheets should stay on your dark surface (no surprise tint)
+              bottomSheetTheme: const BottomSheetThemeData(
+                backgroundColor: Color(0xFF0A101B), // same as dark surface
+                modalBackgroundColor: Color(0xFF0A101B),
+                surfaceTintColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+              ),
+
+              // Subtle, consistent ink ripple in dark
+              splashColor: Colors.white.withValues(alpha: 0.08),
+              highlightColor: Colors.white.withValues(alpha: 0.06),
+
+              // Keep your gradients
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
               ],
             );
+
 
             return MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -398,7 +573,7 @@ class BootstrapApp extends StatelessWidget {
                   builder: (context, scale, _) {
                     final mq = MediaQuery.of(context);
                     return Directionality(
-                      textDirection: TextDirection.ltr,
+                      textDirection: ui.TextDirection.ltr,
                       child: MediaQuery(
                         data: mq.copyWith(textScaler: TextScaler.linear(scale)),
                         child: child!,
