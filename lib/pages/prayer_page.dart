@@ -1,8 +1,10 @@
 // lib/pages/prayer_page.dart
 import 'dart:async';
+//import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../utils/time_utils.dart';
+import '../utils/clock_skew.dart';
 import '../widgets/top_header.dart';
 import '../widgets/salah_table.dart';
 import '../models.dart';
@@ -10,14 +12,12 @@ import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 import '../localization/prayer_labels.dart';
 import '../widgets/dst_pill_stealth.dart';
-import '../warm_up.dart';
+import 'dart:ui' show ImageFilter; // for ImageFilter.blur
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIGHT THEME CONSTANTS (unchanged)
 const _kLightTextPrimary = Color(0xFF0F2432);
 const _kLightTextMuted   = Color(0xFF4A6273);
-const _kLightRowAlt      = Color(0xFFE5ECF2);
-const _kLightCard        = Color(0xFFFFFFFF);
 const _kLightDivider     = Color(0xFF7B90A0);
 const _kLightHighlight   = Color(0xFFFFF0C9);
 const _kLightPanel       = Color(0xFFE9F2F9);
@@ -29,7 +29,7 @@ const double kTempFallbackF = 72.0;
 const double _kHeaderHeight = 116.0;
 const bool   enableDstPreviewToggle = false;
 
-// ✨ EDIT THESE to change the countdown digit sizes (light & dark)
+// EDIT THESE to change the countdown digit sizes (light & dark)
 const double kCountdownDigitSizeLight = 56;
 const double kCountdownDigitSizeDark  = 56;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,24 +57,40 @@ class _PrayerPageState extends State<PrayerPage> {
   late NextPrayerTracker _tracker;
   NextPrayer? _next;
   bool? _dstPreview;
+  TextStyle? _hdrLight, _hdrDark, _nameLight, _nameDark, _valLight, _valDark;
+  bool? _stylesForLight; // remembers which brightness the cached styles target
+
+  // Ensures styles exist and match current brightness
+  void _ensureStyles(bool isLight) {
+    // If we already computed for this brightness, keep them
+    if (_stylesForLight == isLight &&
+        _hdrLight != null && _hdrDark != null &&
+        _nameLight != null && _nameDark != null &&
+        _valLight != null && _valDark != null) {
+      return;
+    }
+    // Light styles (use your existing light constants/colors)
+    _hdrLight  = const TextStyle(
+        color: _kLightTextPrimary, fontSize: 16, fontWeight: FontWeight.w600);
+    _nameLight = const TextStyle(
+        color: _kLightTextPrimary, fontSize: 16, fontWeight: FontWeight.w500);
+    _valLight  = const TextStyle(
+        color: _kLightTextPrimary, fontSize: 16, fontWeight: FontWeight.w600);
+    // Dark styles (use your existing AppColors for dark scheme)
+    _hdrDark  = TextStyle(
+        color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w600);
+    _nameDark = TextStyle(
+        color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w500);
+    _valDark  = TextStyle(
+        color: AppColors.textPrimary,   fontSize: 16, fontWeight: FontWeight.w600);
+    _stylesForLight = isLight;
+  }
 
   @override
   void initState() {
     super.initState();
     _initTracker();
-
-    // Post-frame warm-ups — lint-safe guards around context after awaits.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      try { await warmUpAboveTheFold(context); } catch (_) {}
-      if (!mounted) return;
-      try {
-        final isLight = Theme.of(context).brightness == Brightness.light;
-        await warmUpSalahRow(context, isLight: isLight);
-      } catch (_) {}
-    });
   }
-
   void _initTracker() {
     _tracker = NextPrayerTracker(
       loc: widget.location,
@@ -153,18 +169,10 @@ class _PrayerPageState extends State<PrayerPage> {
     }
 
     // Table text styles (unchanged)
-    final headerTextStyle = TextStyle(
-      color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
-      fontSize: 16, fontWeight: FontWeight.w600,
-    );
-    final nameTextStyle = TextStyle(
-      color: isLight ? _kLightTextPrimary : AppColors.textSecondary,
-      fontSize: 16, fontWeight: FontWeight.w500,
-    );
-    final valueTextStyle = TextStyle(
-      color: isLight ? _kLightTextPrimary : AppColors.textPrimary,
-      fontSize: 16, fontWeight: FontWeight.w600,
-    );
+    _ensureStyles(isLight);
+    final headerTextStyle = isLight ? _hdrLight!  : _hdrDark!;
+    final nameTextStyle   = isLight ? _nameLight! : _nameDark!;
+    final valueTextStyle  = isLight ? _valLight!  : _valDark!;
     final bannerTitle = PrayerLabels.countdownHeader(context, next.name);
 
     // ── DST (live, zone‑aware) ────────────────────────────────────────────────
@@ -254,6 +262,8 @@ class _PrayerPageState extends State<PrayerPage> {
       tracker: _tracker,
       isLight: isLight,
       title: bannerTitle,
+      // DST-aware now + drift correction:
+      nowProvider: () => tz.TZDateTime.now(widget.location).add(ClockSkew.skew),
       onNextChanged: (newName) {
         if (_next?.name != newName && mounted) {
           setState(() { _next = _tracker.current; });
@@ -325,35 +335,78 @@ class _PrayerPageState extends State<PrayerPage> {
         countdownSection,
 
         // Salah Table
+// ───────── Replace your whole Expanded(...) that wraps SalahTable with this ─────────
         Expanded(
           child: _guarded(
                 () => RepaintBoundary(
-              child: KeyedSubtree(
-                key: const ValueKey('salah_table_static'),
-                child: SalahTable(
-                  adhanByName: adhanByName,
-                  iqamahByName: iqamahByName,
-                  iqamahWidgetByName: iqamahWidgetByName,
-                  highlightName: _titleCase(next.name),
-                  expandRowsToFill: true,
-                  headerGreen: false,
-                  headerBackgroundGradient: isLight ? null : AppColors.headerGradient,
-                  headerBackgroundColor: isLight ? Colors.white : null,
-                  rowOddColor:  isLight ? _kLightCard : AppColors.bgSecondary,
-                  rowEvenColor: isLight ? _kLightRowAlt : AppColors.bgSecondary,
-                  highlightColor: AppColors.rowHighlight,
-                  highlightColorLight: _kLightHighlight,
-                  rowDividerColorLight: _kLightDivider.withValues(alpha: 0.16),
-                  headerStyle: headerTextStyle,
-                  nameStyle:   nameTextStyle,
-                  adhanStyle:  valueTextStyle,
-                  iqamahStyle: valueTextStyle,
-                  order: order,
-                ),
+              child: Stack(
+                children: [
+                  // UNDERLAY (light-only): keep previous look in light; disable in dark
+                  if (isLight)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: ClipRect(
+                          child: ImageFiltered(
+                            imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            child: const DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Color(0xFFD6E6F1), Color(0xFFFFFFFF)],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // GLASS TABLE (edge-to-edge)
+                  KeyedSubtree(
+                    key: const ValueKey('salah_table_glass'),
+                    child: SalahTable(
+                      adhanByName: adhanByName,
+                      iqamahByName: iqamahByName,
+                      iqamahWidgetByName: iqamahWidgetByName,
+                      highlightName: _titleCase(next.name),
+                      expandRowsToFill: true,
+
+                      // Rely on glass container surface
+                      headerGreen: false,
+                      headerBackgroundGradient: null,
+                      headerBackgroundColor: Colors.transparent,
+                      rowOddColor: Colors.transparent,
+                      rowEvenColor: Colors.transparent,
+
+                      highlightColor: AppColors.rowHighlight,
+                      highlightColorLight: _kLightHighlight,
+                      rowDividerColorLight: _kLightDivider.withValues(alpha: 0.25),
+                      rowDividerThickness: 0.8,
+
+                      headerStyle: headerTextStyle,
+                      nameStyle: nameTextStyle,
+                      adhanStyle: valueTextStyle,
+                      iqamahStyle: valueTextStyle,
+                      order: order,
+
+                      // Keep glass surface ON, but tune only the DARK values
+                      useGlassSurface: true,
+                      glassBlur: 12,
+                      glassTintLight: Colors.white.withValues(alpha: 0.70),
+                      // ↓ Dark-only tweak to avoid washout while preserving glass feel
+                      glassTintDark: const Color(0xFF0A1E3A).withValues(alpha: 0.28),
+                      glassBorderLight: Colors.white.withValues(alpha: 0.85),
+                      glassBorderDark: const Color(0xFFC7A447).withValues(alpha: 0.40),
+                      glassBorderWidth: 1.0,
+                      glassRadius: BorderRadius.zero, // edge-to-edge, no outer rounding
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
+        )
       ],
     );
 
@@ -375,35 +428,40 @@ class _PrayerPageState extends State<PrayerPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CountdownBanner (unchanged behavior; lint‑clean)
-
+// CountdownBanner (adds optional nowProvider for DST-aware, drift-corrected time)
 class CountdownBanner extends StatefulWidget {
   final NextPrayerTracker tracker;
   final bool isLight;
   final String title;
   final void Function(String newNextName)? onNextChanged;
+
+  /// Optional: provide a "now" source (e.g., tz.TZDateTime.now(zone) + ClockSkew.skew).
+  /// If null, falls back to DateTime.now().
+  final DateTime Function()? nowProvider;
+
   const CountdownBanner({
     super.key,
     required this.tracker,
     required this.isLight,
     required this.title,
     this.onNextChanged,
+    this.nowProvider,
   });
 
   static const TextStyle kTitleLight = TextStyle(
     color: _kLightTextMuted, fontSize: 14, fontWeight: FontWeight.w600,
   );
-  static const TextStyle kTitleDark  = TextStyle(
-    color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w600,
+  static const TextStyle kTitleDark = TextStyle(
+    color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600,
   );
   static const TextStyle kDigitsLight = TextStyle(
     color: _kLightGoldDigits, fontSize: kCountdownDigitSizeLight,
     fontWeight: FontWeight.w700, letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
-  static const TextStyle kDigitsDark  = TextStyle(
+  static const TextStyle kDigitsDark = TextStyle(
     color: AppColors.countdownText, fontSize: kCountdownDigitSizeDark,
-    fontWeight: FontWeight.w400, letterSpacing: 1.0,
+    fontWeight: FontWeight.w700, letterSpacing: 1.0,
     fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
   );
 
@@ -463,11 +521,7 @@ class _CountdownBannerState extends State<CountdownBanner>
   void _ensureTicker() {
     if (_shouldTick) {
       if (_ticker == null) {
-        if (_firstStart) {
-          _startTickerAligned();
-        } else {
-          _startTickerImmediate();
-        }
+        _firstStart ? _startTickerAligned() : _startTickerImmediate();
       }
     } else {
       _ticker?.cancel();
@@ -476,7 +530,9 @@ class _CountdownBannerState extends State<CountdownBanner>
   }
 
   void _tickOnce() {
-    final rem = widget.tracker.tick(DateTime.now());
+    // Use the injected (DST-aware, skew-corrected) time if provided; else fallback.
+    final now = widget.nowProvider?.call() ?? DateTime.now();
+    final rem = widget.tracker.tick(now);
     final safe = rem.isNegative ? Duration.zero : rem;
     final newDigits = formatCountdown(safe);
     final name = widget.tracker.current.name;
@@ -501,13 +557,13 @@ class _CountdownBannerState extends State<CountdownBanner>
   @override
   Widget build(BuildContext context) {
     final isLight = widget.isLight;
-    final title   = widget.title;
+    final title = widget.title;
 
     final light = Container(
       decoration: const BoxDecoration(
         color: _kLightPanel,
         border: Border(
-          top:    BorderSide(color: _kLightPanelTop,    width: 1),
+          top: BorderSide(color: _kLightPanelTop, width: 1),
           bottom: BorderSide(color: _kLightPanelBottom, width: 1),
         ),
       ),
