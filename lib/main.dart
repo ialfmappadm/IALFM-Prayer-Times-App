@@ -553,10 +553,10 @@ class BootstrapApp extends StatelessWidget {
                 trackColor: WidgetStateProperty.resolveWith<Color>((states) {
                   final on = states.contains(WidgetState.selected);
                   final disabled = states.contains(WidgetState.disabled);
-                  if (disabled) return Colors.white.withValues(alpha: 0.12);     // clearly muted
+                  if (disabled) return Colors.white.withValues(alpha: 0.12);
                   return on
-                      ? const Color(0xFF4DA3FF).withValues(alpha: 0.60)           // bright, legible blue
-                      : Colors.white.withValues(alpha: 0.22);                     // visible OFF state
+                      ? const Color(0xFF34C759).withValues(alpha: 0.70)
+                      : Colors.white.withValues(alpha: 0.22);
                 }),
                 // Track outline (gives definition on dark backgrounds)
                 trackOutlineColor: WidgetStateProperty.resolveWith<Color>((states) {
@@ -564,10 +564,10 @@ class BootstrapApp extends StatelessWidget {
                   final disabled = states.contains(WidgetState.disabled);
                   if (disabled) return Colors.white.withValues(alpha: 0.16);
                   return on
-                      ? const Color(0xFF9DD1FF).withValues(alpha: 0.95)           // subtle blue ring when ON
-                      : Colors.white.withValues(alpha: 0.35);                     // thin outline when OFF
+                      ? const Color(0xFF9CF7B7)
+                      : Colors.white.withValues(alpha: 0.35);
                 }),
-                // Thumb color: bright in both states for readability
+                // Thumb: bright in both states for readability
                 thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
                   final on = states.contains(WidgetState.selected);
                   final disabled = states.contains(WidgetState.disabled);
