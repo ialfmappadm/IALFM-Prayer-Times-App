@@ -561,6 +561,7 @@ class _CountdownBannerState extends State<CountdownBanner>
   Widget build(BuildContext context) {
     final isLight = widget.isLight;
     final title = widget.title;
+    final cs = Theme.of(context).colorScheme; // for dark primaryContainer
 
     final light = Container(
       decoration: const BoxDecoration(
@@ -582,13 +583,21 @@ class _CountdownBannerState extends State<CountdownBanner>
     );
 
     final dark = Container(
-      color: AppColors.bgPrimary,
+      // Return to deep-navy panel + add subtle hairlines
+      decoration: const BoxDecoration(
+        color: AppColors.bgPrimary, // ← coherent with your page navy
+        border: Border(
+          top: BorderSide(color: Color(0x14FFFFFF), width: 1),   // ~8% white
+          bottom: BorderSide(color: Color(0x1AFFFFFF), width: 1),// ~10% white
+        ),
+      ),
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Column(
         children: [
           Text(title, style: CountdownBanner.kTitleDark),
           const SizedBox(height: 1),
-          Text(_digits, textWidthBasis: TextWidthBasis.longestLine,
+          Text(_digits,
+              textWidthBasis: TextWidthBasis.longestLine,
               style: CountdownBanner.kDigitsDark),
         ],
       ),
