@@ -393,7 +393,7 @@ class _PrayerPageState extends State<PrayerPage> {
 
                       // Keep glass surface ON, but tune only the DARK values
                       useGlassSurface: true,
-                      glassBlur: 12,
+                      glassBlur: 8,
                       glassTintLight: Colors.white.withValues(alpha: 0.70),
                       // ↓ Dark-only tweak to avoid washout while preserving glass feel
                       glassTintDark: const Color(0xFF0A1E3A).withValues(alpha: 0.28),
