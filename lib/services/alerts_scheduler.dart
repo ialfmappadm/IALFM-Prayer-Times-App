@@ -214,9 +214,16 @@ class AlertsScheduler {
       );
     }
 
-    // Iqamah (5 minutes before)
+    // Iqamah (5 minutes before) + Friday Khutbah (fixed time)
     const iqamahLead = Duration(minutes: -5);
+    const khutbahLead = Duration(minutes: -5);
+
+// Easy-to-tweak fixed Khutbah time (Central)
+    const int khutbahHour = 13;   // 1 PM
+    const int khutbahMinute = 30; // :30
+
     if (iqamahEnabled) {
+      // Fajr
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
         body: 'Fajr Iqamah in 5 minutes.',
@@ -224,13 +231,31 @@ class AlertsScheduler {
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
-      await scheduleWithOffset(
-        title: 'Iqamah Reminder',
-        body: 'Dhuhr Iqamah in 5 minutes.',
-        when: dhuhrIqamah,
-        offset: iqamahLead,
-        id: _idFor(base, slot++),
-      );
+
+      // Dhuhr → replace with Friday Khutbah (keep Dhuhr Adhan above)
+      if (dateLocal.weekday == DateTime.friday) {
+        final DateTime khutbahAt = DateTime(
+            dateLocal.year, dateLocal.month, dateLocal.day, khutbahHour, khutbahMinute);
+
+        await scheduleWithOffset(
+          title: 'Friday Khutbah',
+          body: 'Khutbah starts in 5 mins, in sha’ Allah.',
+          when: khutbahAt,
+          offset: khutbahLead,
+          id: _idFor(base, slot++),
+          payload: 'khutbah_alert',
+        );
+      } else {
+        await scheduleWithOffset(
+          title: 'Iqamah Reminder',
+          body: 'Dhuhr Iqamah in 5 minutes.',
+          when: dhuhrIqamah,
+          offset: iqamahLead,
+          id: _idFor(base, slot++),
+        );
+      }
+
+      // Asr
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
         body: 'Asr Iqamah in 5 minutes.',
@@ -238,6 +263,8 @@ class AlertsScheduler {
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
+
+      // Maghrib
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
         body: 'Maghrib Iqamah in 5 minutes.',
@@ -245,6 +272,8 @@ class AlertsScheduler {
         offset: iqamahLead,
         id: _idFor(base, slot++),
       );
+
+      // Isha
       await scheduleWithOffset(
         title: 'Iqamah Reminder',
         body: 'Isha Iqamah in 5 minutes.',

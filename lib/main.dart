@@ -548,6 +548,33 @@ class BootstrapApp extends StatelessWidget {
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
               ],
+              switchTheme: SwitchThemeData(
+                // Track fill
+                trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+                  final on = states.contains(WidgetState.selected);
+                  final disabled = states.contains(WidgetState.disabled);
+                  if (disabled) return Colors.white.withValues(alpha: 0.12);     // clearly muted
+                  return on
+                      ? const Color(0xFF4DA3FF).withValues(alpha: 0.60)           // bright, legible blue
+                      : Colors.white.withValues(alpha: 0.22);                     // visible OFF state
+                }),
+                // Track outline (gives definition on dark backgrounds)
+                trackOutlineColor: WidgetStateProperty.resolveWith<Color>((states) {
+                  final on = states.contains(WidgetState.selected);
+                  final disabled = states.contains(WidgetState.disabled);
+                  if (disabled) return Colors.white.withValues(alpha: 0.16);
+                  return on
+                      ? const Color(0xFF9DD1FF).withValues(alpha: 0.95)           // subtle blue ring when ON
+                      : Colors.white.withValues(alpha: 0.35);                     // thin outline when OFF
+                }),
+                // Thumb color: bright in both states for readability
+                thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+                  final on = states.contains(WidgetState.selected);
+                  final disabled = states.contains(WidgetState.disabled);
+                  if (disabled) return Colors.white.withValues(alpha: 0.40);
+                  return on ? Colors.white : Colors.white.withValues(alpha: 0.90);
+                }),
+              ),
             );
 
 
@@ -564,7 +591,7 @@ class BootstrapApp extends StatelessWidget {
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
 
-              // ✅ Enable app-wide state restoration (restores nav + restorable state)
+              // Enable app-wide state restoration (restores nav + restorable state)
               restorationScopeId: 'app',
 
               builder: (context, child) {
