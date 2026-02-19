@@ -81,3 +81,4 @@ yarn-error.log*
 # doze collect logs
 tools/doze_min_*/
 tools/doze_*_*.txtandroid/app/release/
+android/app/release/
