@@ -138,6 +138,8 @@
   "privacy_b6": "Weather is shown using a fixed Dallas‑area coordinate (not your location) via the Open‑Meteo API.",
   "privacy_b7": "A Mohid donation link opens in your web browser and is processed outside the app; donations do not unlock features, and payment data is not handled by the app.",
   "privacy_b8": "We do not sell or share personal data with third parties and do not use targeted advertising.",
+  "privacy_b9": "We use Firebase Analytics for anonymous, aggregated usage metrics (no personal info).",
+  "privacy_b10": "We use Firebase Crashlytics for anonymous crash reporting to improve stability.",
   "privacy_view_full": "View the Full Policy",
   "privacy_view_full_hint": "For the complete policy text, open the published page on our website.",
   "open_full_policy_button": "Open Full Policy (Website)",

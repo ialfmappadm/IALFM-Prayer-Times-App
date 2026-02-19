@@ -1,7 +1,7 @@
 name: ialfm_prayer_times
 description: IALFM Prayer Times (Central Time) using Flutter with annual schedule and notifications
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

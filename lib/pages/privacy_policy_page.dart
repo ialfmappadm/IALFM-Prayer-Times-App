@@ -53,6 +53,8 @@ class PrivacyPolicyPage extends StatelessWidget {
                 _bullet(context, l10n.privacy_b6),
                 _bullet(context, l10n.privacy_b7),
                 _bullet(context, l10n.privacy_b8),
+                _bullet(context, l10n.privacy_b9),
+                _bullet(context, l10n.privacy_b10),
 
                 const SizedBox(height: 20),
                 _sectionHeader(context, l10n.privacy_view_full),
