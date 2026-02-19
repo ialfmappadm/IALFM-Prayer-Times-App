@@ -15,6 +15,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // cloud metadata peek
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
@@ -50,6 +51,7 @@ import 'services/iqamah_change_service.dart';
 import 'widgets/iqamah_change_sheet.dart';
 
 import 'dart:ui' as ui show TextDirection;
+import 'package:ialfm_prayer_times/debug_tools.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -79,18 +81,31 @@ const String kFirstStartupSnackSuppressedKey =
 // Background FCM handler
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure bindings for background isolate
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase (safe to call multiple times)
   try {
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
-  } catch (_) {}
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid:
-    kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple:
-    kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  );
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (_) {
+    // Ignore: initializeApp can throw if called more than once in process
+  }
 
+  // App Check (keep your original providers & behavior)
+  try {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid:
+      kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+      providerApple:
+      kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    );
+  } catch (_) {
+    // Background isolates on some devices/OS versions may fail to init App Check; safe to continue.
+  }
+
+  // Your existing payload handling (unchanged)
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -101,22 +116,29 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
+// -----------------------------------------------------------------------------
+// App entry point
 Future<void> main() async {
   runZonedGuarded(() async {
+    // Keep your original fatal flag
     BindingBase.debugZoneErrorsAreFatal = true;
+
+    // Preserve native splash until first frame
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
-    // Enable detector logs if needed
-    //IqamahChangeService.logEnabled = true;
 
     // Fonts are asset-only (never HTTP)
     GoogleFonts.config.allowRuntimeFetching = false;
 
-    // Firebase init + App Check
+    // ---------------- Firebase core ----------------
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // FCM background handler (your original line)
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // ---------------- Firebase App Check ----------------
     await FirebaseAppCheck.instance.activate(
       providerAndroid:
       kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
@@ -124,15 +146,16 @@ Future<void> main() async {
       kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
     );
 
-    FlutterError.onError = (FlutterErrorDetails details) {
-      FlutterError.presentError(details);
-      Zone.current.handleUncaughtError(
-        details.exception,
-        details.stack ?? StackTrace.current,
-      );
-    };
+    // ---------------- Crashlytics wiring ----------------
+    // Forward Flutter framework errors to Crashlytics
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
-    // Prefs & Theme
+    // (Optional) Spin up Analytics instance (no-op if not used)
+    await initAnalyticsAndLogAppOpen();
+    // You can log a startup event if useful:
+    // await analytics.logEvent(name: 'app_start');
+
+    // ---------------- App init (unchanged) ----------------
     await UXPrefs.init();
     await ThemeController.init();
 
@@ -140,7 +163,14 @@ Future<void> main() async {
     await HijriOverrideService.applyIfPresent(resolveAppHijri: _appHijri);
 
     // Local notifications scheduler
-    await AlertsScheduler.instance.init(androidSmallIcon: 'ic_stat_bell');
+    try {
+      await AlertsScheduler.instance.init(androidSmallIcon: 'ic_stat_bell');
+    } catch (_) {
+      // Fallback (never block first frame)
+      try {
+        await AlertsScheduler.instance.init(androidSmallIcon: '@mipmap/ic_launcher');
+      } catch (_) {}
+    }
 
     // iOS: present notifications while app is in foreground
     await FirebaseMessaging.instance
@@ -150,13 +180,16 @@ Future<void> main() async {
       sound: true,
     );
 
+    // Run the app
     runApp(const BootstrapApp());
 
-    // Post-frame must be sync; kick off async work via helper
+    // Post-frame async work (unchanged)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_postFrameAsync());
     });
   }, (Object error, StackTrace stack) {
+    // Forward any uncaught async errors to Crashlytics
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     debugPrint('Uncaught async error: $error\n$stack');
   });
 }

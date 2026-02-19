@@ -13,6 +13,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     // Apply Google Services at the module level (after Android & Kotlin)
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 // Read Flutter-generated properties for versioning
@@ -23,7 +24,12 @@ val localProperties = Properties().apply {
 val flutterVersionCode = (localProperties.getProperty("flutter.versionCode") ?: "1").toInt()
 val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0"
 
-// Kotlin DSL at top-level (outside android { ... })
+// ADDED ─ Load keystore credentials from android/key.properties (if present)
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
 kotlin {
     // Ensure Kotlin uses JDK 17 toolchain (AGP 8.x expects JDK 17)
     jvmToolchain(17)
@@ -46,11 +52,9 @@ android {
 
         versionCode = flutterVersionCode
         versionName = flutterVersionName
-        // (deprecated) resConfigs(...) → use androidResources.localeFilters below
-        // resConfigs("en", "ar")
     }
 
-    // ✅ Modern locale packaging filter (replaces resConfigs)
+    // Modern locale packaging filter (replaces resConfigs)
     androidResources {
         // Use addAll for cross-AGP compatibility
         localeFilters.addAll(listOf("en", "ar"))
@@ -64,21 +68,47 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    // ADDED ─ Define release signing (reads from key.properties)
+    signingConfigs {
+        create("release") {
+            // Supports absolute or project-relative path
+            // Example key.properties: storeFile=android/app/release.keystore
+            val storeFilePath = keystoreProps.getProperty("storeFile")
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+            }
+            storePassword = keystoreProps.getProperty("storePassword")
+            keyAlias = keystoreProps.getProperty("keyAlias")
+            keyPassword = keystoreProps.getProperty("keyPassword")
+
+            // Explicitly enable both schemes; modern Android expects v2+.
+            // (These are enabled by default on recent AGP, but called out for clarity.)
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // ADDED ─ Point release at the release signing config
+            // (Do NOT point to signingConfigs.debug; that causes unsigned or debug-signed APKs.)
+            signingConfig = signingConfigs.getByName("release")
+
+            // While we debug the splash issue you saw in release, you can temporarily disable shrinking.
+            // Turn these back ON later and add keep rules once the app runs cleanly.
+            isMinifyEnabled = true  // was true
+            isShrinkResources = true // was true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // signingConfig = signingConfigs.release // when you add a release keystore
         }
-        // ✅ Ensure profile exists and inherits debug flags
+        // Ensure profile exists and inherits debug flags
         maybeCreate("profile").apply {
             initWith(getByName("debug"))
             matchingFallbacks += listOf("debug")
@@ -94,9 +124,7 @@ android {
 }
 
 // --- Dependencies ---
-// If all Firebase usage is via FlutterFire (Dart), you can remove native Firebase deps below.
 dependencies {
-    // Up-to-date suggestions to clear IDE hints
     implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-analytics")
 
@@ -104,34 +132,24 @@ dependencies {
 
     // Desugar runtime
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
-
-    // Add others if you call them natively:
-    // implementation("com.google.firebase:firebase-auth")
-    // implementation("com.google.firebase:firebase-firestore")
-    // implementation("com.google.firebase:firebase-messaging")
-    // implementation("com.google.firebase:firebase-storage")
 }
 
 /* ---------------------------------------------------------------------------
    Helpers to discover build outputs across unflavored & flavored variants.
+   (unchanged)
    --------------------------------------------------------------------------- */
 fun findSingleApk(baseDir: File, suffix: String): File? {
     if (!baseDir.exists()) return null
-    // Prefer a universal APK in the expected dir
     val preferred = File(baseDir, "app-$suffix.apk")
     if (preferred.exists()) return preferred
-    // Otherwise, look for the first matching split APK under the baseDir
     return baseDir
         .walkTopDown()
         .firstOrNull { it.isFile && it.name.endsWith("-$suffix.apk") }
 }
 
 fun findProfileApk(projectDir: File): File? {
-    // Unflavored: build/outputs/apk/profile/app-profile.apk
     val unflavored = File(projectDir, "build/outputs/apk/profile")
     findSingleApk(unflavored, "profile")?.let { return it }
-
-    // Flavored: build/outputs/apk/<flavor>/profile/app-<flavor>-profile.apk
     val apkRoot = File(projectDir, "build/outputs/apk")
     if (!apkRoot.exists()) return null
     apkRoot.listFiles { f -> f.isDirectory }?.forEach { flavorDir ->
@@ -147,23 +165,17 @@ fun findDebugApk(projectDir: File): File? {
 }
 
 fun findReleaseAab(projectDir: File): File? {
-    // Unflavored AAB
     val unflavored = File(projectDir, "build/outputs/bundle/release")
     val preferred = File(unflavored, "app-release.aab")
     if (preferred.exists()) return preferred
-
-    // Flavored AABs: app-<flavor>-release.aab
     return unflavored
         .walkTopDown()
         .firstOrNull { it.isFile && it.name.endsWith("-release.aab") }
 }
 
 /* ---------------------------------------------------------------------------
-   Copy tasks that mirror AGP outputs to the paths Flutter expects.
-   Late-evaluated callables (no Provider#get), skip cleanly if nothing to copy.
+   Copy tasks … (unchanged)
    --------------------------------------------------------------------------- */
-
-// Callable producers that return [] when nothing exists (avoids provider realization errors)
 fun debugApkFiles(root: File): List<File> =
     findDebugApk(root)?.let { listOf(it) } ?: emptyList()
 
@@ -173,19 +185,15 @@ fun profileApkFiles(root: File): List<File> =
 fun releaseAabFiles(root: File): List<File> =
     findReleaseAab(root)?.let { listOf(it) } ?: emptyList()
 
-// DEBUG → <root>/build/app/outputs/flutter-apk/app-debug.apk
 val copyDebugApkToFlutter by tasks.registering(Copy::class) {
     val outDir = layout.projectDirectory.dir("../../build/app/outputs/flutter-apk")
-    // Late evaluation; Copy accepts a Callable/closure
     from({ debugApkFiles(layout.projectDirectory.asFile) })
     into(outDir)
     rename { _ -> "app-debug.apk" }
-    // Skip if no files
     onlyIf { debugApkFiles(layout.projectDirectory.asFile).isNotEmpty() }
     doFirst { outDir.asFile.mkdirs() }
 }
 
-// PROFILE → <root>/build/app/outputs/flutter-apk/app-profile.apk
 val copyProfileApkToFlutter by tasks.registering(Copy::class) {
     val outDir = layout.projectDirectory.dir("../../build/app/outputs/flutter-apk")
     from({ profileApkFiles(layout.projectDirectory.asFile) })
@@ -195,7 +203,6 @@ val copyProfileApkToFlutter by tasks.registering(Copy::class) {
     doFirst { outDir.asFile.mkdirs() }
 }
 
-// RELEASE AAB → <root>/build/app/outputs/bundle/release/app-release.aab
 val copyReleaseAabToFlutter by tasks.registering(Copy::class) {
     val outDir = layout.projectDirectory.dir("../../build/app/outputs/bundle/release")
     from({ releaseAabFiles(layout.projectDirectory.asFile) })
@@ -205,10 +212,6 @@ val copyReleaseAabToFlutter by tasks.registering(Copy::class) {
     doFirst { outDir.asFile.mkdirs() }
 }
 
-/* ---------------------------------------------------------------------------
-   Hook the copy tasks to run *after* the corresponding assemble/bundle tasks.
-   Matches both unflavored & flavored task names.
-   --------------------------------------------------------------------------- */
 tasks.configureEach {
     when (name) {
         "assembleDebug" -> finalizedBy(copyDebugApkToFlutter)

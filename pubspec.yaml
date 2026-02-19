@@ -1,7 +1,7 @@
 name: ialfm_prayer_times
 description: IALFM Prayer Times (Central Time) using Flutter with annual schedule and notifications
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+4
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -28,7 +28,7 @@ dependencies:
 
   # ----- Firebase (aligned with latest FlutterFire 2025/26) -----
   # firebase_core 4.3.x -> Firebase iOS SDK ~12.6.x; matches current Flutter stable toolchain
-  firebase_core: ^4.3.0
+  firebase_core: ^4.4.0
   # Cloud Messaging 16.x (iOS scene delegate support; Android 34 SDK compat)
   firebase_messaging: ^16.1.0
   # Cloud Storage 13.x
@@ -49,6 +49,8 @@ dependencies:
   # Localization for Arabic/English (SDK component, not from pub.dev)
   flutter_localizations:
     sdk: flutter
+  firebase_crashlytics: ^5.0.7
+  firebase_analytics: ^12.1.2
 
 dev_dependencies:
   flutter_test:

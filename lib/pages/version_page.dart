@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import '../main.dart' show AppGradients;
 import '../app_colors.dart';
+import 'package:ialfm_prayer_times/debug_tools.dart';
 
 class VersionInfoPage extends StatefulWidget {
   const VersionInfoPage({super.key});
@@ -68,6 +69,9 @@ class _VersionInfoPageState extends State<VersionInfoPage> {
                 const SizedBox(height: 10),
                 _kv(l10n.version_label, _version, context),
                 _kv(l10n.build_label, _build, context),
+                // ⬇️ Debug-only Crash Test panel (hidden in release or when disabled)
+                const SizedBox(height: 8),
+                const CrashTestPanel(),
               ],
             ),
           ),
