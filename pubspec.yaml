@@ -1,7 +1,7 @@
 name: ialfm_prayer_times
 description: IALFM Prayer Times (Central Time) using Flutter with annual schedule and notifications
 publish_to: 'none'
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -77,6 +77,7 @@ flutter:
     - assets/branding/instagram.svg
     - assets/branding/facebook.svg
     - assets/branding/ialfm_logo.png
+    - assets/branding/ialfm_logo_trimmed.png
   fonts:
     - family: Manrope
       fonts:

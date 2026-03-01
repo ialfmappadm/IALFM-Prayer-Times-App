@@ -192,6 +192,23 @@
   "about_refresh_none_toast": "لا حاجة للتحديث",
   "about_refresh_failed_toast": "فشل التحديث: {error}",
   "@about_refresh_failed_toast": {
-    "placeholders": { "error": {} }
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "page_salah_table_generator_title": "مولّد جدول الصلاة",
+  "label_iqamah_times": "أوقات الإقامة",
+  "msg_no_schedule": "لا توجد جداول محلية لهذا التاريخ.",
+  "btn_download": "تنزيل",
+  "tip_download": "تنزيل",
+  "tip_pick_date": "اختر التاريخ",
+  "tip_poster_on": "عرض الملصق (مفعّل)",
+  "tip_poster_off": "عرض الملصق (غير مفعّل)",
+  "sheet_khateeb_title": "أسماء الخطباء",
+  "label_first_khateeb": "اسم خطيب الجمعة الأولى",
+  "label_youth_khateeb": "اسم الخطيب (الشباب)",
+  "label_unknown_tbd": "غير معروف (استخدم \"TBD\")",
+  "label_khutbah": "الخطبة",
+  "label_iqamah": "الإقامة",
+  "text_sunset_plus_5": "غروب الشمس + ٥ دقائق"
   }
-}
