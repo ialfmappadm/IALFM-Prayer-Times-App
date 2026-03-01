@@ -52,6 +52,8 @@ import 'widgets/iqamah_change_sheet.dart';
 
 import 'dart:ui' as ui show TextDirection;
 import 'package:ialfm_prayer_times/debug_tools.dart';
+import 'package:flutter/services.dart';
+
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -125,6 +127,11 @@ Future<void> main() async {
 
     // Preserve native splash until first frame
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+    // Opt in to edge‑to‑edge (Android 15+ default; enables it on older Android as well)
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    // Keep native splash until first Flutter frame
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
     // Fonts are asset-only (never HTTP)
@@ -632,11 +639,25 @@ class BootstrapApp extends StatelessWidget {
                   valueListenable: UXPrefs.textScale,
                   builder: (context, scale, _) {
                     final mq = MediaQuery.of(context);
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                    // Only control icon brightness; do NOT set status/navigation bar colors.
+                    // This avoids deprecated APIs on Android 15+ and is safe on iOS.
+                    final uiStyle = SystemUiOverlayStyle(
+                      statusBarIconBrightness:
+                      isDark ? Brightness.light : Brightness.dark,
+                      systemNavigationBarIconBrightness:
+                      isDark ? Brightness.light : Brightness.dark,
+                    );
+
                     return Directionality(
                       textDirection: ui.TextDirection.ltr,
-                      child: MediaQuery(
-                        data: mq.copyWith(textScaler: TextScaler.linear(scale)),
-                        child: child!,
+                      child: AnnotatedRegion<SystemUiOverlayStyle>(
+                        value: uiStyle,
+                        child: MediaQuery(
+                          data: mq.copyWith(textScaler: TextScaler.linear(scale)),
+                          child: child!,
+                        ),
                       ),
                     );
                   },

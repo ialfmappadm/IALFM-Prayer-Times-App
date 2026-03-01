@@ -9,6 +9,7 @@ import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 import 'directory_contact_page.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
+import 'salah_table_generator.dart';
 
 // Endpoints / Links
 const String _latestNewsletterEndpoint =
@@ -583,6 +584,17 @@ class _DirectoryPageState extends State<DirectoryPage> {
                           icon: FontAwesomeIcons.handshakeAngle,
                           label: l10n.dir_volunteer,
                           onTap: () => _open(context, _volunteer),
+                        ),
+                        _hairline(context),
+                        _navRow(
+                          context: context,
+                          icon: FontAwesomeIcons.tableList,
+                          label: l10n.page_salah_table_generator_title,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SalahTableGeneratorPage()),
+                            );
+                          },
                         ),
                       ],
                     ),

@@ -192,6 +192,24 @@
   "about_refresh_none_toast": "No update required",
   "about_refresh_failed_toast": "Update failed: {error}",
   "@about_refresh_failed_toast": {
-    "placeholders": { "error": {} }
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "page_salah_table_generator_title": "Salah Table Generator",
+  "label_iqamah_times": "Iqamah Times",
+  "msg_no_schedule": "No local schedule found for this date.",
+  "btn_download": "Download",
+  "tip_download": "Download",
+  "tip_pick_date": "Pick date",
+  "tip_poster_on": "Poster view (ON)",
+  "tip_poster_off": "Poster view (OFF)",
+  "sheet_khateeb_title": "Khateeb Names",
+  "label_first_khateeb": "Khateeb Name",
+  "label_youth_khateeb": "Khateeb Name (Youth)",
+  "label_unknown_tbd": "TBD",
+  "label_khutbah": "Khutbah",
+  "label_iqamah": "Iqamah",
+  "text_sunset_plus_5": "Sunset + 5 mins"
   }
-}
