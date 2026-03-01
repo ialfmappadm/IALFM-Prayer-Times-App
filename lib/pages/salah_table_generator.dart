@@ -200,67 +200,81 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 
     final result = await showModalBottomSheet<_KhateebResult>(
       context: context,
-      useSafeArea: true,
+      useSafeArea: true,                // keep
+      isScrollControlled: true,         // NEW: let the sheet size itself
       showDragHandle: true,
       backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       builder: (ctx) {
         const gold = Color(0xFFC7A447);
         final cs = Theme.of(ctx).colorScheme;
         final l10n = AppLocalizations.of(ctx);
+        final bottomInset  = MediaQuery.of(ctx).viewInsets.bottom;  // keyboard
+        final bottomSafe   = MediaQuery.of(ctx).viewPadding.bottom; // system nav / gesture
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l10n.sheet_khateeb_title, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 10),
-              _FieldWithUnknown(
-                label: l10n.label_first_khateeb, // “Khateeb Name”
-                controller: firstCtrl,
-                unknown: firstUnknown,
-                onUnknownChanged: (v) => firstUnknown = v,
-                formatter: nameFmt,
-              ),
-              const SizedBox(height: 12),
-              if (_isDstOn(_selected))
+        return SafeArea(
+          top: false,
+          child: Padding(
+            // Add BOTH keyboard and safe-area bottoms so buttons never get hidden
+            padding: EdgeInsets.fromLTRB(16, 10, 16, 16 + bottomInset + bottomSafe),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.sheet_khateeb_title,
+                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 10),
+
                 _FieldWithUnknown(
-                  label: l10n.label_youth_khateeb, // “Khateeb Name (Youth)”
-                  controller: youthCtrl,
-                  unknown: youthUnknown,
-                  onUnknownChanged: (v) => youthUnknown = v,
+                  label: l10n.label_first_khateeb,
+                  controller: firstCtrl,
+                  unknown: firstUnknown,
+                  onUnknownChanged: (v) => firstUnknown = v,
                   formatter: nameFmt,
                 ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, null),
-                      child: Text(l10n.btn_cancel),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: gold,
-                        foregroundColor: Colors.black,
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onPressed: () {
-                        String f = firstCtrl.text.trim();
-                        String y = youthCtrl.text.trim();
-                        if (firstUnknown || f.isEmpty) f = 'TBD';
-                        if (_isDstOn(_selected) && (youthUnknown || y.isEmpty)) y = 'TBD';
-                        Navigator.pop(ctx, _KhateebResult(first: f, youth: y));
-                      },
-                      child: Text(l10n.btn_save),
-                    ),
+
+                if (dst) ...[
+                  const SizedBox(height: 12),
+                  _FieldWithUnknown(
+                    label: l10n.label_youth_khateeb,
+                    controller: youthCtrl,
+                    unknown: youthUnknown,
+                    onUnknownChanged: (v) => youthUnknown = v,
+                    formatter: nameFmt,
                   ),
                 ],
-              ),
-            ],
+
+                const SizedBox(height: 16),
+
+                // Actions — Expanded keeps them responsive; padding above handles insets
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, null),
+                        child: Text(l10n.btn_cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: gold,
+                          foregroundColor: Colors.black,
+                          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onPressed: () {
+                          String f = firstCtrl.text.trim();
+                          String y = youthCtrl.text.trim();
+                          if (firstUnknown || f.isEmpty) f = 'TBD';
+                          if (_isDstOn(_selected) && (youthUnknown || y.isEmpty)) y = 'TBD';
+                          Navigator.pop(ctx, _KhateebResult(first: f, youth: y));
+                        },
+                        child: Text(l10n.btn_save),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -436,8 +450,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     // Match SalahTable glass surface
     final Color glassTint   = isLight ? Colors.white.withValues(alpha: 0.70)
         : const Color(0xFF0A1E3A).withValues(alpha: 0.28);
-    final Color glassBorder = isLight ? Colors.white.withValues(alpha: 0.85)
-        : const Color(0xFFC7A447).withValues(alpha: 0.40);
 
     // Headings slightly larger (but not overpowering)
     final headerStyle = TextStyle(
@@ -465,10 +477,10 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 
     // Compact a bit when Youth block is present → fit without scroll
     final bool compact = _isDstOn(_selected);
-    final double rowVPad    = compact ? 10 : 12;
-    final double subRowVPad = compact ? 8  : 10;
-    final double sectionTopPad = compact ? 8 : 10;
-    final double sectionBotPad = compact ? 4 : 6;
+    final double rowVPad    = compact ? 6 : 12;
+    final double subRowVPad = compact ? 4  : 10;
+    final double sectionTopPad = compact ? 4 : 10;
+    final double sectionBotPad = compact ? 3 : 6;
 
     String t(String? s) => (s == null || s.isEmpty) ? '—' : _to12h(s);
 
@@ -497,115 +509,123 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     );
 
     // Panel header
-    Widget header() => Padding(
+// Panel header (tinted line)
+    Widget header() => Container(
+      color: glassTint,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowVPad),
       child: Center(
-        child: Text(l10n.label_iqamah_times, // ← localized “Iqamah Times”
+        child: Text(l10n.label_iqamah_times,
             style: headerStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
     );
 
-    // Regular rows (name on left, time on right)
-    Widget row(String left, String right) => Padding(
+// Regular rows (tinted line)
+    Widget row(String left, String right) => Container(
+      color: glassTint,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowVPad),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             flex: 3,
-            child: Text(left, style: nameStyle, maxLines: 2, softWrap: true, overflow: TextOverflow.ellipsis),
+            child: Text(left, style: nameStyle, maxLines: 2, softWrap: true,
+                overflow: TextOverflow.ellipsis),
           ),
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: Align(
               alignment: Alignment.centerRight,
-              child: Text(right, style: valueStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(right, style: valueStyle, maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             ),
           ),
         ],
       ),
     );
 
-    // Sub‑rows for Jumu‘ah / Youth (Khutbah / Iqamah)
-    Widget subRow(String left, String right) => Padding(
+// Sub‑rows (tinted line, indented)
+    Widget subRow(String left, String right) => Container(
+      color: glassTint,
       padding: EdgeInsets.fromLTRB(28, subRowVPad, 16, subRowVPad),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text(left, style: subNameStyle, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(
+            flex: 3,
+            child: Text(left, style: subNameStyle, maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ),
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: Align(
               alignment: Alignment.centerRight,
-              child: Text(right, style: valueStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(right, style: valueStyle, maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             ),
           ),
         ],
       ),
     );
 
-    // Section headings (Jumu'ah / Youth Jumu'ah)
-    Widget sectionHeading(String title) => Padding(
+// Section headings (tinted line)
+    Widget sectionHeading(String title) => Container(
+      color: glassTint,
       padding: EdgeInsets.fromLTRB(16, sectionTopPad, 16, sectionBotPad),
       child: Text(title, style: sectionStyle),
     );
 
+
     // Glass-styled panel (same look as SalahTable)
-    final panel = DecoratedBox(
-      decoration: BoxDecoration(
-        color: glassTint,
-        border: Border.all(color: glassBorder, width: 1.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          header(),
+    final panel = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        header(),
+        divider(),
+
+        // Regular prayers
+        row(PrayerLabels.prayerName(context, 'Fajr'), fajr), divider(),
+        row(PrayerLabels.prayerName(context, 'Dhuhr'), dhuhr), divider(),
+        row(PrayerLabels.prayerName(context, 'Asr'), asr), divider(),
+        row(PrayerLabels.prayerName(context, 'Maghrib'), maghrib), divider(),
+        row(PrayerLabels.prayerName(context, 'Isha'), isha), divider(),
+
+        // Jumu‘ah group
+        sectionHeading(jumuahTitle),
+        subRow(l10n.label_khutbah, mainKhutbah), divider(0.18),
+        subRow(l10n.label_iqamah,  mainIqamah),  divider(),
+
+        // Khateeb (main)
+        row(l10n.label_first_khateeb,
+            _firstKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : _firstKhateeb.trim()),
+        divider(),
+
+        // Youth group (DST only)
+        if (dst) ...[
+          sectionHeading(youthJumuahTitle),
+          subRow(l10n.label_khutbah, youthKhutbah), divider(0.18),
+          subRow(l10n.label_iqamah,  youthIqamah),  divider(),
+          row(l10n.label_youth_khateeb,
+              _youthKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : _youthKhateeb.trim()),
           divider(),
-
-          // Regular prayers (names via helper → localized automatically)
-          row(PrayerLabels.prayerName(context, 'Fajr'),    fajr),    divider(),
-          row(PrayerLabels.prayerName(context, 'Dhuhr'),   dhuhr),   divider(),
-          row(PrayerLabels.prayerName(context, 'Asr'),     asr),     divider(),
-          row(PrayerLabels.prayerName(context, 'Maghrib'), maghrib), divider(),
-          row(PrayerLabels.prayerName(context, 'Isha'),    isha),    divider(),
-
-          // Jumu‘ah group
-          sectionHeading(jumuahTitle),
-          subRow(l10n.label_khutbah, mainKhutbah), // ← localized “Khutbah”
-          divider(0.18),
-          subRow(l10n.label_iqamah,  mainIqamah),  // ← localized “Iqamah”
-          divider(),
-
-          // Khateeb (main) — localized label + localized TBD fallback
-          row(l10n.label_first_khateeb,
-              _firstKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : _firstKhateeb.trim()),
-          divider(),
-
-          // Youth group (DST only)
-          if (dst) ...[
-            sectionHeading(youthJumuahTitle),
-            subRow(l10n.label_khutbah, youthKhutbah),
-            divider(0.18),
-            subRow(l10n.label_iqamah,  youthIqamah),
-            divider(),
-            row(l10n.label_youth_khateeb,
-                _youthKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : _youthKhateeb.trim()),
-            divider(),
-          ],
         ],
-      ),
+      ],
     );
 
-    // Export: return panel as-is
-    if (!fillHeight) return SizedBox(width: double.infinity, child: panel);
 
-    // On-screen: auto-scale down (if needed) so it never scrolls
+    // On-screen: keep the panel full width.
+    // Export: return panel full-res (no scaling, no scroll)
+    if (!fillHeight) {
+      return SizedBox(
+        width: double.infinity, // full width
+        child: panel,
+      );
+    }
+    // On-screen: fixed full width, no scroll
     return LayoutBuilder(builder: (ctx, cc) {
-      return FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.topCenter,
-        child: SizedBox(width: cc.maxWidth, child: panel),
+      return SizedBox(
+        width: cc.maxWidth,
+        child: panel,
       );
     });
   }
@@ -724,7 +744,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                           return (_layout == _LayoutKind.poster)
                               ? Padding(
                             padding: EdgeInsets.fromLTRB(
-                              12, 0, 12, _hideChrome ? 12 : (_btnReserve + bottomSafe + 12),
+                              0, 0, 0, _hideChrome ? 8 : (bottomSafe + 8),
                             ),
                             child: _posterPanel(
                               day,
@@ -800,7 +820,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 Positioned(
                   // BOTTOM‑RIGHT Download button
                   right: _btnInset + 2,
-                  bottom: _btnInset + bottomSafe,
+                  bottom: (_btnInset - 2) + (bottomSafe > 0 ? bottomSafe + 6 : 6),
                   child: IconButton(
                     onPressed: _selectedDay == null || _isExporting ? null : _exportPng,
                     icon: const Icon(Icons.download, size: 26),
