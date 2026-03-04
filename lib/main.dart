@@ -2,6 +2,7 @@
 // Initializes app, themes, localization, messaging, and local alerts scheduling.
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -209,6 +210,17 @@ Future<void> main() async {
   });
 }
 
+Future<String?> _waitForApnsToken({Duration timeout = const Duration(seconds: 10)}) async {
+  if (!Platform.isIOS) return 'android-or-web'; // not needed elsewhere
+  final end = DateTime.now().add(timeout);
+  String? apns = await FirebaseMessaging.instance.getAPNSToken();
+  while (apns == null && DateTime.now().isBefore(end)) {
+    await Future.delayed(const Duration(milliseconds: 300));
+    apns = await FirebaseMessaging.instance.getAPNSToken();
+  }
+  return apns;
+}
+
 // Async work after first frame (warm-ups + deferred topic subscription)
 Future<void> _postFrameAsync() async {
   unawaited(ClockSkew.calibrate()); // ← one‑line drift guard
@@ -228,11 +240,25 @@ Future<void> _postFrameAsync() async {
   unawaited(
     Future<void>.delayed(const Duration(milliseconds: 1200)).then((_) async {
       try {
+        // 1) Ask for permission (iOS); harmless on Android (no-op)
         final settings = await FirebaseMessaging.instance.requestPermission(
           alert: true, badge: true, sound: true, provisional: false,
         );
         debugPrint('FCM permission (deferred): ${settings.authorizationStatus}');
+
+        // 2) Wait for iOS APNs token before doing token-bound FCM ops
+        final apns = await _waitForApnsToken(timeout: const Duration(seconds: 10));
+        if (apns == null && Platform.isIOS) {
+          debugPrint('[FCM] APNs token not available yet; skipping topic subscribe for now.');
+          return;
+        }
+
+        // 3) Safe to subscribe now (works on Android and iOS once APNs is ready)
         await FirebaseMessaging.instance.subscribeToTopic('allUsers');
+
+        // (Optional) Inspect FCM token
+        final fcm = await FirebaseMessaging.instance.getToken();
+        debugPrint('[FCM] token=${fcm?.substring(0, 12)}…');
       } catch (e, st) {
         debugPrint('Deferred FCM setup error: $e\n$st');
       }

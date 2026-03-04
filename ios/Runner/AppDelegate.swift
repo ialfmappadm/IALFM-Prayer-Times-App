@@ -1,6 +1,6 @@
 import UIKit
 import Flutter
-import Firebase            // ← keep if you want native configure here
+//import Firebase            // ← keep if you want native configure here
 import UserNotifications
 
 @main
@@ -12,7 +12,7 @@ import UserNotifications
   ) -> Bool {
 
     // 1) Configure Firebase (optional if you already call Firebase.initializeApp() in Dart)
-    FirebaseApp.configure()
+    //FirebaseApp.configure()
 
     // 2) iOS 10+: Ask for permission & set notification center delegate
     UNUserNotificationCenter.current().delegate = self
