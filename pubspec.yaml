@@ -51,6 +51,9 @@ dependencies:
     sdk: flutter
   firebase_crashlytics: ^5.0.7
   firebase_analytics: ^12.1.2
+  #image_gallery_saver: ^2.0.3
+  image_gallery_saver_plus: ^4.0.1
+  file_saver: ^0.3.1
 
 dev_dependencies:
   flutter_test:
