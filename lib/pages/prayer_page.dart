@@ -63,7 +63,6 @@ class _PrayerPageState extends State<PrayerPage> {
 
   // Ensures styles exist and match current brightness
   void _ensureStyles(bool isLight) {
-    // If we already computed for this brightness, keep them
     if (_stylesForLight == isLight &&
         _hdrLight != null && _hdrDark != null &&
         _nameLight != null && _nameDark != null &&
@@ -92,6 +91,7 @@ class _PrayerPageState extends State<PrayerPage> {
     super.initState();
     _initTracker();
   }
+
   void _initTracker() {
     _tracker = NextPrayerTracker(
       loc: widget.location,
@@ -169,6 +169,10 @@ class _PrayerPageState extends State<PrayerPage> {
       );
     }
 
+    // Orientation (for compacting header/countdown in landscape)
+    final media = MediaQuery.of(context);
+    final bool isLandscape = media.orientation == Orientation.landscape;
+
     // Table text styles (unchanged)
     _ensureStyles(isLight);
     final headerTextStyle = isLight ? _hdrLight!  : _hdrDark!;
@@ -179,7 +183,6 @@ class _PrayerPageState extends State<PrayerPage> {
     // ── DST (live, zone‑aware) ────────────────────────────────────────────────
     final tz.TZDateTime nowTz = tz.TZDateTime.now(widget.location);
     final bool sysIsDst = () {
-      // Compare today's offset to Jan 1 in same zone — flips naturally on DST days
       final jan1 = tz.TZDateTime(widget.location, nowTz.year, 1, 1);
       return nowTz.timeZoneOffset != jan1.timeZoneOffset;
     }();
@@ -263,7 +266,6 @@ class _PrayerPageState extends State<PrayerPage> {
       tracker: _tracker,
       isLight: isLight,
       title: bannerTitle,
-      // DST-aware now + drift correction:
       nowProvider: () => tz.TZDateTime.now(widget.location).add(ClockSkew.skew),
       onNextChanged: (newName) {
         if (_next?.name != newName && mounted) {
@@ -275,7 +277,8 @@ class _PrayerPageState extends State<PrayerPage> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _guarded(
+        // ── Header row: shown in portrait; hidden in landscape to prioritize table
+        if (!isLandscape) _guarded(
               () => RepaintBoundary(
             child: SizedBox(
               height: _kHeaderHeight,
@@ -289,9 +292,10 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
-        Container(height: 1, color: AppColors.goldDivider),
+        if (!isLandscape)
+          Container(height: 1, color: AppColors.goldDivider),
 
-        if (enableDstPreviewToggle)
+        if (enableDstPreviewToggle && !isLandscape)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(
@@ -332,65 +336,78 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
 
-        // Countdown
-        countdownSection,
+        // Countdown: portrait only (hidden in landscape for maximum table space)
+        if (!isLandscape) countdownSection,
 
+        // ────────────────────────────────────────────────────────────────────
         // Salah Table
-// ───────── Replace your whole Expanded(...) that wraps SalahTable with this ─────────
         Expanded(
           child: _guarded(
                 () => RepaintBoundary(
-              child: Stack(
-                children: [
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Count visible rows the same way SalahTable filters them
+                  final visibleNames = order.where((n) {
+                    final v = adhanByName[n];
+                    return v != null && v.isNotEmpty;
+                  }).toList();
+
+                  // Minimum height needed for a readable, tappable table.
+                  // If landscape, we already hid header/countdown, so less overhead.
+                  const double kTableHeaderMin = 42.0;
+                  const double kRowMin        = 44.0;
+                  final double needMinHeight  = kTableHeaderMin + kRowMin * visibleNames.length;
+                  final bool needScroll       = constraints.maxHeight < needMinHeight;
+
                   // UNDERLAY (light-only): keep previous look in light; disable in dark
-                  if (isLight)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: ClipRect(
-                          child: ImageFiltered(
-                            imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: const DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Color(0xFFD6E6F1), Color(0xFFFFFFFF)],
-                                ),
+                  final underlay = isLight && !isLandscape
+                      ? Positioned.fill(
+                    child: IgnorePointer(
+                      child: ClipRect(
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                          child: const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFFD6E6F1), Color(0xFFFFFFFF)],
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
+                  )
+                      : const SizedBox.shrink();
 
-                  // GLASS TABLE (edge-to-edge)
-                  KeyedSubtree(
+                  // Prefer expanded rows in landscape (more rows visible);
+                  // Scroll only if absolutely necessary to avoid overflow/freeze.
+                  final bool expandRows = isLandscape ? !needScroll : !needScroll;
+
+                  final table = KeyedSubtree(
                     key: const ValueKey('salah_table_glass'),
                     child: SalahTable(
                       adhanByName: adhanByName,
                       iqamahByName: iqamahByName,
                       iqamahWidgetByName: iqamahWidgetByName,
                       highlightName: _titleCase(next.name),
-                      expandRowsToFill: true,
-
+                      expandRowsToFill: expandRows,
                       // Rely on glass container surface
                       headerGreen: false,
                       headerBackgroundGradient: null,
                       headerBackgroundColor: Colors.transparent,
                       rowOddColor: Colors.transparent,
                       rowEvenColor: Colors.transparent,
-
                       highlightColor: AppColors.rowHighlight,
                       highlightColorLight: _kLightHighlight,
                       rowDividerColorLight: _kLightDivider.withValues(alpha: 0.25),
                       rowDividerThickness: 0.8,
-
                       headerStyle: headerTextStyle,
                       nameStyle: nameTextStyle,
                       adhanStyle: valueTextStyle,
                       iqamahStyle: valueTextStyle,
                       order: order,
-
                       // Keep glass surface ON, but tune only the DARK values
                       useGlassSurface: true,
                       glassBlur: 8,
@@ -402,8 +419,15 @@ class _PrayerPageState extends State<PrayerPage> {
                       glassBorderWidth: 1.0,
                       glassRadius: BorderRadius.zero, // edge-to-edge, no outer rounding
                     ),
-                  ),
-                ],
+                  );
+
+                  // If tight height, make the table scroll (never overflows, never “disappears”)
+                  final body = needScroll
+                      ? SingleChildScrollView(padding: EdgeInsets.zero, child: table)
+                      : table;
+
+                  return Stack(children: [if (underlay is! SizedBox) underlay, body]);
+                },
               ),
             ),
           ),
@@ -536,7 +560,6 @@ class _CountdownBannerState extends State<CountdownBanner>
       _ticker = null;
     }
   }
-
 
   void _tickOnce() {
     // Use provided (DST-aware, drift-corrected) time if available; else fallback.
