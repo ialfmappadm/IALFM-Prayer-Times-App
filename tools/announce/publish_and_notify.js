@@ -6,24 +6,27 @@
 //
 // Usage:
 //   node publish_and_notify.js \
-//     --file announcements.json \
+//     --file tools/announce/single_announcement.json \
 //     --project ialfm-prayer-times \
 //     --tz America/Chicago \
 //     --topic allUsers          # optional (sends FCM)
 //
 // Auth (recommended):
-//   export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/ialfm-admin.json"
+//   export GOOGLE_APPLICATION_CREDENTIALS="$PWD/tools/announce/ialfm-admin.json"
 //   export GOOGLE_CLOUD_PROJECT="ialfm-prayer-times"
 
-import admin from 'firebase-admin';
-import fs from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import crypto from 'node:crypto';
+import process from 'node:process';
+
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { getRemoteConfig } from 'firebase-admin/remote-config';
+import { getMessaging } from 'firebase-admin/messaging';
 
 // --- tiny arg helpers (no external deps) ---
 function getArg(name, def) {
   const i = process.argv.indexOf(`--${name}`);
-  if (i >= 0 && i + 1 < process.argv.length) return process.argv[i + 1];
-  return def;
+  return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : def;
 }
 const file    = getArg('file', '');
 const project = getArg('project', process.env.GOOGLE_CLOUD_PROJECT || '');
@@ -33,19 +36,11 @@ const topic   = getArg('topic', ''); // optional
 if (!file)    { console.error('[publish] Missing --file <path>'); process.exit(2); }
 if (!project) { console.error('[publish] Missing --project <id> or $GOOGLE_CLOUD_PROJECT'); process.exit(2); }
 
-// --- admin init (prefers service-account JSON via env) ---
-function initAdmin(projectId) {
-  let credential;
-  const sa = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (sa) {
-    try {
-      const raw = JSON.parse(require('node:fs').readFileSync(sa, 'utf8'));
-      if (raw.type === 'service_account') credential = admin.credential.cert(raw);
-    } catch (_) { /* fall back below */ }
-  }
-  if (!credential) credential = admin.credential.applicationDefault();
-  admin.initializeApp({ credential, projectId });
-}
+// --- admin init (ADC: service-account JSON via env is preferred) ---
+initializeApp({
+  credential: applicationDefault(),
+  projectId: project,
+});
 
 // --- time + fingerprint helpers ---
 function nowStamp(tz) {
@@ -58,7 +53,7 @@ function nowStamp(tz) {
     const parts = Object.fromEntries(fmt.formatToParts(now).map(p => [p.type, p.value]));
     const y = +parts.year, m = +parts.month, d = +parts.day;
     const hh = +parts.hour, mm = +parts.minute, ss = +parts.second;
-    // derive offset like -06:00 by comparing instant
+    // Build an ISO-like string with a best-effort offset (for display only)
     const tzDate = new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
     const diffMin = Math.round((tzDate.getTime() - now.getTime()) / 60000);
     const sign = diffMin >= 0 ? '+' : '-';
@@ -74,7 +69,6 @@ function fpFrom(obj) {
   return crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
 }
 function withPublishedAt(arr, stamp) {
-  // Add published_at to items that don't have it; keep existing values untouched
   return arr.map((it) => {
     const obj = (it && typeof it === 'object') ? { ...it } : {};
     if (!obj.published_at || String(obj.published_at).trim() === '') {
@@ -86,10 +80,8 @@ function withPublishedAt(arr, stamp) {
 
 // --- main ---
 (async () => {
-  initAdmin(project);
-
   // 1) Load the JSON array
-  const raw = await fs.readFile(file, 'utf8');
+  const raw = await readFile(file, 'utf8');
   let arr;
   try {
     arr = JSON.parse(raw);
@@ -107,17 +99,14 @@ function withPublishedAt(arr, stamp) {
   const arrOut = withPublishedAt(arr, stamp);
   const annFp  = fpFrom(arrOut);
 
-  // 3) Write RC (ONLY unprefixed keys your app reads)
-  const rc = admin.remoteConfig();
+  // 3) Publish Remote Config parameters (ONLY the unprefixed keys your app reads)
+  const rc = getRemoteConfig();
   let tpl  = await rc.getTemplate();
   const p  = tpl.parameters ?? {};
 
-  // announcements list + version/fp
   p['announcements_json']        = { defaultValue: { value: JSON.stringify(arrOut) } };
   p['ann_fp']                    = { defaultValue: { value: annFp } };
   p['announcements_version']     = { defaultValue: { value: annFp } };
-
-  // single card OFF so the list shows
   p['announcement_active']       = { defaultValue: { value: 'false' } };
   p['announcement_title']        = { defaultValue: { value: '' } };
   p['announcement_text']         = { defaultValue: { value: '' } };
@@ -131,13 +120,20 @@ function withPublishedAt(arr, stamp) {
   console.log(`[publish] RC published version=${version}; ann_fp=${annFp}`);
   console.log('[publish] announcements_json.length =', JSON.stringify(arrOut).length);
 
-  // 4) Optional FCM notify (data-only)
+  // 4) Optional FCM notify (data-only, iOS background)
   if (topic) {
-    const id = await admin.messaging().send({
+    const id = await getMessaging().send({
       topic,
       data: { ann_fp: String(annFp), ann_count: String(arrOut.length) },
-      android: { priority: 'high' },
-      apns: { headers: { 'apns-push-type': 'background' }, payload: { aps: { 'content-available': 1 } } },
+      // iOS silent/background requirements:
+      apns: {
+        headers: {
+          'apns-push-type': 'background',
+          'apns-priority': '5'  // required for background on Apple platforms
+        },
+        payload: { aps: { 'content-available': 1 } }
+      },
+      // (Android side can ignore; you can add android config if you need)
     });
     console.log('[publish] FCM data sent →', id);
   }

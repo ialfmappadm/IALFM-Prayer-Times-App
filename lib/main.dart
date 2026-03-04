@@ -49,11 +49,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'services/iqamah_change_service.dart';
 // Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
 import 'widgets/iqamah_change_sheet.dart';
-
 import 'dart:ui' as ui show TextDirection;
 import 'package:ialfm_prayer_times/debug_tools.dart';
 import 'package:flutter/services.dart';
-
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
@@ -112,13 +110,23 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
   final year = (yearStr != null) ? int.tryParse(yearStr) : null;
-
   if (shouldRefresh) {
     await repo.refreshFromFirebase(year: year);
   }
-}
 
+  // NEW: Persist announcement fingerprint from a silent/background push
+  // This allows the UI to light the red dot on next app open/resume.
+  try {
+    final fp = message.data['ann_fp'] as String?;
+    if (fp != null && fp.isNotEmpty) {
+      await UXPrefs.setString('ux.ann.pendingFp', fp);
+    }
+  } catch (_) {
+    // If UXPrefs isn't background-safe on your setup, switch to a file write here.
+  }
+}
 // -----------------------------------------------------------------------------
+
 // App entry point
 Future<void> main() async {
   runZonedGuarded(() async {
@@ -204,15 +212,16 @@ Future<void> main() async {
 // Async work after first frame (warm-ups + deferred topic subscription)
 Future<void> _postFrameAsync() async {
   unawaited(ClockSkew.calibrate()); // ← one‑line drift guard
+
   // Reacquire and use BuildContext inside helpers so we never hold it across awaits.
-  await _warmImages();  // uses ctx immediately, then awaits
+  await _warmImages(); // uses ctx immediately, then awaits
+
   // Non-context work
   final cache = PaintingBinding.instance.imageCache;
   cache.maximumSize = (cache.maximumSize * 1.3).round();
 
-  await warmIntl();                      // pre-warm EN+AR formats (from warm_up.dart)
-  await _preReadPrefsAndRemoteConfig();  // pre-read prefs & kick RC in background
-
+  await warmIntl(); // pre-warm EN+AR formats (from warm_up.dart)
+  await _preReadPrefsAndRemoteConfig(); // pre-read prefs & kick RC in background
   await _warmSalahRow(); // reacquires ctx and uses it immediately, then awaits
 
   // Defer FCM permission + topic subscription (~1.2s after first paint)
@@ -260,10 +269,9 @@ Future<void> _preReadPrefsAndRemoteConfig() async {
     // Seed Remote Config defaults and fetch in the background
     final rc = FirebaseRemoteConfig.instance;
     await rc.setDefaults({
-      'ann_fp': '',               // announcements fingerprint
+      'ann_fp': '', // announcements fingerprint
       'feature_x_enabled': false, // example feature flag
     });
-
     // Don’t block UI—fire and forget
     unawaited(rc.fetchAndActivate());
   } catch (e, st) {
@@ -299,28 +307,22 @@ const ColorScheme lightColorScheme = ColorScheme(
 
 const ColorScheme darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
-  primary: Color(0xFF0A2C42),      // Navy
+  primary: Color(0xFF0A2C42), // Navy
   onPrimary: Color(0xFFE7EEF4),
   primaryContainer: Color(0xFF0F1A22),
   onPrimaryContainer: Color(0xFFE7EEF4),
-
-  secondary: Color(0xFFC7A447),    // Gold
+  secondary: Color(0xFFC7A447), // Gold
   onSecondary: Color(0xFF1A1400),
-
-  surface: Color(0xFF0A1116),      // inky canvas
+  surface: Color(0xFF0A1116), // inky canvas
   onSurface: Color(0xFFE8EDF3),
-
-  outline: Color(0x14FFFFFF),      // white @ ~8%
+  outline: Color(0x14FFFFFF), // white @ ~8%
   outlineVariant: Color(0x1AFFFFFF),
-
   error: Color(0xFFF29682),
   onError: Color(0xFF2B0D08),
   errorContainer: Color(0xFF3A1E1B),
   onErrorContainer: Color(0xFFFAD9D3),
-
   inverseSurface: Color(0xFFE8EDF3),
   onInverseSurface: Color(0xFF0A1116),
-
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
@@ -358,7 +360,7 @@ class AppGradients extends ThemeExtension<AppGradients> {
   }
 
   static const light = AppGradients(page: pageGradientLight);
-  static const dark  = AppGradients(page: pageGradientDark);
+  static const dark = AppGradients(page: pageGradientDark);
 }
 
 // -----------------------------------------------------------------------------
@@ -384,7 +386,6 @@ class BootstrapApp extends StatelessWidget {
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
               titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
             );
-
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
 
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
@@ -396,28 +397,28 @@ class BootstrapApp extends StatelessWidget {
               t.bodyLarge?.copyWith(fontFamilyFallback: arabicFallback),
               titleSmall:
               t.titleSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium:
-              t.titleMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium: t.titleMedium
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
               titleLarge:
               t.titleLarge?.copyWith(fontFamilyFallback: arabicFallback),
               labelSmall:
               t.labelSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium:
-              t.labelMedium?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium: t.labelMedium
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
               labelLarge:
               t.labelLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall:
-              t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
-              displayMedium:
-              t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge:
-              t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall:
-              t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineMedium:
-              t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge:
-              t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall: t.displaySmall
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
+              displayMedium: t.displayMedium
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge: t.displayLarge
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall: t.headlineSmall
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineMedium: t.headlineMedium
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge: t.headlineLarge
+                  ?.copyWith(fontFamilyFallback: arabicFallback),
             );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
@@ -446,11 +447,14 @@ class BootstrapApp extends StatelessWidget {
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.light,
@@ -459,28 +463,22 @@ class BootstrapApp extends StatelessWidget {
 
             const ColorScheme darkColorScheme = ColorScheme(
               brightness: Brightness.dark,
-              primary: Color(0xFF0A1E3A),      // Navy
+              primary: Color(0xFF0A1E3A), // Navy
               onPrimary: Color(0xFFE7EEF4),
               primaryContainer: Color(0xFF0F1A22),
               onPrimaryContainer: Color(0xFFE7EEF4),
-
-              secondary: Color(0xFFC7A447),    // Gold
+              secondary: Color(0xFFC7A447), // Gold
               onSecondary: Color(0xFF1A1400),
-
-              surface: Color(0xFF0A101B),      // inky canvas
+              surface: Color(0xFF0A101B), // inky canvas
               onSurface: Color(0xFFE8EDF3),
-
-              outline: Color(0x14FFFFFF),      // white @ ~8%
+              outline: Color(0x14FFFFFF), // white @ ~8%
               outlineVariant: Color(0x1AFFFFFF),
-
               error: Color(0xFFF29682),
               onError: Color(0xFF2B0D08),
               errorContainer: Color(0xFF3A1E1B),
               onErrorContainer: Color(0xFFFAD9D3),
-
               inverseSurface: Color(0xFFE8EDF3),
               onInverseSurface: Color(0xFF0A1116),
-
               shadow: Color(0xFF000000),
               scrim: Color(0xFF000000),
             );
@@ -488,37 +486,39 @@ class BootstrapApp extends StatelessWidget {
             final ThemeData baseDark = ThemeData(
               brightness: Brightness.dark,
               useMaterial3: true,
-              colorScheme: darkColorScheme, // the const scheme defined above in BootstrapApp
+              colorScheme:
+              darkColorScheme, // the const scheme defined above in BootstrapApp
               scaffoldBackgroundColor: darkColorScheme.surface,
               textTheme: chosenDark,
-
               // Keep your existing nav bar look
               navigationBarTheme: NavigationBarThemeData(
                 backgroundColor: darkColorScheme.surface,
                 surfaceTintColor: Colors.transparent,
                 indicatorColor: Colors.transparent,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-                  final selected = states.contains(WidgetState.selected);
-                  return IconThemeData(
-                    color: selected
-                        ? Colors.white.withValues(alpha: 0.95)
-                        : Colors.white.withValues(alpha: 0.72),
-                  );
-                }),
+                iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                        (states) {
+                      final selected = states.contains(WidgetState.selected);
+                      return IconThemeData(
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.95)
+                            : Colors.white.withValues(alpha: 0.72),
+                      );
+                    }),
               ),
-
               // Make snackbars readable in dark (kept from your current code)
               snackBarTheme: SnackBarThemeData(
                 backgroundColor: Colors.white,
                 contentTextStyle: const TextStyle(
-                    color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600),
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
                 actionTextColor: Colors.black,
                 elevation: 3,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-
               // ---- New: pin common interaction widgets for dark ----
               // Tiles (ListTile + ExpansionTile) should keep onSurface for text/icons even when expanded/pressed.
               listTileTheme: ListTileThemeData(
@@ -531,20 +531,23 @@ class BootstrapApp extends StatelessWidget {
                 collapsedTextColor: darkColorScheme.onSurface,
                 collapsedIconColor: darkColorScheme.onSurface,
               ),
-
               // Buttons — keep readable foregrounds on dark and predictable overlays.
               textButtonTheme: TextButtonThemeData(
                 style: ButtonStyle(
-                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
-                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                  foregroundColor:
+                  WidgetStateProperty.all(darkColorScheme.onSurface),
+                  overlayColor:
+                  WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
                 ),
               ),
               outlinedButtonTheme: OutlinedButtonThemeData(
                 style: ButtonStyle(
-                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
+                  foregroundColor:
+                  WidgetStateProperty.all(darkColorScheme.onSurface),
                   side: WidgetStateProperty.all(
                       BorderSide(color: darkColorScheme.outline.withValues(alpha: 0.50))),
-                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                  overlayColor:
+                  WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
                 ),
               ),
               // Applies to both FilledButton and FilledButton.tonal unless locally overridden.
@@ -552,24 +555,27 @@ class BootstrapApp extends StatelessWidget {
                 style: ButtonStyle(
                   // Use gold by default for primary filled buttons; your sheets already
                   // specify gold explicitly, so this just unifies elsewhere.
-                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                  backgroundColor:
+                  WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.disabled)) {
                       return darkColorScheme.surface.withValues(alpha: 0.38);
                     }
                     return darkColorScheme.secondary; // gold
                   }),
                   foregroundColor: WidgetStateProperty.all(Colors.black),
-                  overlayColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.06)),
+                  overlayColor:
+                  WidgetStateProperty.all(Colors.black.withValues(alpha: 0.06)),
                 ),
               ),
               segmentedButtonTheme: SegmentedButtonThemeData(
                 style: ButtonStyle(
                   // Ensure labels stay readable on the dark card background
-                  foregroundColor: WidgetStateProperty.all(darkColorScheme.onSurface),
-                  overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
+                  foregroundColor:
+                  WidgetStateProperty.all(darkColorScheme.onSurface),
+                  overlayColor:
+                  WidgetStateProperty.all(Colors.white.withValues(alpha: 0.06)),
                 ),
               ),
-
               // Bottom sheets should stay on your dark surface (no surprise tint)
               bottomSheetTheme: const BottomSheetThemeData(
                 backgroundColor: Color(0xFF0A101B), // same as dark surface
@@ -579,18 +585,17 @@ class BootstrapApp extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                 ),
               ),
-
               // Subtle, consistent ink ripple in dark
               splashColor: Colors.white.withValues(alpha: 0.08),
               highlightColor: Colors.white.withValues(alpha: 0.06),
-
               // Keep your gradients
               extensions: const <ThemeExtension<dynamic>>[
                 AppGradients.dark,
               ],
               switchTheme: SwitchThemeData(
                 // Track fill
-                trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+                trackColor:
+                WidgetStateProperty.resolveWith<Color>((states) {
                   final on = states.contains(WidgetState.selected);
                   final disabled = states.contains(WidgetState.disabled);
                   if (disabled) return Colors.white.withValues(alpha: 0.12);
@@ -599,7 +604,8 @@ class BootstrapApp extends StatelessWidget {
                       : Colors.white.withValues(alpha: 0.22);
                 }),
                 // Track outline (gives definition on dark backgrounds)
-                trackOutlineColor: WidgetStateProperty.resolveWith<Color>((states) {
+                trackOutlineColor:
+                WidgetStateProperty.resolveWith<Color>((states) {
                   final on = states.contains(WidgetState.selected);
                   final disabled = states.contains(WidgetState.disabled);
                   if (disabled) return Colors.white.withValues(alpha: 0.16);
@@ -608,7 +614,8 @@ class BootstrapApp extends StatelessWidget {
                       : Colors.white.withValues(alpha: 0.35);
                 }),
                 // Thumb: bright in both states for readability
-                thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+                thumbColor:
+                WidgetStateProperty.resolveWith<Color>((states) {
                   final on = states.contains(WidgetState.selected);
                   final disabled = states.contains(WidgetState.disabled);
                   if (disabled) return Colors.white.withValues(alpha: 0.40);
@@ -616,7 +623,6 @@ class BootstrapApp extends StatelessWidget {
                 }),
               ),
             );
-
 
             return MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -630,10 +636,8 @@ class BootstrapApp extends StatelessWidget {
               locale: appLocale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-
               // Enable app-wide state restoration (restores nav + restorable state)
               restorationScopeId: 'app',
-
               builder: (context, child) {
                 return ValueListenableBuilder<double>(
                   valueListenable: UXPrefs.textScale,
@@ -671,11 +675,11 @@ class BootstrapApp extends StatelessWidget {
     );
   }
 }
-
 // -----------------------------------------------------------------------------
 // Bootstrap Screen
 class _BootstrapScreen extends StatefulWidget {
   const _BootstrapScreen();
+
   @override
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -771,6 +775,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _maybeShowIqamahChangePrompt(r);
           });
+
           return HomeTabs(
             location: r.location,
             nowLocal: r.nowLocal,
@@ -834,21 +839,19 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       debugPrint('loadPrayerDays() error: $e\n$st');
       days = <PrayerDay>[];
     }
+
     final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
     final PrayerDay today = _findByDate(days, todayDate) ??
         (days.isNotEmpty ? days.first : _dummyDay(todayDate));
-
     final tomorrowDate = todayDate.add(const Duration(days: 1));
     final PrayerDay? tomorrow = _findByDate(days, tomorrowDate);
 
     // Weather (non‑blocking)
     final coords = _coordsForLocation(location);
-
     final double? currentTempF = await _fetchTemperatureF(
       latitude: coords.lat,
       longitude: coords.lon,
     ).timeout(const Duration(seconds: 10), onTimeout: () => null);
-
     debugPrint('[Weather] final currentTempF=${currentTempF?.toStringAsFixed(1) ?? 'null (will use default)'}');
 
     // Schedule local alerts (only if OS notifications are enabled)
@@ -931,6 +934,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
       await UXPrefs.setString(_kLastDailyCheckYMD, todayYMD);
 
       final year = DateTime.now().year;
+
       // Peek metadata (no content download)
       // CHANGED: use chained child() to avoid leading-slash issues.
       final ref = FirebaseStorage.instance
@@ -998,7 +1002,8 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
     // Fallback: double-check at the plugin level (Android) to avoid stale false negatives.
     bool finalAuthorized = authorized;
     try {
-      final enabled = await AlertsScheduler.instance.areNotificationsEnabledAndroid();
+      final enabled =
+      await AlertsScheduler.instance.areNotificationsEnabledAndroid();
       if (enabled == true && !authorized) {
         debugPrint('[Alerts] App status said "not authorized", but Android reports '
             'notifications ENABLED → proceeding.');
@@ -1201,22 +1206,21 @@ class _BootstrapScreenState extends State<_BootstrapScreen>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     final begin = fmt(date);
     final Map<String, PrayerTime> prayers = {
-      'fajr':    PrayerTime(begin: begin, iqamah: ''),
-      'dhuhr':   PrayerTime(begin: begin, iqamah: ''),
-      'asr':     PrayerTime(begin: begin, iqamah: ''),
+      'fajr': PrayerTime(begin: begin, iqamah: ''),
+      'dhuhr': PrayerTime(begin: begin, iqamah: ''),
+      'asr': PrayerTime(begin: begin, iqamah: ''),
       'maghrib': PrayerTime(begin: begin, iqamah: ''),
-      'isha':    PrayerTime(begin: begin, iqamah: ''),
+      'isha': PrayerTime(begin: begin, iqamah: ''),
     };
     return PrayerDay(
       date: date,
       prayers: prayers,
       sunrise: begin,
-      sunset:  begin,
-      serial:  0,
+      sunset: begin,
+      serial: 0,
     );
   }
 }
-
 // -----------------------------------------------------------------------------
 // Result wrapper
 class _InitResult {
@@ -1226,6 +1230,7 @@ class _InitResult {
   final PrayerDay? tomorrow;
   final double? temperatureF;
   final IqamahChange? upcomingChange;
+
   _InitResult({
     required this.location,
     required this.nowLocal,
@@ -1235,13 +1240,13 @@ class _InitResult {
     required this.upcomingChange,
   });
 }
-
 // -----------------------------------------------------------------------------
 // Splash
 class _SplashScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback? onRetry;
+
   const _SplashScaffold({
     super.key,
     required this.title,
@@ -1283,7 +1288,6 @@ class _SplashScaffold extends StatelessWidget {
     );
   }
 }
-
 // -----------------------------------------------------------------------------
 // Navigation (HomeTabs)
 class HomeTabs extends StatefulWidget {
@@ -1292,6 +1296,7 @@ class HomeTabs extends StatefulWidget {
   final PrayerDay today;
   final PrayerDay? tomorrow;
   final double? temperatureF;
+
   const HomeTabs({
     super.key,
     required this.location,
@@ -1309,12 +1314,13 @@ class _HomeTabsState extends State<HomeTabs>
     with WidgetsBindingObserver, RestorationMixin {
   // Restorable selected index
   final RestorableInt _restorableIndex = RestorableInt(0);
-
   bool hasNewAnnouncement = false;
 
   // Announcement fingerprint keys
   static const _kAnnSeenFp = 'ux.ann.lastSeenFp'; // last seen by the user
-  String? _annFp;                                 // latest fetched/received fp
+  static const _kAnnPendingFp = 'ux.ann.pendingFp'; // NEW: set by BG handler
+
+  String? _annFp; // latest fetched/received fp
 
   @override
   String? get restorationId => 'home_tabs';
@@ -1361,6 +1367,9 @@ class _HomeTabsState extends State<HomeTabs>
       }
     });
 
+    // NEW: apply any fingerprint persisted by the background isolate
+    unawaited(_applyPendingAnnFpIfAny());
+
     // RC fallback: pick up changes even when no FCM was sent
     unawaited(_fetchAnnFpFromRC());
 
@@ -1372,6 +1381,8 @@ class _HomeTabsState extends State<HomeTabs>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Refresh from RC when app returns to foreground
     if (state == AppLifecycleState.resumed) {
+      // NEW: pick up any background-delivered fingerprint first
+      unawaited(_applyPendingAnnFpIfAny());
       unawaited(_fetchAnnFpFromRC());
     }
   }
@@ -1390,6 +1401,19 @@ class _HomeTabsState extends State<HomeTabs>
       await _applyAnnFp(fp.isEmpty ? null : fp);
     } catch (_) {
       // swallow — dot just won't update from RC this time
+    }
+  }
+
+  // NEW: Compare pending fingerprint to what user last saw; light the dot if different, then clear pending.
+  Future<void> _applyPendingAnnFpIfAny() async {
+    try {
+      final pending = await UXPrefs.getString(_kAnnPendingFp);
+      if (pending != null && pending.isNotEmpty) {
+        await _applyAnnFp(pending);
+        await UXPrefs.setString(_kAnnPendingFp, ''); // clear pending
+      }
+    } catch (_) {
+      // no-op
     }
   }
 
@@ -1451,6 +1475,7 @@ class _HomeTabsState extends State<HomeTabs>
           },
           destinations: [
             const NavigationDestination(label: '', icon: Icon(Icons.schedule)),
+
             // 🔔 with red dot
             NavigationDestination(
               label: '',
@@ -1458,14 +1483,18 @@ class _HomeTabsState extends State<HomeTabs>
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2, top: -2,
+                    right: -2,
+                    top: -2,
                     child: Container(
-                      width: 10, height: 10,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle,
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white : Colors.black,
+                              ? Colors.white
+                              : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1476,14 +1505,18 @@ class _HomeTabsState extends State<HomeTabs>
                 const FaIcon(FontAwesomeIcons.bell, size: 20),
                 if (hasNewAnnouncement)
                   Positioned(
-                    right: -2, top: -2,
+                    right: -2,
+                    top: -2,
                     child: Container(
-                      width: 10, height: 10,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle,
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.white : Colors.black,
+                              ? Colors.white
+                              : Colors.black,
                           width: 1.5,
                         ),
                       ),
@@ -1491,6 +1524,7 @@ class _HomeTabsState extends State<HomeTabs>
                   ),
               ]),
             ),
+
             const NavigationDestination(
               label: '', icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
             ),
@@ -1504,7 +1538,6 @@ class _HomeTabsState extends State<HomeTabs>
     );
   }
 }
-
 // -----------------------------------------------------------------------------
 // Helpers (coords & weather)
 class LatLon {
@@ -1533,10 +1566,8 @@ Future<double?> _fetchTemperatureF({
       'temperature_unit': 'fahrenheit',
       'timezone': 'auto',
     });
-
     debugPrint('[Weather] GET $uri');
     final resp = await http.get(uri).timeout(const Duration(seconds: 10));
-
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final cw = data['current_weather'] as Map<String, dynamic>?;
