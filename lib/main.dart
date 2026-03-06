@@ -8,15 +8,18 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:timezone/timezone.dart' as tz;
+
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+
 // Locale & prefs
 import 'locale_controller.dart';
 import 'theme_controller.dart';
 import 'ux_prefs.dart';
+
 // UI & pages
 import 'app_colors.dart';
 import 'models.dart';
@@ -26,33 +29,43 @@ import 'pages/social_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/more_page.dart';
 import 'utils/time_utils.dart';
-// RESTORED: repository import (fixes PrayerTimesRepository type)
+
+// Repository
 import 'prayer_times_firebase.dart';
+
 // Hijri override
 import 'services/hijri_override_service.dart';
 import 'package:hijri/hijri_calendar.dart';
+
 // Haptics
 import 'utils/haptics.dart';
+
 // Notifications opt-in + local scheduler
 import 'services/notification_optin_service.dart';
 import 'services/alerts_scheduler.dart';
+
 // Localization
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
-// NEW: warm-ups (images + glyphs)
+
+// Warm-ups (images + glyphs)
 import 'warm_up.dart';
 
-// NEW: Font Awesome for bottom bar icons
+// Font Awesome for bottom bar icons
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 // Iqamah change detector (local JSON only)
 import 'services/iqamah_change_service.dart';
+
+// Centralized popup UI (no bullets / 12‑hour / single‑Salah big time)
+import 'widgets/iqamah_change_sheet.dart';
 
 // -- Navigation UI tuning
 const double kNavIconSize = 18.0;
 const double kNavBarHeight = 50.0;
 final GlobalKey<ScaffoldMessengerState> messengerKey =
 GlobalKey<ScaffoldMessengerState>();
-// NEW: navigator key for a safe top-level BuildContext after first frame
+
+// Navigator key for a safe top-level BuildContext after first frame
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
 // Background FCM handler
@@ -68,7 +81,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     providerApple:
     kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
-  // ✅ Now resolves with the restored import
   final repo = PrayerTimesRepository();
   final shouldRefresh = message.data['updatePrayerTimes'] == 'true';
   final yearStr = message.data['year'];
@@ -83,6 +95,12 @@ Future<void> main() async {
     BindingBase.debugZoneErrorsAreFatal = true;
     final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+    // Force GoogleFonts to ONLY use bundled asset fonts (never HTTP)
+    GoogleFonts.config.allowRuntimeFetching = false;
+
+    // Enable detector logs if needed
+    IqamahChangeService.logEnabled = true;
 
     // Firebase init + App Check
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -119,19 +137,18 @@ Future<void> main() async {
 
     runApp(const BootstrapApp());
 
-    // 🔹 Warm-ups AFTER the first frame (does NOT block first paint)
+    // Warm-ups AFTER the first frame (does NOT block first paint)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final ctx = navKey.currentContext;
       if (ctx != null) {
         await warmUpAboveTheFold(ctx);
       }
 
-      // 🔹 Slightly increase image cache to avoid early evictions of small assets
-      // used across top header / nav during first interactions.
+      // Slightly increase image cache to avoid early evictions of small assets
       final cache = PaintingBinding.instance.imageCache;
       cache.maximumSize = (cache.maximumSize * 1.3).round();
 
-      // 🔹 Defer FCM permission + topic subscription ~1.2s after first paint
+      // Defer FCM permission + topic subscription ~1.2s after first paint
       unawaited(Future<void>(() async {
         await Future<void>.delayed(const Duration(milliseconds: 1200));
         try {
@@ -175,6 +192,7 @@ const ColorScheme lightColorScheme = ColorScheme(
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
+
 const LinearGradient pageGradientLight = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -207,35 +225,40 @@ class BootstrapApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure GoogleFonts never tries HTTP; will use your asset TTFs
+    GoogleFonts.config.allowRuntimeFetching = false;
+
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeMode,
       builder: (context, mode, _) {
         return ValueListenableBuilder<Locale?>(
           valueListenable: LocaleController.locale,
           builder: (context, appLocale, __) {
-            final TextTheme baseLatin = GoogleFonts.manropeTextTheme().copyWith(
+            // Build Manrope-based text theme using ASSET fonts registered in pubspec.yaml
+            final TextTheme baseLatin =
+            GoogleFonts.manropeTextTheme(ThemeData(brightness: Brightness.light).textTheme)
+                .copyWith(
               titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-              titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-              bodyMedium: GoogleFonts.manrope(),
-              bodyLarge: GoogleFonts.manrope(),
+              titleLarge:  GoogleFonts.manrope(fontWeight: FontWeight.w700),
             );
+
             const arabicFallback = ['IBM Plex Sans Arabic', 'Noto Sans Arabic'];
             TextTheme addFallbacks(TextTheme t) => t.copyWith(
-              bodySmall: t.bodySmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyMedium: t.bodyMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              bodyLarge: t.bodyLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleSmall: t.titleSmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleMedium: t.titleMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              titleLarge: t.titleLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelSmall: t.labelSmall ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelMedium: t.labelMedium ?.copyWith(fontFamilyFallback: arabicFallback),
-              labelLarge: t.labelLarge ?.copyWith(fontFamilyFallback: arabicFallback),
-              displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: arabicFallback),
+              bodySmall:    t.bodySmall    ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyMedium:   t.bodyMedium   ?.copyWith(fontFamilyFallback: arabicFallback),
+              bodyLarge:    t.bodyLarge    ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleSmall:   t.titleSmall   ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleMedium:  t.titleMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
+              titleLarge:   t.titleLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelSmall:   t.labelSmall   ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelMedium:  t.labelMedium  ?.copyWith(fontFamilyFallback: arabicFallback),
+              labelLarge:   t.labelLarge   ?.copyWith(fontFamilyFallback: arabicFallback),
+              displaySmall: t.displaySmall ?.copyWith(fontFamilyFallback: arabicFallback),
               displayMedium:t.displayMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
+              displayLarge: t.displayLarge ?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineSmall:t.headlineSmall?.copyWith(fontFamilyFallback: arabicFallback),
               headlineMedium:t.headlineMedium?.copyWith(fontFamilyFallback: arabicFallback),
-              headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
+              headlineLarge:t.headlineLarge?.copyWith(fontFamilyFallback: arabicFallback),
             );
 
             final TextTheme chosenLight = addFallbacks(baseLatin);
@@ -316,7 +339,7 @@ class BootstrapApp extends StatelessWidget {
               theme: baseLight,
               darkTheme: baseDark,
               scaffoldMessengerKey: messengerKey,
-              // NEW: navigator key (so we can grab a context post-frame)
+              // navigator key (so we can grab a context post-frame)
               navigatorKey: navKey,
               navigatorObservers: [HapticNavigatorObserver()],
               locale: appLocale,
@@ -355,7 +378,7 @@ class _BootstrapScreen extends StatefulWidget {
 
 class _BootstrapScreenState extends State<_BootstrapScreen> {
   late Future<_InitResult> _initFuture;
-  final PrayerTimesRepository _repo = PrayerTimesRepository(); // ✅ now resolves
+  final PrayerTimesRepository _repo = PrayerTimesRepository();
   Timer? _midnightTimer;
 
   @override
@@ -427,7 +450,6 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   }
 
   Future<_InitResult> _initializeAll() async {
-    // (kept as-is; FCM prompt now deferred post-frame)
     // Timezone init (central time)
     tz.Location location;
     try {
@@ -556,7 +578,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     final maghribIqamah = mkTime(base, today.prayers['maghrib']?.iqamah ?? '');
     final ishaIqamah = mkTime(base, today.prayers['isha']?.iqamah ?? '');
 
-    // Read toggles from UXPrefs (you wired these earlier)
+    // Read toggles from UXPrefs
     final bool adhanEnabled  = UXPrefs.adhanAlertEnabled.value;
     final bool iqamahEnabled = UXPrefs.iqamahAlertEnabled.value;
     final bool jumuahEnabled = UXPrefs.jumuahReminderEnabled.value;
@@ -583,136 +605,40 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     );
   }
 
-  // ---- Iqamah change prompt helpers ----
+  // ---- Iqamah change prompt helpers (unified sheet) ----
   Future<void> _maybeShowIqamahChangePrompt(_InitResult r) async {
     final ch = r.upcomingChange;
     if (ch == null || !ch.anyChange) return;
 
     // First-open-of-day guard (prevents re-prompting if user reopens app)
     final firstOpen = await UXPrefs.markOpenToday(r.nowLocal);
-    if (!mounted) return; // ⬅️ fix: don't use context after async gap
+    if (!mounted) return;
     if (!firstOpen) return;
 
     final changeYMD = ch.changeYMD;
-    final daysToChange = ch.changeDate.difference(r.today.date).inDays;
+    final delta = ch.daysToChange; // use detector’s own delta
 
-    if (daysToChange == 2) {
+    if (delta == 2) {
       if (!UXPrefs.wasShownHeadsUp(changeYMD)) {
-        await _showIqamahHeadsUpSheet(context, ch, changeYMD);
-        if (!mounted) return; // ⬅️ fix after await
+        await showIqamahChangeSheet(context, ch); // new UI (no bullets)
+        if (!mounted) return;
         await UXPrefs.markShownHeadsUp(changeYMD);
       }
       return;
     }
 
-    if (daysToChange == 1) {
-      final afterMaghrib = IqamahChangeService.isAfterMaghrib(
+    if (delta == 1) {
+      final afterCutoff = IqamahChangeService.isAfterMaghrib(
         today: r.today,
         nowLocal: r.nowLocal,
       );
-      if (afterMaghrib && !UXPrefs.wasShownNightBefore(changeYMD)) {
-        await _showIqamahNightBeforeSheet(context, ch, changeYMD);
-        if (!mounted) return; // ⬅️ fix after await
+      if (afterCutoff && !UXPrefs.wasShownNightBefore(changeYMD)) {
+        await showIqamahChangeSheet(context, ch); // new UI (no bullets)
+        if (!mounted) return;
         await UXPrefs.markShownNightBefore(changeYMD);
       }
       return;
     }
-  }
-
-  Future<void> _showIqamahHeadsUpSheet(
-      BuildContext context, IqamahChange ch, String changeYMD) async {
-    const gold = Color(0xFFC7A447);
-    final cs = Theme.of(context).colorScheme;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Upcoming Iqamah Change (in 2 days)',
-                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text(
-                  'Changes effective on $changeYMD:',
-                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)),
-                ),
-                const SizedBox(height: 8),
-                ...ch.prettyDiffs.entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('• ${e.key}: ${e.value}',
-                      style: TextStyle(color: cs.onSurface)),
-                )),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: gold, foregroundColor: Colors.black),
-                    child: const Text('OK, got it'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showIqamahNightBeforeSheet(
-      BuildContext context, IqamahChange ch, String changeYMD) async {
-    const gold = Color(0xFFC7A447);
-    final cs = Theme.of(context).colorScheme;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Iqamah Times Change Tomorrow',
-                    style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                if (ch.fajrEmphasis)
-                  Text('⚠️ Fajr will change tomorrow morning.',
-                      style: TextStyle(
-                          color: cs.onSurface, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                ...ch.prettyDiffs.entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('• ${e.key}: ${e.value}',
-                      style: TextStyle(color: cs.onSurface)),
-                )),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: gold, foregroundColor: Colors.black),
-                    child: const Text('OK'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 }
 
@@ -850,7 +776,6 @@ class _HomeTabsState extends State<HomeTabs> {
 
     return Scaffold(
       body: pages[_index],
-      // Isolate bottom navigation from body repaints
       bottomNavigationBar: RepaintBoundary(
         child: NavigationBar(
           surfaceTintColor: Colors.transparent,
@@ -865,28 +790,19 @@ class _HomeTabsState extends State<HomeTabs> {
             Haptics.tap();
           },
           destinations: const [
-            // 0: Prayer — keep Material clock
             NavigationDestination(label: '', icon: Icon(Icons.schedule)),
-
-            // 1: Announcements — FA bell
             NavigationDestination(
               label: '',
               icon: FaIcon(FontAwesomeIcons.bell, size: 20),
             ),
-
-            // 2: Social — FA Instagram
             NavigationDestination(
               label: '',
               icon: FaIcon(FontAwesomeIcons.instagram, size: 20),
             ),
-
-            // 3: Directory — FA link
             NavigationDestination(
               label: '',
               icon: FaIcon(FontAwesomeIcons.link, size: 20),
             ),
-
-            // 4: More — keep Material ellipsis
             NavigationDestination(label: '', icon: Icon(Icons.more_horiz)),
           ],
         ),

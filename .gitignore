@@ -70,3 +70,8 @@ tools/size_report.txt
 
 # Prevent accidental root-level profile configs
 ios/Profile*.xcconfig
+
+#troubleshooting shell outputs
+screens/
+tools/run.trace
+

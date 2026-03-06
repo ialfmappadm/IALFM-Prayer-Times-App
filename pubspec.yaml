@@ -75,6 +75,19 @@ flutter:
     - assets/branding/instagram.svg
     - assets/branding/facebook.svg
     - assets/branding/ialfm_logo.png
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/manrope/Manrope-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/manrope/Manrope-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/manrope/Manrope-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/manrope/Manrope-VariableFont_wght.ttf
+          weight: 500
+        - asset: assets/fonts/manrope/Manrope-VariableFont_wght.ttf
+          weight: 800
 
 
 # ----------------------------
