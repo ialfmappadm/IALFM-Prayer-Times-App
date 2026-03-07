@@ -271,7 +271,7 @@ class TopHeader extends StatelessWidget {
                               Uri.parse(
                                 'https://us.mohid.co/tx/dallas/ialfm/masjid/online/donation/index/1',
                               ),
-                              mode: LaunchMode.externalApplication,
+                              mode: LaunchMode.inAppBrowserView,
                             );
                             if (!ok && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
