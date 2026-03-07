@@ -9,9 +9,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
+
 // Gallery/Downloads helpers
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+
 // 🔤 snake_case getters (your project)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import '../app_colors.dart';
@@ -119,6 +121,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       }
       return null;
     }
+
     setState(() {
       _selected = DateTime(newLocal.year, newLocal.month, newLocal.day);
       _selectedDay = findByDate(days, _selected);
@@ -210,6 +213,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       if (showToast && mounted) messenger.showSnackBar(const SnackBar(content: Text('Saved to Photos')));
       return true;
     }
+
     final res = await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
     assert(() {
       debugPrint('Gallery save (Android): $res');
@@ -229,7 +233,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       await Future.delayed(const Duration(milliseconds: 16));
       if (!mounted) return;
       final boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      // ✅ remove unnecessary cast; clamp returns num → convert safely to double
+      // remove unnecessary cast; clamp returns num → convert safely to double
       final double dpr = media.devicePixelRatio.clamp(2.0, 3.0).toDouble();
       final ui.Image image = await boundary.toImage(pixelRatio: dpr);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -251,17 +255,22 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 
   // ────────────────────────────────────────────────────────────────────────────
   // Bottom-sheet editor for Khateeb names (poster only)
-  // Matches your sheet patterns (background, onSurface text, drag handle, buttons)
   // ────────────────────────────────────────────────────────────────────────────
   Future<void> _openKhateebSheet() async {
     if (_layout != _LayoutKind.poster) return;
+
     final theme = Theme.of(context);
     final bg = theme.bottomSheetTheme.backgroundColor;
-    // final cs = theme.colorScheme;
     final dstOn = _isDstOn(_selected);
-    final ctrlMain = TextEditingController(text: _khateebMain == 'TBD' ? '' : _khateebMain);
+
+    final ctrlMain  = TextEditingController(text: _khateebMain  == 'TBD' ? '' : _khateebMain);
     final ctrlYouth = TextEditingController(text: _khateebYouth == 'TBD' ? '' : _khateebYouth);
-    final nameFilter = FilteringTextInputFormatter.allow(RegExp(r"[A-Za-z \-]"));
+
+    //  Inclusive formatter: allow Latin + Arabic letters, spaces, hyphens, apostrophes, periods.
+    // Arabic block U+0600–U+06FF; you can expand if needed.
+    final nameFilter = FilteringTextInputFormatter.allow(
+        RegExp(r"[A-Za-z\u0600-\u06FF '.-]")
+    );
 
     await showModalBottomSheet<void>(
       context: context,
@@ -290,6 +299,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 TextField(
                   controller: ctrlMain,
                   inputFormatters: [nameFilter],
+                  keyboardType: TextInputType.name,             //  nicer keyboard
+                  textInputAction: TextInputAction.done,        //  has “Done”
                   textCapitalization: TextCapitalization.words,
                   cursorColor: cs2.primary,
                   style: TextStyle(color: cs2.onSurface),
@@ -316,6 +327,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   TextField(
                     controller: ctrlYouth,
                     inputFormatters: [nameFilter],
+                    keyboardType: TextInputType.name,           // nicer keyboard
+                    textInputAction: TextInputAction.done,      // has “Done”
                     textCapitalization: TextCapitalization.words,
                     cursorColor: cs2.primary,
                     style: TextStyle(color: cs2.onSurface),
@@ -389,7 +402,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final dateSize = titleSize;
     final sideLaneW = (w < 360) ? 48.0 : (w < 400 ? 52.0 : 56.0);
     final double logoH = (w * 0.16).clamp(56.0, 92.0).toDouble();
-
     final greg = DateFormat('EEE, MMM d yyyy').format(_selected);
     final DateTime hijriAdjusted = _selected.add(Duration(days: UXPrefs.hijriEffectiveOffset));
     final hCal = HijriCalendar.fromDate(hijriAdjusted);
@@ -400,7 +412,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     ];
     final hName = (hCal.hMonth >= 1 && hCal.hMonth <= 12) ? hijriMonths[hCal.hMonth - 1] : 'Hijri';
     final hijriStr = '$hName ${hCal.hDay}, ${hCal.hYear}';
-
     final headerDecoration = _pageBg(context);
 
     final title = Text(
@@ -444,7 +455,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   height: logoH,
                   child: Center(
                     child: GestureDetector(
-                      onLongPress: _openKhateebSheet, // ✅ bottom-sheet editor (poster only)
+                      onLongPress: _openKhateebSheet, //  bottom-sheet editor (poster only)
                       child: FittedBox(
                         fit: BoxFit.contain,
                         child: Image.asset('assets/branding/ialfm_logo_trimmed.png', height: logoH),
@@ -508,6 +519,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final int year = _todayLocal.year;
     final DateTime minDate = DateTime(year, 1, 1);
     final DateTime maxDate = DateTime(year, 12, 31);
+
     DateTime initial = _selected;
     if (initial.isBefore(minDate)) initial = minDate;
     if (initial.isAfter(maxDate)) initial = maxDate;
@@ -580,6 +592,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final media = MediaQuery.of(context);
     final bottomSafe = media.viewPadding.bottom;
     final topSafe = media.viewPadding.top;
+
     // Dynamic headroom below top nav: safe-area top + extra knob
     final double dynamicTopHeadroom = topSafe + _topOverlayExtra;
 
@@ -600,7 +613,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 child: Column(
                   children: [
                     SizedBox(height: dynamicTopHeadroom),
-
                     // Always keep logo + header (portrait & landscape)
                     _generatorHeader(context),
 
@@ -683,10 +695,10 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                                 : table;
                           },
                         )
-                        // Poster path unchanged
+                        // Poster path unchanged (but poster will now wrap khateeb names)
                             : _PosterFullHeight(
                           builder: (context, size) {
-                            // ✅ Top-aligned scaleDown so poster never overflows on DST
+                            // Top-aligned scaleDown so poster never overflows on DST
                             return Align(
                               alignment: Alignment.topCenter,
                               child: FittedBox(
@@ -716,7 +728,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: _bottomVisualMargin),
                   ],
                 ),
@@ -768,6 +779,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 class _PosterFullHeight extends StatelessWidget {
   const _PosterFullHeight({required this.builder});
   final Widget Function(BuildContext context, Size size) builder;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

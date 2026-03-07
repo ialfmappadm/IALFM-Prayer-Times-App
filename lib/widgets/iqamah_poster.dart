@@ -58,14 +58,14 @@ class IqamahPoster extends StatelessWidget {
       color: (isLight ? const Color(0xFF0F2432) : AppColors.textSecondary).withValues(alpha: 0.92),
     );
 
-    // A bit tighter when Youth section is visible.
     final compact = dstOn;
-    final rowVPad      = compact ? 8.0  : 12.0;
-    final subRowVPad   = compact ? 6.0  : 10.0;
-    final sectionTop   = compact ? 6.0  : 10.0;
-    final sectionBot   = compact ? 4.0  : 6.0;
+    final rowVPad = compact ? 8.0 : 12.0;
+    final subRowVPad = compact ? 6.0 : 10.0;
+    final sectionTop = compact ? 6.0 : 10.0;
+    final sectionBot = compact ? 4.0 : 6.0;
 
     String t(String? s) => (s == null || s.isEmpty) ? '—' : to12h(s);
+
     final fajr    = t(day.prayers['fajr']?.iqamah);
     final dhuhr   = t(day.prayers['dhuhr']?.iqamah);
     final asr     = t(day.prayers['asr']?.iqamah);
@@ -86,19 +86,69 @@ class IqamahPoster extends StatelessWidget {
     Widget header() => Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowVPad),
       child: Center(
-        child: Text(l10n.label_iqamah_times,
-            style: headerStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+        child: Text(
+          l10n.label_iqamah_times,
+          style: headerStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
 
+    // Generic row: single line on both sides
     Widget row(String left, String right) => Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowVPad),
       child: Row(
         children: [
           Expanded(flex: 3, child: Text(left, style: nameStyle, maxLines: 2, overflow: TextOverflow.ellipsis)),
           const SizedBox(width: 8),
-          Expanded(flex: 2, child: Align(alignment: Alignment.centerRight,
-              child: Text(right, style: valueStyle, maxLines: 1, overflow: TextOverflow.ellipsis))),
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                right,
+                style: valueStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // ✅ Special row: give RIGHT column (name) more width and keep it single-line.
+    // Left label compresses earlier and ellipsizes if needed.
+    Widget rowRightPriority(String left, String right) => Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowVPad),
+      child: Row(
+        children: [
+          // Left label with SMALLER flex, still allowed to ellipsize
+          Expanded(
+            flex: 3,
+            child: Text(
+              left,
+              style: nameStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Right value (name) with LARGER flex → takes more width; stays single-line
+          Expanded(
+            flex: 4,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                right,
+                style: valueStyle,
+                maxLines: 1,               // ← never wraps
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -109,8 +159,13 @@ class IqamahPoster extends StatelessWidget {
         children: [
           Expanded(flex: 3, child: Text(left, style: subNameStyle, maxLines: 1, overflow: TextOverflow.ellipsis)),
           const SizedBox(width: 8),
-          Expanded(flex: 2, child: Align(alignment: Alignment.centerRight,
-              child: Text(right, style: valueStyle, maxLines: 1, overflow: TextOverflow.ellipsis))),
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(right, style: valueStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ),
         ],
       ),
     );
@@ -121,7 +176,6 @@ class IqamahPoster extends StatelessWidget {
     );
 
     return DecoratedBox(
-      // ✅ No border (removed the gold/white stroke)
       decoration: BoxDecoration(color: glassTint),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -135,16 +189,26 @@ class IqamahPoster extends StatelessWidget {
 
           section(PrayerLabels.prayerName(context, "Jumu'ah")),
           subRow(l10n.label_khutbah, mainKhutbah), divider(0.18),
-          subRow(l10n.label_iqamah,  mainIqamah),  divider(),
-          row(l10n.label_first_khateeb,
-              firstKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : firstKhateeb.trim()), divider(),
+          subRow(l10n.label_iqamah, mainIqamah),   divider(),
+
+          // ✅ Main Khateeb: right-side single-line with priority width
+          rowRightPriority(
+            l10n.label_first_khateeb,
+            firstKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : firstKhateeb.trim(),
+          ),
+          divider(),
 
           if (dstOn) ...[
             section(PrayerLabels.prayerName(context, "Youth Jumu'ah")),
             subRow(l10n.label_khutbah, youthKhutbah), divider(0.18),
-            subRow(l10n.label_iqamah,  youthIqamah),  divider(),
-            row(l10n.label_youth_khateeb,
-                youthKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : youthKhateeb.trim()), divider(),
+            subRow(l10n.label_iqamah, youthIqamah),   divider(),
+
+            // ✅ Youth Khateeb: right-side single-line with priority width
+            rowRightPriority(
+              l10n.label_youth_khateeb,
+              youthKhateeb.trim().isEmpty ? l10n.label_unknown_tbd : youthKhateeb.trim(),
+            ),
+            divider(),
           ],
         ],
       ),
