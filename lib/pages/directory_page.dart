@@ -10,6 +10,7 @@ import '../main.dart' show AppGradients;
 import 'directory_contact_page.dart';
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import 'salah_table_generator.dart';
+import 'membership_section.dart';
 
 // Endpoints / Links
 const String _latestNewsletterEndpoint =
@@ -306,7 +307,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
             padding: const EdgeInsets.fromLTRB(20, _kListPadV, 20, _kListPadV),
             children: [
               // CONTACT
-              _sectionHeader(context, l10n.dir_section_contact),
+              _sectionHeader(context, l10n.dir_contact_section),
               _card(
                 context,
                 child: Theme(
@@ -321,13 +322,21 @@ class _DirectoryPageState extends State<DirectoryPage> {
                       childrenPadding: const EdgeInsets.only(bottom: 6),
                       initiallyExpanded: _contactExpanded,
                       onExpansionChanged: (v) => setState(() => _contactExpanded = v),
-                      leading: _secIcon(FontAwesomeIcons.phone),
-                      title: _secTitle(context, l10n.dir_contact_us_feedback),
+
+                      // NEW ICON + NEW TITLE
+                      leading: _secIcon(FontAwesomeIcons.commentDots),
+                      title: _secTitle(context, l10n.dir_contact_tile_title),
+
                       children: [
                         _navRow(
                           context: context,
-                          icon: FontAwesomeIcons.envelope,
-                          label: l10n.dir_contact_us_feedback,
+
+                          // NEW ICON FOR ROW
+                          icon: FontAwesomeIcons.message,
+
+                          // NEW ROW TEXT
+                          label: l10n.dir_contact_touch,
+
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const DirectoryContactPage()),
                           ),
@@ -474,48 +483,13 @@ class _DirectoryPageState extends State<DirectoryPage> {
               const SizedBox(height: _kSectionGap),
 
               // MEMBERSHIP
-              _sectionHeader(context, l10n.dir_membership),
-              _card(
-                context,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    dividerColor: Colors.transparent,
-                    visualDensity: _kTileDensity,
-                  ),
-                  child: ListTileTheme(
-                    dense: false,
-                    child: ExpansionTile(
-                      tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                      childrenPadding: const EdgeInsets.only(bottom: 6),
-                      initiallyExpanded: _membershipExpanded,
-                      onExpansionChanged: (v) => setState(() => _membershipExpanded = v),
-                      leading: _secIcon(FontAwesomeIcons.userPlus),
-                      title: _secTitle(context, l10n.dir_membership),
-                      children: [
-                        _navRow(
-                          context: context,
-                          icon: FontAwesomeIcons.userPlus,
-                          label: l10n.dir_signup_individual,
-                          onTap: () => _open(context, _mIndiv),
-                        ),
-                        _hairline(context),
-                        _navRow(
-                          context: context,
-                          icon: FontAwesomeIcons.usersViewfinder,
-                          label: l10n.dir_signup_family,
-                          onTap: () => _open(context, _mFamily),
-                        ),
-                        _hairline(context),
-                        _navRow(
-                          context: context,
-                          icon: FontAwesomeIcons.rightToBracket,
-                          label: l10n.dir_renew,
-                          onTap: () => _open(context, _mRenew),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _sectionHeader(context, 'Member Services'),
+              MembershipSectionCard(
+                initiallyExpanded: _membershipExpanded,
+                onExpansionChanged: (v) => setState(() => _membershipExpanded = v),
+                mIndiv: _mIndiv,
+                mFamily: _mFamily,
+                mRenew: _mRenew,
               ),
               const SizedBox(height: _kSectionGap),
 
