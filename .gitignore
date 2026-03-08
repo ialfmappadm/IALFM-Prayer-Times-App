@@ -82,3 +82,7 @@ yarn-error.log*
 tools/doze_min_*/
 tools/doze_*_*.txtandroid/app/release/
 android/app/release/
+
+#Ignore all gem files except under ios folder
+Gemfile.lock
+!ios/Gemfile.lock
