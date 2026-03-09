@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
-//import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -24,7 +24,6 @@ import '../widgets/iqamah_poster.dart'; // poster widget (handles “TBD”, you
 import '../models.dart';
 import '../utils/time_utils.dart';
 import '../ux_prefs.dart';
-//import '../localization/prayer_labels.dart';
 
 enum _LayoutKind { table, poster }
 
@@ -69,6 +68,9 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   _LayoutKind _layout = _LayoutKind.table;
   bool _isExporting = false;
 
+  // NEW: temporarily hides header action icons (calendar & newspaper) during export
+  bool _hideHeaderActions = false;
+
   // ✅ Khateeb names (poster)
   String _khateebMain = 'TBD';
   String _khateebYouth = 'TBD';
@@ -96,7 +98,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   }
 
   Future<void> _bootstrap() async {
-    final loc = await initCentralTime().catchError((_) => tz.getLocation('America/Chicago'));
+    final loc =
+    await initCentralTime().catchError((_) => tz.getLocation('America/Chicago'));
     final now = tz.TZDateTime.now(loc).toLocal();
     await _loadYearIntoCache(loc, now.year);
     _applySelectedDate(now);
@@ -117,7 +120,9 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final days = _cacheByYear[newLocal.year] ?? const <PrayerDay>[];
     PrayerDay? findByDate(List<PrayerDay> all, DateTime d) {
       for (final p in all) {
-        if (p.date.year == d.year && p.date.month == d.month && p.date.day == d.day) return p;
+        if (p.date.year == d.year && p.date.month == d.month && p.date.day == d.day) {
+          return p;
+        }
       }
       return null;
     }
@@ -174,7 +179,14 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   };
 
   List<String> _tableOrder(bool dst) => <String>[
-    'Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "Jumu'ah", if (dst) "Youth Jumu'ah",
+    'Fajr',
+    'Sunrise',
+    'Dhuhr',
+    'Asr',
+    'Maghrib',
+    'Isha',
+    "Jumu'ah",
+    if (dst) "Youth Jumu'ah",
   ];
 
   Map<String, Widget> _sunriseIqamahWidget(bool isLight) => <String, Widget>{
@@ -190,10 +202,12 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
         bool showToast = false,
       }) async {
     final messenger = ScaffoldMessenger.of(context);
+
     if (Platform.isIOS) {
       var addOnly = await Permission.photosAddOnly.status;
       var photos = await Permission.photos.status;
       bool hasWrite = addOnly.isGranted || photos.isGranted || photos.isLimited;
+
       if (!hasWrite) {
         addOnly = await Permission.photosAddOnly.request();
         hasWrite = addOnly.isGranted;
@@ -205,43 +219,62 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       if (!hasWrite) {
         throw 'Photos permission denied (addOnly: ${addOnly.name}, full: ${photos.name})';
       }
-      final res = await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
+      final res =
+      await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
       assert(() {
         debugPrint('Gallery save (iOS): $res');
         return true;
       }());
-      if (showToast && mounted) messenger.showSnackBar(const SnackBar(content: Text('Saved to Photos')));
+      if (showToast && mounted) {
+        messenger.showSnackBar(const SnackBar(content: Text('Saved to Photos')));
+      }
       return true;
     }
 
-    final res = await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
+    final res =
+    await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
     assert(() {
       debugPrint('Gallery save (Android): $res');
       return true;
     }());
-    if (showToast && mounted) messenger.showSnackBar(const SnackBar(content: Text('Saved to Photos/Gallery')));
+    if (showToast && mounted) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Saved to Photos/Gallery')));
+    }
     return true;
   }
 
-  // Seamless export: overlays are outside capture; no setState during export.
+  // Seamless export with header actions temporarily hidden.
   Future<void> _exportPng() async {
     if (_isExporting) return;
     _isExporting = true;
+
     final media = MediaQuery.of(context);
     final messenger = ScaffoldMessenger.of(context);
+
     try {
-      await Future.delayed(const Duration(milliseconds: 16));
+      // 1) Hide header action icons just for the capture frame
+      setState(() => _hideHeaderActions = true);
+      // Ensure the hidden frame is presented before we snapshot
+      await WidgetsBinding.instance.endOfFrame;
+
+      // 2) Small extra delay to be extra safe on slower devices
+      await Future.delayed(const Duration(milliseconds: 4));
       if (!mounted) return;
-      final boundary = _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      // remove unnecessary cast; clamp returns num → convert safely to double
+
+      final boundary =
+      _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+
       final double dpr = media.devicePixelRatio.clamp(2.0, 3.0).toDouble();
       final ui.Image image = await boundary.toImage(pixelRatio: dpr);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final bytes = byteData!.buffer.asUint8List();
+
       final String mode = _layout == _LayoutKind.poster ? 'poster' : 'salah';
       final String date = DateFormat('yyyy-MM-dd').format(_selected);
       final String time = DateFormat('HHmmss_SSS').format(DateTime.now());
       final String fname = 'ialfm_${mode}_${date}_$time';
+
       await _saveToGalleryOrDownloads(bytes, fname, showToast: false);
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Screenshot saved')));
@@ -249,6 +282,10 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
     } finally {
+      // 3) Restore header icons
+      if (mounted) {
+        setState(() => _hideHeaderActions = false);
+      }
       _isExporting = false;
     }
   }
@@ -258,18 +295,18 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   // ────────────────────────────────────────────────────────────────────────────
   Future<void> _openKhateebSheet() async {
     if (_layout != _LayoutKind.poster) return;
-
     final theme = Theme.of(context);
     final bg = theme.bottomSheetTheme.backgroundColor;
     final dstOn = _isDstOn(_selected);
 
-    final ctrlMain  = TextEditingController(text: _khateebMain  == 'TBD' ? '' : _khateebMain);
-    final ctrlYouth = TextEditingController(text: _khateebYouth == 'TBD' ? '' : _khateebYouth);
+    final ctrlMain = TextEditingController(text: _khateebMain == 'TBD' ? '' : _khateebMain);
+    final ctrlYouth =
+    TextEditingController(text: _khateebYouth == 'TBD' ? '' : _khateebYouth);
 
-    //  Inclusive formatter: allow Latin + Arabic letters, spaces, hyphens, apostrophes, periods.
+    // Inclusive formatter: allow Latin + Arabic letters, spaces, hyphens, apostrophes, periods.
     // Arabic block U+0600–U+06FF; you can expand if needed.
     final nameFilter = FilteringTextInputFormatter.allow(
-        RegExp(r"[A-Za-z\u0600-\u06FF '.-]")
+      RegExp(r"[A-Za-z\u0600-\u06FF '.-]"),
     );
 
     await showModalBottomSheet<void>(
@@ -282,7 +319,9 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              left: 16, right: 16, top: 8,
+              left: 16,
+              right: 16,
+              top: 8,
               bottom: 16 + MediaQuery.of(ctx).viewInsets.bottom,
             ),
             child: Column(
@@ -290,7 +329,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
               children: [
                 Text(
                   'Khateeb Names',
-                  style: TextStyle(color: cs2.onSurface, fontWeight: FontWeight.w700),
+                  style:
+                  TextStyle(color: cs2.onSurface, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -299,22 +339,26 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 TextField(
                   controller: ctrlMain,
                   inputFormatters: [nameFilter],
-                  keyboardType: TextInputType.name,             //  nicer keyboard
-                  textInputAction: TextInputAction.done,        //  has “Done”
+                  keyboardType: TextInputType.name, // nicer keyboard
+                  textInputAction: TextInputAction.done, // has “Done”
                   textCapitalization: TextCapitalization.words,
                   cursorColor: cs2.primary,
                   style: TextStyle(color: cs2.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Main Khateeb',
-                    labelStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
+                    labelStyle:
+                    TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
                     hintText: 'Imam Rasheed Farah',
-                    hintStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
+                    hintStyle:
+                    TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
                     filled: true,
                     fillColor: cs2.surface.withValues(alpha: 0.06),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
+                      borderSide:
+                      BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -327,22 +371,26 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   TextField(
                     controller: ctrlYouth,
                     inputFormatters: [nameFilter],
-                    keyboardType: TextInputType.name,           // nicer keyboard
-                    textInputAction: TextInputAction.done,      // has “Done”
+                    keyboardType: TextInputType.name, // nicer keyboard
+                    textInputAction: TextInputAction.done, // has “Done”
                     textCapitalization: TextCapitalization.words,
                     cursorColor: cs2.primary,
                     style: TextStyle(color: cs2.onSurface),
                     decoration: InputDecoration(
                       labelText: 'Youth Khateeb',
-                      labelStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
+                      labelStyle:
+                      TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
                       hintText: 'Imam Rasheed Farah',
-                      hintStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
+                      hintStyle:
+                      TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
                       filled: true,
                       fillColor: cs2.surface.withValues(alpha: 0.06),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
+                        borderSide:
+                        BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -364,7 +412,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                     Expanded(
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: _gold, foregroundColor: Colors.black,
+                          backgroundColor: _gold,
+                          foregroundColor: Colors.black,
                         ),
                         onPressed: () {
                           final m = ctrlMain.text.trim();
@@ -397,46 +446,76 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final isLight = theme.brightness == Brightness.light;
     final media = MediaQuery.of(context);
     final w = media.size.width;
+
     final clamped = media.textScaler.clamp(maxScaleFactor: 1.08);
     final titleSize = (w >= 430) ? 20.0 : (w >= 380 ? 18.0 : 16.0);
     final dateSize = titleSize;
     final sideLaneW = (w < 360) ? 48.0 : (w < 400 ? 52.0 : 56.0);
+
     final double logoH = (w * 0.16).clamp(56.0, 92.0).toDouble();
+
     final greg = DateFormat('EEE, MMM d yyyy').format(_selected);
-    final DateTime hijriAdjusted = _selected.add(Duration(days: UXPrefs.hijriEffectiveOffset));
+    final DateTime hijriAdjusted =
+    _selected.add(Duration(days: UXPrefs.hijriEffectiveOffset));
     final hCal = HijriCalendar.fromDate(hijriAdjusted);
+
     const hijriMonths = [
-      'Muharram','Safar','Rabi-al-Awwal','Rabi-al-Thani',
-      'Jumada-al-awwal','Jumada-al-Thani','Rajab','Shaban',
-      'Ramadan','Shawwal','Dhul-Qadah','Dhul-Hijjah',
+      'Muharram',
+      'Safar',
+      'Rabi-al-Awwal',
+      'Rabi-al-Thani',
+      'Jumada-al-awwal',
+      'Jumada-al-Thani',
+      'Rajab',
+      'Shaban',
+      'Ramadan',
+      'Shawwal',
+      'Dhul-Qadah',
+      'Dhul-Hijjah',
     ];
-    final hName = (hCal.hMonth >= 1 && hCal.hMonth <= 12) ? hijriMonths[hCal.hMonth - 1] : 'Hijri';
+
+    final hName =
+    (hCal.hMonth >= 1 && hCal.hMonth <= 12) ? hijriMonths[hCal.hMonth - 1] : 'Hijri';
     final hijriStr = '$hName ${hCal.hDay}, ${hCal.hYear}';
     final headerDecoration = _pageBg(context);
 
     final title = Text(
       'Islamic Association of Lewisville - Flower Mound',
-      maxLines: 1, softWrap: false, overflow: TextOverflow.visible, textAlign: TextAlign.center,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.visible,
+      textAlign: TextAlign.center,
       style: theme.textTheme.titleMedium?.copyWith(
         color: isLight ? const Color(0xFF0F2432) : AppColors.textSecondary,
-        fontWeight: FontWeight.w700, fontSize: titleSize, letterSpacing: 0.2,
+        fontWeight: FontWeight.w700,
+        fontSize: titleSize,
+        letterSpacing: 0.2,
       ) ??
           TextStyle(
             color: isLight ? const Color(0xFF0F2432) : AppColors.textSecondary,
-            fontWeight: FontWeight.w700, fontSize: titleSize, letterSpacing: 0.2,
+            fontWeight: FontWeight.w700,
+            fontSize: titleSize,
+            letterSpacing: 0.2,
           ),
     );
 
     final dates = Text(
       '$greg • $hijriStr',
-      maxLines: 1, softWrap: false, overflow: TextOverflow.visible, textAlign: TextAlign.center,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.visible,
+      textAlign: TextAlign.center,
       style: theme.textTheme.titleMedium?.copyWith(
         color: isLight ? const Color(0xFF0F2432) : AppColors.textPrimary,
-        fontWeight: FontWeight.w700, fontSize: dateSize, letterSpacing: 0.15,
+        fontWeight: FontWeight.w700,
+        fontSize: dateSize,
+        letterSpacing: 0.15,
       ) ??
           TextStyle(
             color: isLight ? const Color(0xFF0F2432) : AppColors.textPrimary,
-            fontWeight: FontWeight.w700, fontSize: dateSize, letterSpacing: 0.15,
+            fontWeight: FontWeight.w700,
+            fontSize: dateSize,
+            letterSpacing: 0.15,
           ),
     );
 
@@ -455,10 +534,11 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   height: logoH,
                   child: Center(
                     child: GestureDetector(
-                      onLongPress: _openKhateebSheet, //  bottom-sheet editor (poster only)
+                      onLongPress: _openKhateebSheet, // bottom-sheet editor (poster only)
                       child: FittedBox(
                         fit: BoxFit.contain,
-                        child: Image.asset('assets/branding/ialfm_logo_trimmed.png', height: logoH),
+                        child: Image.asset('assets/branding/ialfm_logo_trimmed.png',
+                            height: logoH),
                       ),
                     ),
                   ),
@@ -466,37 +546,64 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 const SizedBox(height: 8),
                 FittedBox(fit: BoxFit.scaleDown, child: title),
                 const SizedBox(height: 8),
+
                 // Single row: calendar (left), date centered, poster toggle (right)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // LEFT lane: Calendar icon — hide during export only
                     SizedBox(
                       width: sideLaneW,
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          tooltip: l10n.tip_pick_date,
-                          onPressed: _openDateSheet,
-                          padding: EdgeInsets.zero,
-                          icon: const FaIcon(FontAwesomeIcons.calendarDays, size: 18),
+                        child: Visibility(
+                          visible: !_hideHeaderActions,
+                          maintainSize: true,
+                          maintainAnimation: true,
+                          maintainState: true,
+                          replacement: const SizedBox(width: 44, height: 44),
+                          child: IconButton(
+                            tooltip: l10n.tip_pick_date,
+                            onPressed: _openDateSheet,
+                            padding: EdgeInsets.zero,
+                            icon: const FaIcon(FontAwesomeIcons.calendarDays, size: 18),
+                          ),
                         ),
                       ),
                     ),
-                    Expanded(child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: dates))),
+
+                    Expanded(
+                      child: Center(
+                        child: FittedBox(fit: BoxFit.scaleDown, child: dates),
+                      ),
+                    ),
+
+                    // RIGHT lane: Poster toggle — hide during export only
                     SizedBox(
                       width: sideLaneW,
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: IconButton(
-                          tooltip: _layout == _LayoutKind.poster ? l10n.tip_poster_on : l10n.tip_poster_off,
-                          onPressed: () => setState(() {
-                            _layout = _layout == _LayoutKind.poster ? _LayoutKind.table : _LayoutKind.poster;
-                          }),
-                          padding: EdgeInsets.zero,
-                          icon: FaIcon(
-                            FontAwesomeIcons.newspaper,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.secondary,
+                        child: Visibility(
+                          visible: !_hideHeaderActions,
+                          maintainSize: true,
+                          maintainAnimation: true,
+                          maintainState: true,
+                          replacement: const SizedBox(width: 44, height: 44),
+                          child: IconButton(
+                            tooltip: _layout == _LayoutKind.poster
+                                ? l10n.tip_poster_on
+                                : l10n.tip_poster_off,
+                            onPressed: () => setState(() {
+                              _layout = _layout == _LayoutKind.poster
+                                  ? _LayoutKind.table
+                                  : _LayoutKind.poster;
+                            }),
+                            padding: EdgeInsets.zero,
+                            icon: FaIcon(
+                              FontAwesomeIcons.newspaper,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
                           ),
                         ),
                       ),
@@ -532,7 +639,9 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
         return CupertinoTheme(
           data: CupertinoTheme.of(ctx).copyWith(
             primaryColor: const Color(0xFF4A6273),
-            textTheme: const CupertinoTextThemeData(dateTimePickerTextStyle: TextStyle(fontSize: 20)),
+            textTheme: const CupertinoTextThemeData(
+              dateTimePickerTextStyle: TextStyle(fontSize: 20),
+            ),
           ),
           child: SafeArea(
             top: false,
@@ -544,20 +653,29 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   Positioned.fill(
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.date,
-                      initialDateTime: initial, minimumDate: minDate, maximumDate: maxDate,
+                      initialDateTime: initial,
+                      minimumDate: minDate,
+                      maximumDate: maxDate,
                       onDateTimeChanged: (value) {
                         final clamped = value.isBefore(minDate)
-                            ? minDate : (value.isAfter(maxDate) ? maxDate : value);
+                            ? minDate
+                            : (value.isAfter(maxDate) ? maxDate : value);
                         _applySelectedDate(clamped);
                       },
                     ),
                   ),
                   Positioned(
-                    right: 8, top: 8,
+                    right: 8,
+                    top: 8,
                     child: CupertinoButton(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       minimumSize: const Size(44, 32),
-                      child: Text(l10n.btn_save, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        l10n.btn_save,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ),
@@ -580,14 +698,31 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     final headerTextStyle = isLight
-        ? const TextStyle(color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w700)
-        : TextStyle(color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w700);
+        ? const TextStyle(
+        color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w700)
+        : TextStyle(
+      color: AppColors.textSecondary,
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+    );
+
     final nameTextStyle = isLight
-        ? const TextStyle(color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w600)
-        : TextStyle(color: AppColors.textSecondary, fontSize: 16, fontWeight: FontWeight.w600);
+        ? const TextStyle(
+        color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w600)
+        : TextStyle(
+      color: AppColors.textSecondary,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    );
+
     final valueTextStyle = isLight
-        ? const TextStyle(color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w700)
-        : TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700);
+        ? const TextStyle(
+        color: Color(0xFF0F2432), fontSize: 16, fontWeight: FontWeight.w700)
+        : TextStyle(
+      color: AppColors.textPrimary,
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+    );
 
     final media = MediaQuery.of(context);
     final bottomSafe = media.viewPadding.bottom;
@@ -613,6 +748,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 child: Column(
                   children: [
                     SizedBox(height: dynamicTopHeadroom),
+
                     // Always keep logo + header (portrait & landscape)
                     _generatorHeader(context),
 
@@ -629,7 +765,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                             ? Center(
                           child: Text(
                             l10n.msg_no_schedule,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         )
                             : (_layout == _LayoutKind.table)
@@ -640,7 +777,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                           builder: (context, c) {
                             final adhanMap = _adhanRaw(day);
                             final order = _tableOrder(_isDstOn(_selected));
-
                             // Same filter SalahTable uses:
                             final visible = order.where((n) {
                               final v = adhanMap[n];
@@ -650,17 +786,21 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                             // Readable minima (header + rows)
                             const double kHeaderMin = 42.0;
                             const double kRowMin = 44.0;
-                            final double needMin = kHeaderMin + kRowMin * visible.length;
+                            final double needMin =
+                                kHeaderMin + kRowMin * visible.length;
                             final bool needScroll = c.maxHeight < needMin;
 
                             final table = KeyedSubtree(
-                              key: const ValueKey('salah_table_glass_generator'),
+                              key: const ValueKey(
+                                  'salah_table_glass_generator'),
                               child: SalahTable(
                                 adhanByName: adhanMap,
                                 iqamahByName: _iqamahRaw(day),
-                                iqamahWidgetByName: _sunriseIqamahWidget(isLight),
+                                iqamahWidgetByName:
+                                _sunriseIqamahWidget(isLight),
                                 highlightName: '__none__',
-                                expandRowsToFill: !needScroll, // ← key
+                                expandRowsToFill:
+                                !needScroll, // ← key
                                 headerGreen: false,
                                 headerBackgroundGradient: null,
                                 headerBackgroundColor: Colors.transparent,
@@ -668,9 +808,11 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                                 rowOddColor: Colors.transparent,
                                 rowEvenColor: Colors.transparent,
                                 highlightColor: AppColors.rowHighlight,
-                                highlightColorLight: const Color(0xFFFFF0C9),
+                                highlightColorLight:
+                                const Color(0xFFFFF0C9),
                                 rowDividerColorLight:
-                                const Color(0xFF7B90A0).withValues(alpha: 0.25),
+                                const Color(0xFF7B90A0)
+                                    .withValues(alpha: 0.25),
                                 rowDividerThickness: 0.8,
                                 // Consistent fonts for both columns
                                 headerStyle: headerTextStyle,
@@ -680,8 +822,10 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                                 order: order,
                                 useGlassSurface: true,
                                 glassBlur: 8,
-                                glassTintLight: Colors.white.withValues(alpha: 0.70),
-                                glassTintDark: const Color(0xFF0A1E3A).withValues(alpha: 0.28),
+                                glassTintLight:
+                                Colors.white.withValues(alpha: 0.70),
+                                glassTintDark: const Color(0xFF0A1E3A)
+                                    .withValues(alpha: 0.28),
                                 glassBorderLight: Colors.transparent,
                                 glassBorderDark: Colors.transparent,
                                 glassBorderWidth: 0.0,
@@ -691,7 +835,9 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 
                             return needScroll
                                 ? SingleChildScrollView(
-                                padding: EdgeInsets.zero, child: table)
+                              padding: EdgeInsets.zero,
+                              child: table,
+                            )
                                 : table;
                           },
                         )
@@ -754,7 +900,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
             Positioned(
               right: 10,
               // >>> SIMPLE KNOB: bottomSafe + offset (offset may be negative to push further down)
-              bottom: bottomSafe + _downloadButtonOffsetPx,
+              bottom: media.viewPadding.bottom + _downloadButtonOffsetPx,
               child: IconButton(
                 onPressed: _selectedDay == null || _isExporting ? null : _exportPng,
                 icon: const Icon(Icons.download, size: 26),

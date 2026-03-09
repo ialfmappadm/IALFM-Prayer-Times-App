@@ -88,6 +88,8 @@
   "dir_join_family": "الانضمام – عائلي",
   "dir_renew_membership": "تجديد العضوية",
   "dir_membership_disclaimer": "تُدار العضوية عبر منصة MOHID، ولا يؤدي ذلك إلى إنشاء حساب داخل التطبيق أو فتح أي مزايا خاصة بالتطبيق.",
+  "dir_request_account_deletion": "طلب حذف الحساب",
+  "dir_mohid_deletion_note": "يتم إنشاء حسابات MOHID وإدارتها خارج هذا التطبيق. لطلب حذف حسابك أو بياناتك لدى MOHID، يُرجى التواصل مع دعم MOHID عبر إحدى الوسائل التالية:",
 
   "dir_newsletter": "النشرة البريدية",
   "dir_open_latest_newsletter": "فتح أحدث نشرة",

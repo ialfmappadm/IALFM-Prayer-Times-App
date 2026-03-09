@@ -72,6 +72,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
   // List scroll control + anchor for Resources section
   final _listController = ScrollController();
   final _resourcesTileKey = GlobalKey();
+  final _membershipTileKey = GlobalKey();
 
   @override
   void dispose() {
@@ -160,6 +161,27 @@ class _DirectoryPageState extends State<DirectoryPage> {
         const SnackBar(content: Text('Network error — opened archive instead.')),
       );
     }
+  }
+
+  // Smoothly scroll Membership into view after it expands (same pattern as Resources)
+  void _scrollToMembership() {
+    void tryScroll({Duration duration = const Duration(milliseconds: 250)}) {
+      final ctx = _membershipTileKey.currentContext; // read fresh
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: duration,
+          curve: Curves.easeInOutCubic,
+          alignment: 0.0, // tweak to 0.02 if you want a hair of spacing under the AppBar
+        );
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      tryScroll(duration: const Duration(milliseconds: 250));
+    });
+    Future.delayed(const Duration(milliseconds: 220), tryScroll);
+    Future.delayed(const Duration(milliseconds: 400), tryScroll);
   }
 
   // Smoothly scroll Resources into view after it expands (lint‑clean, no async/await)
@@ -483,13 +505,19 @@ class _DirectoryPageState extends State<DirectoryPage> {
               const SizedBox(height: _kSectionGap),
 
               // MEMBERSHIP
-              _sectionHeader(context, 'Member Services'),
-              MembershipSectionCard(
-                initiallyExpanded: _membershipExpanded,
-                onExpansionChanged: (v) => setState(() => _membershipExpanded = v),
-                mIndiv: _mIndiv,
-                mFamily: _mFamily,
-                mRenew: _mRenew,
+              _sectionHeader(context, l10n.dir_member_services),
+              Container( // ← NEW wrapper so we can anchor scroll
+                key: _membershipTileKey,
+                child: MembershipSectionCard(
+                  initiallyExpanded: _membershipExpanded,
+                  onExpansionChanged: (v) {
+                    setState(() => _membershipExpanded = v);
+                    if (v) _scrollToMembership(); // ← NEW: auto-scroll on expand
+                  },
+                  mIndiv: _mIndiv,
+                  mFamily: _mFamily,
+                  mRenew: _mRenew,
+                ),
               ),
               const SizedBox(height: _kSectionGap),
 

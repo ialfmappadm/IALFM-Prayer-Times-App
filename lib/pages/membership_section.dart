@@ -82,8 +82,12 @@ class _MembershipSectionCardState extends State<MembershipSectionCard> {
 
   Widget _secTitle(BuildContext context, String title) {
     final cs = Theme.of(context).colorScheme;
-    return Text(title,
-        style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700));
+    return Text(
+      title,
+      style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
   }
 
   Divider _hairline(BuildContext context) {
@@ -129,19 +133,120 @@ class _MembershipSectionCardState extends State<MembershipSectionCard> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final supports = await supportsLaunchMode(LaunchMode.inAppBrowserView);
-      final mode =
-      supports ? LaunchMode.inAppBrowserView : LaunchMode.platformDefault;
+      final mode = supports ? LaunchMode.inAppBrowserView : LaunchMode.platformDefault;
       final ok = await launchUrl(uri, mode: mode);
+      if (!mounted) return;
       if (!ok) {
         messenger.showSnackBar(
           SnackBar(content: Text('Could not open ${uri.toString()}')),
         );
       }
     } catch (_) {
+      if (!mounted) return;
       messenger.showSnackBar(
         const SnackBar(content: Text('Could not open link')),
       );
     }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Style‑A bottom sheet (matches More Page action sheets)
+  // ───────────────────────────────────────────────────────────────────────────
+  Future<void> _openDeletionSheet() async {
+    const Color gold = Color(0xFFC7A447); // app gold
+
+    // Bottom sheet surface matches your theme (works in light/dark)
+    final bottomSheetBg = Theme.of(context).bottomSheetTheme.backgroundColor;
+
+    // Launcher helper with safe feedback; do not capture ctx across awaits
+    Future<void> launchExternal(Uri uri) async {
+      try {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        // No SnackBar, no error, silent failure (simulators often cannot open tel/mailto)
+      } catch (_) {
+        // Fully silent — do nothing
+      }
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: bottomSheetBg,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme; // use sheet context
+        final l10n = AppLocalizations.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Text(
+                  l10n.dir_request_account_deletion,
+                  style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+
+                // Body
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.dir_mohid_deletion_note,
+                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Primary actions
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold,
+                      foregroundColor: Colors.black,
+                    ),
+                    icon: const Icon(Icons.email_outlined),
+                    label: const Text('support@mohid.net'),
+                    onPressed: () => launchExternal(Uri.parse('mailto:support@mohid.net')),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold,
+                      foregroundColor: Colors.black,
+                    ),
+                    icon: const Icon(Icons.phone),
+                    label: const Text('1‑844‑827‑5387'),
+                    onPressed: () => launchExternal(Uri.parse('tel:18448275387')),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(l10n.btn_close),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -188,6 +293,14 @@ class _MembershipSectionCardState extends State<MembershipSectionCard> {
                 label: l10n.dir_renew_membership,
                 onTap: () => _openInAppBrowser(widget.mRenew),
               ),
+              _hairline(context),
+              _navRow(
+                context: context,
+                icon: FontAwesomeIcons.userXmark,
+                label: l10n.dir_request_account_deletion,
+                onTap: _openDeletionSheet, // open Style‑A sheet
+              ),
+
               // Disclaimer (only visible when expanded)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),

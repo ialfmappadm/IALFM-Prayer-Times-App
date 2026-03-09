@@ -89,6 +89,8 @@
   "dir_join_family": "Join – Family",
   "dir_renew_membership": "Renew Membership",
   "dir_membership_disclaimer": "Membership is managed by MOHID, this does not create an app account or unlock any in-app functionality",
+  "dir_request_account_deletion": "Request Account Deletion",
+  "dir_mohid_deletion_note": "MOHID accounts are created and managed outside of this app. To request deletion of your MOHID account or data, please contact MOHID support using one of the methods below.",
   "dir_newsletter": "Newsletter",
   "dir_open_latest_newsletter": "Open Latest Newsletter",
   "dir_view_all_newsletters": "View All Past Newsletters",
