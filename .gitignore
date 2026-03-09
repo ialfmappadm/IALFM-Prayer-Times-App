@@ -87,3 +87,8 @@ android/app/release/
 #Ignore all gem files except under ios folder
 Gemfile.lock
 !ios/Gemfile.lock
+
+#PBX Project Backup Files
+ios/Runner.xcodeproj/project.pbxproj.BEFORE
+ios/Runner.xcodeproj/project.pbxproj.bak.*
+
