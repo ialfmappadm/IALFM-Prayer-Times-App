@@ -1,51 +1,87 @@
 import UIKit
 import Flutter
-//import Firebase            // ← keep if you want native configure here
+import WatchConnectivity
 import UserNotifications
 
 @main
-@objc class AppDelegate: FlutterAppDelegate { // ← removed redundant protocol
+@objc class AppDelegate: FlutterAppDelegate {
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
 
-    // 1) Configure Firebase (optional if you already call Firebase.initializeApp() in Dart)
-    //FirebaseApp.configure()
+    // 0) Start WatchConnectivity (iOS side)
+    WCPhoneSessionManager.shared.start()
 
-    // 2) iOS 10+: Ask for permission & set notification center delegate
+    // 1) Safely unwrap Flutter root
+    guard let controller = window?.rootViewController as? FlutterViewController else {
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    // 2) Optional: quick debug ping a few seconds after launch (remove when done)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+      WCPhoneSessionManager.shared.sendPing()
+    }
+
+    // 3) Notifications (permission + register APNs)
     UNUserNotificationCenter.current().delegate = self
     let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
     UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
       if let error = error {
-        print("🔔 Notification authorization error: \(error)")
+        print("🔔 Notification authorization error:", error)
       } else {
-        print("🔔 Notification authorization granted: \(granted)")
+        print("🔔 Notification authorization granted:", granted)
+      }
+    }
+    application.registerForRemoteNotifications()
+
+    // 4) MethodChannel for watch connectivity helpers
+    let ch = FlutterMethodChannel(name: "wc", binaryMessenger: controller.binaryMessenger)
+    ch.setMethodCallHandler { call, result in
+      switch call.method {
+
+      case "send_ping":
+        WCPhoneSessionManager.shared.sendPing()
+        result("ok")
+
+      case "wc_push_next_prayer":
+        if let m = call.arguments as? [String: Any],
+           let next = m["next"] as? String,
+           let ts = m["targetTs"] as? Double {
+          WCPhoneSessionManager.shared.pushNextPrayer(next: next, targetTs: ts)
+        }
+        result("ok")
+
+      case "wc_push_day_times":
+        if let map = call.arguments as? [String: String] {
+          WCPhoneSessionManager.shared.pushDayTimes(map)
+        }
+        result("ok")
+
+      case "wc_push_announcements":
+        if let arr = call.arguments as? [[String: Any]] {
+          WCPhoneSessionManager.shared.pushAnnouncements(arr)
+        }
+        result("ok")
+
+      case "wc_transfer_prayer_json":
+        if let path = (call.arguments as? [String:String])?["path"] {
+          WCPhoneSessionManager.shared.transferPrayerJSON(fileURL: URL(fileURLWithPath: path))
+        }
+        result("ok")
+
+      default:
+        result(FlutterMethodNotImplemented)
       }
     }
 
-    // 3) Register with APNs to get device token
-    application.registerForRemoteNotifications()
-
-    // Register Flutter plugins
+    // 5) Register Flutter plugins and return
     GeneratedPluginRegistrant.register(with: self)
-
-    // Call super last
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // 4) Receive APNs device token (optional but useful to debug)
-  override func application(_ application: UIApplication,
-                            didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    // If you don’t use FirebaseMessaging directly here, leaving this empty is fine.
-    // FlutterFire’s Messaging plugin will map APNs token to FCM automatically via method swizzling
-    // (unless you explicitly disabled swizzling).
-    // Messaging.messaging().apnsToken = deviceToken
-    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
-  }
-
-  // 5) Handle foreground notifications
+  // MARK: Foreground presentation (iOS 10+)
   @available(iOS 10.0, *)
   override func userNotificationCenter(_ center: UNUserNotificationCenter,
                                        willPresent notification: UNNotification,
@@ -53,7 +89,7 @@ import UserNotifications
     completionHandler([.banner, .list, .sound])
   }
 
-  // 6) Handle user tapping a notification
+  // MARK: User tapped notification
   @available(iOS 10.0, *)
   override func userNotificationCenter(_ center: UNUserNotificationCenter,
                                        didReceive response: UNNotificationResponse,
