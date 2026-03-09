@@ -70,6 +70,7 @@ tools/run.trace
 # Cloud Functions (RC) and Newsltter local deps
 /tools/cloud-functions-rc/node_modules/
 /tools/newsletter/node_modules/
+tools/**/node_modules/
 # Ignore stray APKs dropped at repo root
 *.apk
 
