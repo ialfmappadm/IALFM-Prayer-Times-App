@@ -59,6 +59,22 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
   final _aboutSectionKey = GlobalKey(); // key on the ABOUT card container
   final _aboutTileKey = GlobalKey();
 
+  bool _isArabicSelected() {
+    final code = LocaleController.locale.value?.languageCode;
+    return code == 'ar';
+  }
+
+  Future<void> _setLanguage(bool toArabic) async {
+    if (toArabic) {
+      LocaleController.setLocale(const Locale('ar'));
+    } else {
+      LocaleController.setLocale(const Locale('en'));
+    }
+    UXPrefs.maybeHaptic();
+    if (mounted) setState(() {});
+  }
+
+
   // --- OS notifications state label ---
   Future<String> _readOsNotificationStateLabel() async {
     try {
@@ -427,35 +443,128 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
                     leading: _secIcon(FontAwesomeIcons.language),
                     title: _secTitle(context, l10n.more_language),
                     children: [
-                      _pickerRow(
-                        context: context,
-                        icon: FontAwesomeIcons.language,
-                        label: l10n.more_language_label,
-                        value: _currentLanguageLabel(context),
-                        onTap: () async {
-                          final messenger = ScaffoldMessenger.of(context); // BEFORE await
-                          final List<String> options = <String>[l10n.lang_english, l10n.lang_arabic];
-                          final selectedNow = _currentLanguageLabel(context);
-                          final choice = await _chooseOne(
-                            context,
-                            title: l10n.more_language,
-                            options: options,
-                            selected: selectedNow,
-                          );
-                          if (!mounted || choice == null) return;
+// ——— Language (gold-selected, theme-adaptive unselected) ———
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                FaIcon(
+                                  FontAwesomeIcons.language,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    l10n.more_language, // keep the single heading; remove redundant sublabel
+                                    style: _rowLabelStyle(context),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.clip,
+                                    softWrap: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
 
-                          if (choice == l10n.lang_arabic) {
-                            LocaleController.setLocale(const Locale('ar'));
-                          } else {
-                            LocaleController.setLocale(const Locale('en'));
-                          }
-                          UXPrefs.maybeHaptic();
-                          messenger.showSnackBar(
-                            SnackBar(content: Text('${l10n.more_language}: $choice')),
-                          );
-                          setState(() {});
-                        },
-                        alignValueRight: true,
+                            LayoutBuilder(
+                              builder: (ctx, constraints) {
+                                final cs = Theme.of(ctx).colorScheme;
+                                final isDark = Theme.of(ctx).brightness == Brightness.dark;
+                                const gold = Color(0xFFC7A447);
+
+                                // Background for the whole control (card-like)
+                                final controlBg = isDark
+                                    ? cs.surface.withValues(alpha: 0.10)
+                                    : Color.alphaBlend(cs.primary.withValues(alpha: 0.04), cs.surface);
+
+                                // Border hairline against card
+                                final borderColor = isDark
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : cs.outline.withValues(alpha: 0.30);
+
+                                // Unselected chip background should melt into card per theme
+                                final unselectedFill = controlBg;
+
+                                // Typography colors
+                                final selectedText = Colors.black;                      // on gold
+                                final unselectedText = cs.onSurface.withValues(alpha: 0.85);
+
+                                final isArabic = _isArabicSelected();
+                                final selections = <bool>[!isArabic, isArabic];
+
+                                // Make each segment wide enough so Arabic doesn't get clipped
+                                final double segMinW = (constraints.maxWidth - 12) / 2;
+
+                                return DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: controlBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: borderColor),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4), // breathing room inside the pill
+                                    child: ToggleButtons(
+                                      isSelected: selections,
+                                      onPressed: (index) => _setLanguage(index == 1),
+                                      // Visuals
+                                      color: unselectedText,                 // label for unselected
+                                      selectedColor: selectedText,           // label for selected (on gold)
+                                      fillColor: gold,                       // selected background (your brand gold)
+                                      borderColor: Colors.transparent,       // edges handled by outer box
+                                      selectedBorderColor: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                      constraints: BoxConstraints(
+                                        minWidth: segMinW,
+                                        minHeight: 40,
+                                      ),
+                                      children: [
+                                        // English chip
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: selections[0] ? Colors.transparent : unselectedFill,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                          child: Text(
+                                            l10n.lang_english,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            softWrap: true,
+                                            overflow: TextOverflow.visible,
+                                            style: const TextStyle(fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                        // Arabic chip
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: selections[1] ? Colors.transparent : unselectedFill,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                          child: Text(
+                                            l10n.lang_arabic,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            softWrap: true,
+                                            overflow: TextOverflow.visible,
+                                            style: const TextStyle(fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1468,11 +1577,6 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     );
   }
 
-  String _currentLanguageLabel(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final code = LocaleController.locale.value?.languageCode;
-    return (code == 'ar') ? l10n.lang_arabic : l10n.lang_english;
-  }
 
   // Smoothly scroll About into view after it expands (lint‑clean, no async/await)
   void _scrollToAbout() {
@@ -1501,6 +1605,7 @@ class _MorePageState extends State<MorePage> with WidgetsBindingObserver {
     Future.delayed(const Duration(milliseconds: 400), tryScroll);
   }
 }
+
 
 // Separator used in lists
 class _Hairline extends StatelessWidget {

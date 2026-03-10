@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
-
+import 'dart:io' show Platform;
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
 import 'directory_contact_page.dart';
@@ -505,21 +505,23 @@ class _DirectoryPageState extends State<DirectoryPage> {
               const SizedBox(height: _kSectionGap),
 
               // MEMBERSHIP
-              _sectionHeader(context, l10n.dir_member_services),
-              Container( // ← NEW wrapper so we can anchor scroll
-                key: _membershipTileKey,
-                child: MembershipSectionCard(
-                  initiallyExpanded: _membershipExpanded,
-                  onExpansionChanged: (v) {
-                    setState(() => _membershipExpanded = v);
-                    if (v) _scrollToMembership(); // ← NEW: auto-scroll on expand
-                  },
-                  mIndiv: _mIndiv,
-                  mFamily: _mFamily,
-                  mRenew: _mRenew,
+              if (!Platform.isIOS) ...[
+                _sectionHeader(context, l10n.dir_member_services),
+                Container(
+                  key: _membershipTileKey, // anchor so we can auto-scroll on expand
+                  child: MembershipSectionCard(
+                    initiallyExpanded: _membershipExpanded,
+                    onExpansionChanged: (v) {
+                      setState(() => _membershipExpanded = v);
+                      if (v) _scrollToMembership(); // same behavior as Resources
+                    },
+                    mIndiv: _mIndiv,   // ← required args
+                    mFamily: _mFamily, // ← required args
+                    mRenew: _mRenew,   // ← required args
+                  ),
                 ),
-              ),
-              const SizedBox(height: _kSectionGap),
+                const SizedBox(height: _kSectionGap),
+              ],
 
               // RESOURCES
               _sectionHeader(context, l10n.dir_section_resources),
