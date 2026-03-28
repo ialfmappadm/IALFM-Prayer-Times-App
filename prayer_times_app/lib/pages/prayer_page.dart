@@ -566,13 +566,23 @@ class _CountdownBannerState extends State<CountdownBanner>
     final now = widget.nowProvider?.call() ?? DateTime.now();
     final rem = widget.tracker.tick(now);
     final safe = rem.isNegative ? Duration.zero : rem;
+
     final newText = cdf.formatCountdownStyled(safe);
     final name = widget.tracker.current.name;
 
+    // Notify parent ONLY after the current frame
     if (name != _lastNextName) {
       _lastNextName = name;
-      widget.onNextChanged?.call(name);
+
+      if (widget.onNextChanged != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.onNextChanged!(name);
+        });
+      }
     }
+
+    // Local state update is fine
     if (newText != _digits) {
       if (!mounted) return;
       setState(() => _digits = newText);
