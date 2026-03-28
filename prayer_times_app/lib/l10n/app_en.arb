@@ -202,7 +202,7 @@
     }
   },
 
-  "page_salah_table_generator_title": "Salah Table Generator",
+  "page_salah_table_generator_title": "Salah Times Viewer",
   "label_iqamah_times": "Iqamah Times",
   "msg_no_schedule": "No local schedule found for this date.",
   "btn_download": "Download",

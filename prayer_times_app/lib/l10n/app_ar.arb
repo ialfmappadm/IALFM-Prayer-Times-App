@@ -202,7 +202,7 @@
       "error": {}
     }
   },
-  "page_salah_table_generator_title": "مولّد جدول الصلاة",
+  "page_salah_table_generator_title": "عارض أوقات الصلاة",
   "label_iqamah_times": "أوقات الإقامة",
   "msg_no_schedule": "لا توجد جداول محلية لهذا التاريخ.",
   "btn_download": "تنزيل",
