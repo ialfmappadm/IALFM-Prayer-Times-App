@@ -1,5 +1,6 @@
 // lib/widgets/top_header.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:hijri/hijri_calendar.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../models.dart';
 import '../ux_prefs.dart';
+import '../pages/salah_table_generator.dart';
 
 /// Light theme text colors (as in your original)
 const _kLightTextPrimary = Color(0xFF0F2432); // deep blue-gray
@@ -241,10 +243,21 @@ class TopHeader extends StatelessWidget {
                   // CENTER lane (Expanded): dates in a FittedBox, single Text
                   Expanded(
                     child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.center,
-                        child: oneLineDates,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => const SalahTableGeneratorPage( autoOpenDatePicker: true),
+
+                            ),
+                          );
+                        },
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: oneLineDates,
+                        ),
                       ),
                     ),
                   ),

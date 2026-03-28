@@ -1,6 +1,6 @@
+// lib/pages/salah_table_generator.dart
 import 'dart:io';
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -9,12 +9,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
-
 // Gallery/Downloads helpers
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
-
-// 🔤 snake_case getters (your project)
+// 🔥 snake_case getters (your project)
 import 'package:ialfm_prayer_times/l10n/generated/app_localizations.dart';
 import '../app_colors.dart';
 import '../main.dart' show AppGradients;
@@ -28,8 +26,14 @@ import '../ux_prefs.dart';
 enum _LayoutKind { table, poster }
 
 class SalahTableGeneratorPage extends StatefulWidget {
-  const SalahTableGeneratorPage({super.key, this.logoTargetPx = 80});
+  const SalahTableGeneratorPage({
+    super.key,
+    this.logoTargetPx = 80,
+    this.autoOpenDatePicker = false, // NEW (safe default)
+  });
+
   final double logoTargetPx;
+  final bool autoOpenDatePicker; // flag for date picker
 
   @override
   State<SalahTableGeneratorPage> createState() => _SalahTableGeneratorPageState();
@@ -48,7 +52,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   static const double _btnReserve = 12.0;
   // Poster should also end above the floating Download button
   static const double _posterReserve = 64.0; // knob: ensures poster doesn’t run under the button
-
   // ===== Download button vertical position (simple, signed knob) =====
   // bottom = bottomSafe + _downloadButtonOffsetPx
   // → Positive moves UP from safe area; Negative pushes DOWN (below safe area).
@@ -67,7 +70,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   // UI
   _LayoutKind _layout = _LayoutKind.table;
   bool _isExporting = false;
-
   // NEW: temporarily hides header action icons (calendar & newspaper) during export
   bool _hideHeaderActions = false;
 
@@ -75,9 +77,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   String _khateebMain = 'TBD';
   String _khateebYouth = 'TBD';
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // ONE source of truth for background (light & dark)
-  // ────────────────────────────────────────────────────────────────────────────
   BoxDecoration _pageBg(BuildContext ctx) {
     final g = Theme.of(ctx).extension<AppGradients>()?.page;
     if (g != null) return BoxDecoration(gradient: g);
@@ -95,6 +96,14 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   void initState() {
     super.initState();
     _bootstrap();
+
+    // ✅ Open Cupertino date picker ONLY when explicitly requested (e.g., from header tap)
+    if (widget.autoOpenDatePicker) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _openDateSheet();
+      });
+    }
   }
 
   Future<void> _bootstrap() async {
@@ -112,7 +121,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
 
   Future<void> _loadYearIntoCache(tz.Location loc, int year) async {
     if (_cacheByYear.containsKey(year) && _cacheByYear[year]!.isNotEmpty) return;
-    final days = await loadPrayerDays(year: year).catchError((_) => <PrayerDay>[]);
+    final days =
+    await loadPrayerDays(year: year).catchError((_) => <PrayerDay>[]);
     _cacheByYear[year] = days;
   }
 
@@ -126,7 +136,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       }
       return null;
     }
-
     setState(() {
       _selected = DateTime(newLocal.year, newLocal.month, newLocal.day);
       _selectedDay = findByDate(days, _selected);
@@ -141,9 +150,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     return d.timeZoneOffset != jan1.timeZoneOffset;
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Time & data maps
-  // ────────────────────────────────────────────────────────────────────────────
   String _to12h(String raw) {
     if (raw.isEmpty || !raw.contains(':')) return raw;
     final p = raw.split(':');
@@ -193,9 +201,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     'Sunrise': DstPillStealth(isDst: _isDstOn(_selected), isLight: isLight),
   };
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Save helpers (Photos/Gallery) — SILENT by default (one toast from caller)
-  // ────────────────────────────────────────────────────────────────────────────
   Future<bool> _saveToGalleryOrDownloads(
       Uint8List bytes,
       String fname, {
@@ -219,6 +226,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       if (!hasWrite) {
         throw 'Photos permission denied (addOnly: ${addOnly.name}, full: ${photos.name})';
       }
+
       final res =
       await ImageGallerySaverPlus.saveImage(bytes, name: fname, quality: 100);
       assert(() {
@@ -238,8 +246,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       return true;
     }());
     if (showToast && mounted) {
-      messenger.showSnackBar(
-          const SnackBar(content: Text('Saved to Photos/Gallery')));
+      messenger.showSnackBar(const SnackBar(content: Text('Saved to Photos/Gallery')));
     }
     return true;
   }
@@ -248,7 +255,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
   Future<void> _exportPng() async {
     if (_isExporting) return;
     _isExporting = true;
-
     final media = MediaQuery.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -257,14 +263,12 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       setState(() => _hideHeaderActions = true);
       // Ensure the hidden frame is presented before we snapshot
       await WidgetsBinding.instance.endOfFrame;
-
       // 2) Small extra delay to be extra safe on slower devices
       await Future.delayed(const Duration(milliseconds: 4));
       if (!mounted) return;
 
       final boundary =
       _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-
       final double dpr = media.devicePixelRatio.clamp(2.0, 3.0).toDouble();
       final ui.Image image = await boundary.toImage(pixelRatio: dpr);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -290,16 +294,16 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     }
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Bottom-sheet editor for Khateeb names (poster only)
-  // ────────────────────────────────────────────────────────────────────────────
   Future<void> _openKhateebSheet() async {
     if (_layout != _LayoutKind.poster) return;
     final theme = Theme.of(context);
     final bg = theme.bottomSheetTheme.backgroundColor;
     final dstOn = _isDstOn(_selected);
 
-    final ctrlMain = TextEditingController(text: _khateebMain == 'TBD' ? '' : _khateebMain);
+    final ctrlMain =
+    TextEditingController(text: _khateebMain == 'TBD' ? '' : _khateebMain);
     final ctrlYouth =
     TextEditingController(text: _khateebYouth == 'TBD' ? '' : _khateebYouth);
 
@@ -329,12 +333,12 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
               children: [
                 Text(
                   'Khateeb Names',
-                  style:
-                  TextStyle(color: cs2.onSurface, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: cs2.onSurface, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
+
                 // Main Khateeb
                 TextField(
                   controller: ctrlMain,
@@ -346,19 +350,16 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                   style: TextStyle(color: cs2.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Main Khateeb',
-                    labelStyle:
-                    TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
+                    labelStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.90)),
                     hintText: 'Imam Rasheed Farah',
-                    hintStyle:
-                    TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
+                    hintStyle: TextStyle(color: cs2.onSurface.withValues(alpha: 0.55)),
                     filled: true,
                     fillColor: cs2.surface.withValues(alpha: 0.06),
                     contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                      BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
+                      borderSide: BorderSide(color: cs2.outline.withValues(alpha: 0.30)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -366,13 +367,14 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                     ),
                   ),
                 ),
+
                 if (dstOn) ...[
                   const SizedBox(height: 12),
                   TextField(
                     controller: ctrlYouth,
                     inputFormatters: [nameFilter],
-                    keyboardType: TextInputType.name, // nicer keyboard
-                    textInputAction: TextInputAction.done, // has “Done”
+                    keyboardType: TextInputType.name,
+                    textInputAction: TextInputAction.done,
                     textCapitalization: TextCapitalization.words,
                     cursorColor: cs2.primary,
                     style: TextStyle(color: cs2.onSurface),
@@ -399,6 +401,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                     ),
                   ),
                 ],
+
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -437,28 +440,27 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Header (no arch) — date centered BETWEEN calendar & poster toggle
-  // ────────────────────────────────────────────────────────────────────────────
   Widget _generatorHeader(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final isLight = theme.brightness == Brightness.light;
+
     final media = MediaQuery.of(context);
     final w = media.size.width;
-
     final clamped = media.textScaler.clamp(maxScaleFactor: 1.08);
+
     final titleSize = (w >= 430) ? 20.0 : (w >= 380 ? 18.0 : 16.0);
     final dateSize = titleSize;
     final sideLaneW = (w < 360) ? 48.0 : (w < 400 ? 52.0 : 56.0);
-
     final double logoH = (w * 0.16).clamp(56.0, 92.0).toDouble();
 
     final greg = DateFormat('EEE, MMM d yyyy').format(_selected);
+
     final DateTime hijriAdjusted =
     _selected.add(Duration(days: UXPrefs.hijriEffectiveOffset));
     final hCal = HijriCalendar.fromDate(hijriAdjusted);
-
     const hijriMonths = [
       'Muharram',
       'Safar',
@@ -473,10 +475,10 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
       'Dhul-Qadah',
       'Dhul-Hijjah',
     ];
-
     final hName =
     (hCal.hMonth >= 1 && hCal.hMonth <= 12) ? hijriMonths[hCal.hMonth - 1] : 'Hijri';
     final hijriStr = '$hName ${hCal.hDay}, ${hCal.hYear}';
+
     final headerDecoration = _pageBg(context);
 
     final title = Text(
@@ -619,9 +621,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Date picker
-  // ────────────────────────────────────────────────────────────────────────────
   Future<void> _openDateSheet() async {
     final int year = _todayLocal.year;
     final DateTime minDate = DateTime(year, 1, 1);
@@ -668,13 +669,11 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                     right: 8,
                     top: 8,
                     child: CupertinoButton(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       minimumSize: const Size(44, 32),
                       child: Text(
                         l10n.btn_save,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       onPressed: () => Navigator.pop(ctx),
                     ),
@@ -688,9 +687,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
   // Build — gradient background + (capture area) + overlays outside
-  // ────────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -727,7 +725,6 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
     final media = MediaQuery.of(context);
     final bottomSafe = media.viewPadding.bottom;
     final topSafe = media.viewPadding.top;
-
     // Dynamic headroom below top nav: safe-area top + extra knob
     final double dynamicTopHeadroom = topSafe + _topOverlayExtra;
 
@@ -791,8 +788,8 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                             final bool needScroll = c.maxHeight < needMin;
 
                             final table = KeyedSubtree(
-                              key: const ValueKey(
-                                  'salah_table_glass_generator'),
+                              key:
+                              const ValueKey('salah_table_glass_generator'),
                               child: SalahTable(
                                 adhanByName: adhanMap,
                                 iqamahByName: _iqamahRaw(day),
@@ -804,6 +801,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                                 headerGreen: false,
                                 headerBackgroundGradient: null,
                                 headerBackgroundColor: Colors.transparent,
+
                                 // Full-width + no gold border
                                 rowOddColor: Colors.transparent,
                                 rowEvenColor: Colors.transparent,
@@ -814,18 +812,23 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                                 const Color(0xFF7B90A0)
                                     .withValues(alpha: 0.25),
                                 rowDividerThickness: 0.8,
+
                                 // Consistent fonts for both columns
                                 headerStyle: headerTextStyle,
                                 nameStyle: nameTextStyle,
                                 adhanStyle: valueTextStyle,
                                 iqamahStyle: valueTextStyle,
                                 order: order,
+
+                                // Glass surface
                                 useGlassSurface: true,
                                 glassBlur: 8,
                                 glassTintLight:
                                 Colors.white.withValues(alpha: 0.70),
-                                glassTintDark: const Color(0xFF0A1E3A)
-                                    .withValues(alpha: 0.28),
+                                glassTintDark:
+                                const Color(0xFF0A1E3A).withValues(
+                                  alpha: 0.28,
+                                ),
                                 glassBorderLight: Colors.transparent,
                                 glassBorderDark: Colors.transparent,
                                 glassBorderWidth: 0.0,
@@ -874,6 +877,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: _bottomVisualMargin),
                   ],
                 ),
@@ -897,6 +901,7 @@ class _SalahTableGeneratorPageState extends State<SalahTableGeneratorPage> {
                 ),
               ),
             ),
+
             Positioned(
               right: 10,
               // >>> SIMPLE KNOB: bottomSafe + offset (offset may be negative to push further down)
