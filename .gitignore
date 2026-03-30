@@ -1,0 +1,107 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+# ============================================================
+# OS / Editor
+# ============================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+
+# ============================================================
+# Node / Vite
+# ============================================================
+
+node_modules/
+dist/
+dist-*
+.env
+.env.local
+.env.*.local
+
+
+# ============================================================
+# Tauri (Rust)
+# ============================================================
+
+src-tauri/target/
+src-tauri/.cargo/
+
+
+# ============================================================
+# Build artifacts
+# ============================================================
+
+*.log
+*.tmp
+*.cache
+
+
+# ============================================================
+# Secrets / Credentials (CRITICAL)
+# ============================================================
+
+*admin*.json
+*service-account*.json
+*firebase*.json
+*credentials*.json
+ialfm_config.json
+
+
+# ============================================================
+# Local tool outputs / runtime JSON
+# ============================================================
+
+announcements.json
+single_announcement.json
+announcement.json
+announcements_*.json
+
+
+# ============================================================
+# External tooling (do not vendor)
+# ============================================================
+
+tools/
+tools/**
+
+
+# ============================================================
+# Optional: ignore generated assets
+# ============================================================
+
+*.lock.bak
+
+
+# ============================================================
+# Git
+# ============================================================
+
+.git/rebase-apply/
+.git/rebase-merge/
