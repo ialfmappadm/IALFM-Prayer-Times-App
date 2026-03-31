@@ -1,0 +1,303 @@
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f6f7fa;
+  color: #0f2432;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial,
+    sans-serif;
+}
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+
+:root {
+  --bar-bg: #ffffff;
+  --bar-fg: #0f2432;
+
+  --accent: #1c74bc;
+
+  --tab-ink: #334155;
+  --tab-underline: #1c74bc;
+
+  --console-bg: #eef1f6;
+  --console-h: 220px;
+
+  --btn-h: 44px;
+  --btn-gap: 12px;
+
+  --toolbar-w: 52px;
+}
+
+/* ============================================================
+   APP SHELL (FIXED GRID — NEVER CHANGES)
+   ============================================================ */
+
+.app-shell {
+  display: grid;
+  grid-template-areas:
+    "toolbar"
+    "title"
+    "content"
+    "console";
+  grid-template-rows: 44px 36px 1fr var(--console-h);
+  grid-template-columns: 1fr;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   TOOLBAR — DEFAULT TOP
+   ============================================================ */
+
+.toolbar {
+  grid-area: toolbar;
+  background: var(--bar-bg);
+  color: var(--bar-fg);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.toolbar__section {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ============================================================
+   TOOLBAR — VERTICAL MODES (ONLY TOOLBAR MOVES)
+   ============================================================ */
+
+.app-shell.toolbar-left .toolbar,
+.app-shell.toolbar-right .toolbar {
+  position: fixed;
+  top: 0;
+  bottom: var(--console-h);
+  width: var(--toolbar-w);
+  padding: 8px 6px;
+  flex-direction: column;
+  justify-content: space-between; /* 🔑 top actions + bottom toggles */
+  align-items: center;
+  z-index: 50;
+  grid-area: unset; /* 🔑 remove from grid flow */
+}
+
+.app-shell.toolbar-left .toolbar {
+  left: 0;
+}
+
+.app-shell.toolbar-right .toolbar {
+  right: 0;
+}
+
+/* Push content ONLY */
+.app-shell.toolbar-left .content-wrap {
+  margin-left: var(--toolbar-w);
+}
+
+.app-shell.toolbar-right .content-wrap {
+  margin-right: var(--toolbar-w);
+}
+
+/* Stack sections vertically */
+.app-shell.toolbar-left .toolbar__section,
+.app-shell.toolbar-right .toolbar__section {
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============================================================
+   ICON BUTTONS
+   ============================================================ */
+
+.icon-btn {
+  all: unset;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--bar-fg);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+/* Hover ONLY when not active */
+.icon-btn:hover:not(.is-active) {
+  background: rgba(15, 36, 50, 0.06);
+}
+
+/* ============================================================
+   ACTIVE LAYOUT INDICATOR (NO GREY EVERYWHERE)
+   ============================================================ */
+
+.layout-btn.is-active {
+  color: var(--accent);
+  background: rgba(28, 116, 188, 0.12);
+  position: relative;
+}
+
+/* Dot indicator */
+.layout-btn.is-active::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+/* ============================================================
+   TITLE STRIP
+   ============================================================ */
+
+.title-strip {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  height: 40px;
+}
+
+.tabs__list {
+  display: flex;
+  gap: 28px;
+  padding: 0 12px;
+}
+
+.tabs__item {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+  padding-bottom: 8px;
+  position: relative;
+  color: var(--tab-ink);
+}
+
+.tabs__item.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 3px;
+  background: var(--tab-underline);
+  border-radius: 3px 3px 0 0;
+}
+
+/* ============================================================
+   CONTENT AREA (NEVER MOVES)
+   ============================================================ */
+
+.content-wrap {
+  grid-area: content;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-inner {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+}
+
+/* ============================================================
+   OPT‑IN SCROLL (PUBLISH TAB ONLY)
+   ============================================================ */
+
+.tab-scroll {
+  max-height: calc(100vh - var(--console-h) - 160px);
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.vstack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--btn-gap);
+}
+
+.btn {
+  all: unset;
+  height: var(--btn-h);
+  min-width: 320px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.btn--primary {
+  color: #ffffff;
+  background: linear-gradient(90deg, #0a2c42, #1b4f6b);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+/* ============================================================
+   CONSOLE (FIXED — NEVER MOVES)
+   ============================================================ */
+
+.console {
+  grid-area: console;
+  background: var(--console-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.console__head {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.console__body {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 12px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
