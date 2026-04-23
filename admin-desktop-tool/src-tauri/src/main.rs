@@ -11,10 +11,12 @@ fn main() {
         .plugin(tauri_plugin_log::Builder::default().build())
 
         .invoke_handler(generate_handler![
-            commands::save_config,
+            commands::get_announce_dir,
+            commands::check_node_toolchain,
             commands::run_npm_install,
             commands::write_json,
             commands::run_node_script
+
         ])
 
         .run(generate_context!())

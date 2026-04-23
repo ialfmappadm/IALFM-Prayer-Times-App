@@ -31,11 +31,13 @@ export default function UtilityTab({ appendLog, onBack }: Props) {
         className="btn btn--primary"
         onClick={() =>
           run("clear_announcements_force.js", [
-            "--tz", "America/Chicago",
+            "--tz",
+            "America/Chicago",
             "--stamp-via-shell",
             "--blank-card",
             "--notify",
-            "--topic", "allUsers",
+            "--topic",
+            "allUsers",
           ])
         }
       >
@@ -46,11 +48,14 @@ export default function UtilityTab({ appendLog, onBack }: Props) {
         className="btn btn--primary"
         onClick={() =>
           run("rc_prune_and_lock.js", [
-            "--tz", "America/Chicago",
+            "--tz",
+            "America/Chicago",
             "--stamp-via-shell",
             "--notify",
-            "--topic", "allUsers",
-            "--project", "ialfm-prayer-times",
+            "--topic",
+            "allUsers",
+            "--project",
+            "ialfm-prayer-times",
           ])
         }
       >

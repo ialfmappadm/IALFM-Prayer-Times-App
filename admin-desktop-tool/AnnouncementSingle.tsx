@@ -2,19 +2,18 @@ import React, { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
 const ANNOUNCE_DIR =
-  "/Users/syed/AndroidStudioProjects/IALFM/prayer_times_app/tools/announce"; // consider moving to a Setup screen
-const FILE_SINGLE = `${ANNOUNCE_DIR}/single_announcement.json`;
-const PUBLISH_JS  = `${ANNOUNCE_DIR}/publish_and_notify.js`;
+  "/Users/syed/AndroidStudioProjects/IALFM/prayer_times_app/tools/announce";
+
+const FILE_SINGLE = "single_announcement.json";
 
 function genIdFromTitle(title: string) {
-  const t = (title || "").trim();
-  // keep it simple; you can slugify later if needed
+  const t = title.trim();
   return t.length ? t : `item-${Date.now()}`;
 }
 
 export default function AnnouncementSingle({ navigate, appendLog }) {
   const [title, setTitle] = useState("");
-  const [text,  setText]  = useState("");
+  const [text, setText] = useState("");
 
   async function postAnnouncement() {
     try {
@@ -25,14 +24,14 @@ export default function AnnouncementSingle({ navigate, appendLog }) {
 
       appendLog("Preparing single announcement…");
 
-      // IMPORTANT: the publish script expects an ARRAY, even for a single
-      const row = {
-        id: genIdFromTitle(title),
-        title: title.trim(),
-        text: text.trim(),
-        sort_by_id: 0
-      };
-      const payload = [row];
+      const payload = [
+        {
+          id: genIdFromTitle(title),
+          title: title.trim(),
+          body: text.trim(),
+          sort_by_id: 0,
+        },
+      ];
 
       appendLog(`Writing ${FILE_SINGLE}…`);
       await invoke("write_json", {
@@ -41,13 +40,22 @@ export default function AnnouncementSingle({ navigate, appendLog }) {
       });
 
       appendLog("Running publish script…");
-      const args = [
-        "--file", FILE_SINGLE,
-        "--project", "ialfm-prayer-times",
-        "--tz", "America/Chicago",
-        "--topic", "allUsers",
-      ];
-      const out = await invoke("run_node_script", { path: PUBLISH_JS, args });
+
+      const out = await invoke<string>("run_node_script", {
+        payload: {
+          scriptPath: "publish_and_notify.js",
+          args: [
+            "--file",
+            FILE_SINGLE,
+            "--project",
+            "ialfm-prayer-times",
+            "--tz",
+            "America/Chicago",
+            "--topic",
+            "allUsers",
+          ],
+        },
+      });
 
       appendLog(String(out));
       appendLog("✅ Single announcement posted!");
@@ -59,33 +67,34 @@ export default function AnnouncementSingle({ navigate, appendLog }) {
   }
 
   return (
-    <div>
+    <div className="vstack">
       <h3>Post Single Announcement</h3>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Title</label>
-        <input
-          style={{ width: "100%" }}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="System Test Broadcast"
-        />
-      </div>
+      <input
+        placeholder="System Test Broadcast"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Text</label>
-        <textarea
-          style={{ width: "100%", minHeight: 140 }}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="This is a test of the IALFM broadcast system. No action is required."
-        />
-      </div>
+      <textarea
+        placeholder="Announcement text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
 
-      <button onClick={postAnnouncement}>Post Announcement</button>
-      <button onClick={() => navigate("main")} style={{ marginLeft: 8 }}>
-        Back
-      </button>
+      <div>
+        <button className="btn btn--primary" onClick={postAnnouncement}>
+          Post Announcement
+        </button>
+
+        <button
+          className="btn btn--secondary"
+          onClick={() => navigate("main")}
+          style={{ marginLeft: 8 }}
+        >
+          Back
+        </button>
+      </div>
     </div>
   );
 }

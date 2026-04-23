@@ -5,7 +5,7 @@
   "identifier": "org.ialfm.desktop.admin.tool",
 
   "build": {
-    "beforeDevCommand": "",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
@@ -25,9 +25,11 @@
     }
   },
 
+
   "bundle": {
     "active": true,
     "targets": ["dmg", "app", "msi"],
+    "resources": ["tools/**/*"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

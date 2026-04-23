@@ -48,7 +48,7 @@ export default function App() {
           active={activeTab}
           tabs={[
             { key: "setup", label: "Setup" },
-            { key: "publish", label: "Publish Notifications" },
+            { key: "publish", label: "Notifications" },
             { key: "utilities", label: "Utilities" },
           ]}
           onSelect={setActiveTab}

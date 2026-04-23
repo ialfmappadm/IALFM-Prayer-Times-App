@@ -61,10 +61,20 @@ export default function AnnouncementMulti({ navigate, appendLog }) {
         "--tz", "America/Chicago",
         "--topic", "allUsers",
       ];
+
+       console.log("🔥 USING PAYLOAD INVOKE", {
+          payload: {
+            scriptPath: PUBLISH_JS,
+            args,
+          },
+       });
+
       const out = await invoke("run_node_script", {
-        path: PUBLISH_JS,
-        args,
-      });
+          payload: {
+              scriptPath: PUBLISH_JS,
+              args,
+              },
+          });
 
       appendLog(String(out));
       appendLog("✅ Multi announcements posted!");

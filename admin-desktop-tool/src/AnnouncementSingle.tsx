@@ -40,6 +40,12 @@ export default function AnnouncementSingle({ navigate, appendLog }) {
         data: JSON.stringify(payload, null, 2),
       });
 
+      console.log("🔥 USING PAYLOAD INVOKE", {
+                payload: {
+                  scriptPath: PUBLISH_JS,
+                  args,
+      });
+
       appendLog("Running publish script…");
       const args = [
         "--file", FILE_SINGLE,
@@ -47,7 +53,12 @@ export default function AnnouncementSingle({ navigate, appendLog }) {
         "--tz", "America/Chicago",
         "--topic", "allUsers",
       ];
-      const out = await invoke("run_node_script", { path: PUBLISH_JS, args });
+      const out = await invoke("run_node_script", {
+        payload: {
+          scriptPath: PUBLISH_JS,
+          args,
+        },
+      });
 
       appendLog(String(out));
       appendLog("✅ Single announcement posted!");

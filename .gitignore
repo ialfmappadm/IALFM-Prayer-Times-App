@@ -58,7 +58,6 @@ src-tauri/.cargo/
 # Build artifacts
 # ============================================================
 
-*.log
 *.tmp
 *.cache
 

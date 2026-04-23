@@ -1,66 +1,29 @@
 import React from "react";
-import { invoke } from "@tauri-apps/api/core";
 
 type Props = {
   appendLog: (msg: string) => void;
   onBack: () => void;
 };
 
-export default function UtilityTab({ appendLog, onBack }: Props) {
-  const run = async (scriptPath: string, args: string[]) => {
-    try {
-      appendLog(`>> Running ${scriptPath}…`);
-
-      const out = await invoke<string>("run_node_script", {
-        payload: {
-          scriptPath,
-          args,
-        },
-      });
-
-      if (out) appendLog(out);
-      appendLog("✅ Done.");
-    } catch (e: any) {
-      appendLog(`❌ Failed: ${String(e)}`);
-    }
-  };
-
+export default function UtilityTab({ onBack }: Props) {
   return (
-    <div className="vstack">
-      <button
-        className="btn btn--primary"
-        onClick={() =>
-          run("clear_announcements_force.js", [
-            "--tz", "America/Chicago",
-            "--stamp-via-shell",
-            "--blank-card",
-            "--notify",
-            "--topic", "allUsers",
-          ])
-        }
-      >
-        Clear Notifications (Mobile App)
-      </button>
+    <div className="vstack" style={{ width: "100%", maxWidth: 480 }}>
+      <h3 style={{ margin: 0 }}>Utilities</h3>
 
-      <button
-        className="btn btn--primary"
-        onClick={() =>
-          run("rc_prune_and_lock.js", [
-            "--tz", "America/Chicago",
-            "--stamp-via-shell",
-            "--notify",
-            "--topic", "allUsers",
-            "--project", "ialfm-prayer-times",
-          ])
-        }
+      <div
+        style={{
+          width: "100%",
+          padding: "16px",
+          border: "1px solid #dbe3ec",
+          borderRadius: "8px",
+          background: "#ffffff",
+          color: "#475569",
+        }}
       >
-        Prune Expired Notifications
-      </button>
+        This tab is reserved for future admin tools.
+      </div>
 
-      <button
-        className="btn btn--primary"
-        onClick={onBack}
-      >
+      <button className="btn btn--primary" onClick={onBack}>
         Back
       </button>
     </div>

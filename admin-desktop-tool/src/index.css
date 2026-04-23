@@ -277,6 +277,67 @@ body {
 }
 
 /* ============================================================
+PUBLISH NOTIFICATIONS LAYOUT
+============================================================ */
+
+.content-wrap {
+  grid-area: content;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.content-inner {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notif-root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.notif-scroll {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 16px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.tab-actions {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: 0;
+  padding-left: 4px;
+}
+
+/* FULLY override the global .btn rule inside the sidebar */
+.tab-actions .btn {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 0 12px;
+  height: 42px;
+  font-size: 14px;
+}
+
+/* ============================================================
    CONSOLE (FIXED — NEVER MOVES)
    ============================================================ */
 

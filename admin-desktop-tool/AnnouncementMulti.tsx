@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-const ANNOUNCE_DIR =
-  "/Users/syed/AndroidStudioProjects/IALFM/prayer_times_app/tools/announce"; // TODO: move to Setup env
-const FILE_MULTI = `${ANNOUNCE_DIR}/announcements.json`;
-const PUBLISH_JS = `${ANNOUNCE_DIR}/publish_and_notify.js`;
+const FILE_MULTI = "announcements.json";
 
-type Draft = { title: string; text: string };
+type Draft = {
+  title: string;
+  text: string;
+};
 
 function genIdFromTitle(title: string) {
-  const t = (title || "").trim();
+  const t = title.trim();
   return t.length ? t : `item-${Date.now()}`;
 }
 
@@ -32,16 +32,14 @@ export default function AnnouncementMulti({ navigate, appendLog }) {
     try {
       appendLog("Preparing announcements…");
 
-      // Transform drafts → required shape with id/sort_by_id
       const payload = items
         .map((a, i) => ({
           id: genIdFromTitle(a.title),
-          title: (a.title || "").trim(),
-          text: (a.text || "").trim(),
-          sort_by_id: i, // order of list → sort key
+          title: a.title.trim(),
+          body: a.text.trim(),
+          sort_by_id: i,
         }))
-        // filter out empties
-        .filter((a) => a.title.length && a.text.length);
+        .filter((a) => a.title && a.body);
 
       if (!payload.length) {
         alert("Please fill at least one Title and Text.");
@@ -55,15 +53,21 @@ export default function AnnouncementMulti({ navigate, appendLog }) {
       });
 
       appendLog("Running publish script…");
-      const args = [
-        "--file", FILE_MULTI,
-        "--project", "ialfm-prayer-times",
-        "--tz", "America/Chicago",
-        "--topic", "allUsers",
-      ];
-      const out = await invoke("run_node_script", {
-        path: PUBLISH_JS,
-        args,
+
+      const out = await invoke<string>("run_node_script", {
+        payload: {
+          scriptPath: "publish_and_notify.js",
+          args: [
+            "--file",
+            FILE_MULTI,
+            "--project",
+            "ialfm-prayer-times",
+            "--tz",
+            "America/Chicago",
+            "--topic",
+            "allUsers",
+          ],
+        },
       });
 
       appendLog(String(out));
@@ -76,36 +80,44 @@ export default function AnnouncementMulti({ navigate, appendLog }) {
   }
 
   return (
-    <div>
+    <div className="vstack">
       <h3>Post Multiple Announcements</h3>
 
       {items.map((a, i) => (
-        <div key={i} style={{ border: "1px solid #ddd", padding: 12, marginBottom: 12 }}>
-          <div style={{ marginBottom: 8 }}>
-            <label>Title #{i + 1}</label>
-            <input
-              style={{ width: "100%" }}
-              value={a.title}
-              onChange={(e) => update(i, "title", e.target.value)}
-              placeholder="Eid ul Fitr"
-            />
-          </div>
+        <div key={i}>
+          <input
+            placeholder={`Title #${i + 1}`}
+            value={a.title}
+            onChange={(e) =>
+              update(i, "title", e.target.value)
+            }
+          />
 
-          <div style={{ marginBottom: 8 }}>
-            <label>Text</label>
-            <textarea
-              style={{ width: "100%", minHeight: 120 }}
-              value={a.text}
-              onChange={(e) => update(i, "text", e.target.value)}
-              placeholder="Enter announcement text…"
-            />
-          </div>
+          <textarea
+            placeholder="Announcement text"
+            value={a.text}
+            onChange={(e) =>
+              update(i, "text", e.target.value)
+            }
+          />
         </div>
       ))}
 
-      <button onClick={addAnnouncement}>Add Another</button>
-      <button onClick={postAll} style={{ marginLeft: 8 }}>Post All</button>
-      <button onClick={() => navigate("main")} style={{ marginLeft: 8 }}>Back</button>
+      <button className="btn btn--secondary" onClick={addAnnouncement}>
+        Add Another
+      </button>
+
+      <button className="btn btn--primary" onClick={postAll}>
+        Post All
+      </button>
+
+      <button
+        className="btn btn--secondary"
+        onClick={() => navigate("main")}
+        style={{ marginLeft: 8 }}
+      >
+        Back
+      </button>
     </div>
   );
 }

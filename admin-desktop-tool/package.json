@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "tauri-run-dev": "tauri dev",
-    "tauri:dev": "concurrently \"npm run dev\" \"npm run tauri-run-dev\""
+    "tauri-run-dev": "tauri dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",

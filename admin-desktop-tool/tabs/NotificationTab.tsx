@@ -32,7 +32,6 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
   };
 
   const publish = async () => {
-    // ✅ Safety: ALL visible cards must be filled
     const invalid = items
       .map((a, i) =>
         !a.title.trim() || !a.body.trim() ? i + 1 : null
@@ -51,7 +50,6 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
     setPublishing(true);
 
     try {
-      // ✅ ALWAYS write an array (single = length 1)
       const payload = items.map((a, idx) => ({
         id: `announcement-${idx}`,
         title: a.title,
@@ -67,7 +65,6 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
       appendLog(`>> Writing ${file}`);
       appendLog(JSON.stringify(payload, null, 2));
 
-      // ✅ Backend writes into tools_dir
       await invoke("write_json", {
         path: file,
         data: JSON.stringify(payload, null, 2),
@@ -75,21 +72,23 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
 
       appendLog(">> Publishing announcements…");
 
-      const output = await invoke<string>("run_node_script", {
-        script_path: "publish_and_notify.js",
-        args: [
-          "--file",
-          file,
-          "--project",
-          "ialfm-prayer-times",
-          "--tz",
-          "America/Chicago",
-          "--topic",
-          "allUsers",
-        ],
+      const out = await invoke<string>("run_node_script", {
+        payload: {
+          scriptPath: "publish_and_notify.js",
+          args: [
+            "--file",
+            file,
+            "--project",
+            "ialfm-prayer-times",
+            "--tz",
+            "America/Chicago",
+            "--topic",
+            "allUsers",
+          ],
+        },
       });
 
-      if (output) appendLog(output);
+      if (out) appendLog(out);
       appendLog("✅ Publish completed successfully.");
     } catch (err: any) {
       appendLog("❌ Publish failed:");
@@ -101,7 +100,6 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
 
   return (
     <div className="vstack" style={{ width: "100%" }}>
-      {/* ✅ This tab opts-in to scrolling ONLY when needed */}
       <div className="tab-scroll">
         <div className="vstack" style={{ width: 420 }}>
           {items.map((item, idx) => (
@@ -130,7 +128,6 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
         </div>
       </div>
 
-      {/* ✅ Buttons ALWAYS visible, full height */}
       <button
         className="btn btn--primary"
         onClick={addAnnouncement}

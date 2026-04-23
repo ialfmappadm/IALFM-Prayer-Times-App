@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -7,30 +7,21 @@ type Props = {
   onBack: () => void;
 };
 
+const SECRETS_KEY = "ialfm_secrets_path";
+
 export default function SetupTab({ appendLog, onBack }: Props) {
-  const [toolsDir, setToolsDir] = useState<string | null>(null);
   const [secretsPath, setSecretsPath] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
 
-  // Step 1: pick tools directory
-  const selectToolsDir = async () => {
-    const result = await open({
-      directory: true,
-      multiple: false,
-      title: "Select Announcement Tools Folder",
-    });
-
-    if (!result || Array.isArray(result)) {
-      appendLog("❌ Tools directory selection cancelled.");
-      return;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SECRETS_KEY);
+      if (saved) setSecretsPath(saved);
+    } catch {
+      // ignore
     }
+  }, []);
 
-    setToolsDir(result);
-    appendLog("✅ Tools directory selected:");
-    appendLog(result);
-  };
-
-  // Step 2: pick secrets JSON
   const selectSecrets = async () => {
     const result = await open({
       directory: false,
@@ -45,16 +36,44 @@ export default function SetupTab({ appendLog, onBack }: Props) {
     }
 
     setSecretsPath(result);
+
+    try {
+      localStorage.setItem(SECRETS_KEY, result);
+    } catch {
+      // ignore
+    }
+
     appendLog("✅ Secrets JSON selected:");
     appendLog(result);
   };
 
-  // Step 3: run setup
-  const runSetup = async () => {
-    if (!toolsDir) {
-      appendLog("❌ Please select the tools directory first.");
-      return;
+  const checkNodeToolchain = async () => {
+    setRunning(true);
+
+    try {
+      appendLog(">> Checking Node.js / npm…");
+
+      const announceDir = await invoke<string>("get_announce_dir");
+      appendLog(">> Announcement tools directory:");
+      appendLog(announceDir);
+
+      const output = await invoke<string>("check_node_toolchain");
+
+      if (output) {
+        appendLog(">> Toolchain check result:");
+        appendLog(output);
+      }
+
+      appendLog("✅ Node.js / npm check completed.");
+    } catch (err: any) {
+      appendLog("❌ Node.js / npm check failed:");
+      appendLog(String(err));
+    } finally {
+      setRunning(false);
     }
+  };
+
+  const runSetup = async () => {
     if (!secretsPath) {
       appendLog("❌ Please select the secrets JSON file.");
       return;
@@ -63,22 +82,12 @@ export default function SetupTab({ appendLog, onBack }: Props) {
     setRunning(true);
 
     try {
-      appendLog(">> Saving setup configuration...");
-
-      await invoke("save_config", {
-        toolsDir,
-        secretsPath,
-        projectId: "ialfm-prayer-times",
-      });
-
-      appendLog("✅ Configuration saved.");
+      const announceDir = await invoke<string>("get_announce_dir");
 
       appendLog(">> Running npm install in:");
-      appendLog(toolsDir);
+      appendLog(announceDir);
 
-      const output = await invoke<string>("run_npm_install", {
-        path: toolsDir,
-      });
+      const output = await invoke<string>("run_npm_install");
 
       if (output) {
         appendLog(">> npm install output:");
@@ -94,20 +103,30 @@ export default function SetupTab({ appendLog, onBack }: Props) {
     }
   };
 
+  const clearSecrets = () => {
+    setSecretsPath(null);
+    try {
+      localStorage.removeItem(SECRETS_KEY);
+    } catch {
+      // ignore
+    }
+    appendLog("✅ Secrets cleared from this device.");
+  };
+
   return (
     <div className="vstack">
       <button
         className="btn btn--primary"
-        onClick={selectToolsDir}
+        onClick={checkNodeToolchain}
         disabled={running}
       >
-        1. Select Tools Folder
+        1. Check Node.js / npm
       </button>
 
       <button
         className="btn btn--primary"
         onClick={selectSecrets}
-        disabled={!toolsDir || running}
+        disabled={running}
       >
         2. Select Secrets JSON
       </button>
@@ -115,9 +134,17 @@ export default function SetupTab({ appendLog, onBack }: Props) {
       <button
         className="btn btn--primary"
         onClick={runSetup}
-        disabled={!toolsDir || !secretsPath || running}
+        disabled={!secretsPath || running}
       >
         3. Run Setup
+      </button>
+
+      <button
+        className="btn btn--primary"
+        onClick={clearSecrets}
+        disabled={running}
+      >
+        4. Clear Secrets (optional)
       </button>
 
       <button

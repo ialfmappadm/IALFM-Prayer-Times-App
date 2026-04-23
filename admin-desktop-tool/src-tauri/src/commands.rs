@@ -1,157 +1,117 @@
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::Deserialize;
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::Command,
     sync::Mutex,
 };
 
-/* ============================================================
-   Global guard to prevent concurrent script execution
-   ============================================================ */
 static SCRIPT_GUARD: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
-/* ============================================================
-   Persistent application configuration
-   ============================================================ */
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AppConfig {
-    pub tools_dir: String,
-    pub secrets_path: String,
-    pub project_id: String,
+/// Dev/admin-time announce tools folder:
+/// <repo>/src-tauri/tools/announce
+fn announce_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tools")
+        .join("announce")
 }
 
-/* ============================================================
-   Config helpers (Tauri v2–safe, no tauri::api)
-   ============================================================ */
-fn config_path() -> Result<PathBuf, String> {
-    // Use working directory for now (stable + predictable).
-    let cwd = std::env::current_dir()
-        .map_err(|e| format!("Unable to determine working directory: {}", e))?;
-    Ok(cwd.join("ialfm_config.json"))
-}
-
-fn load_config() -> Result<AppConfig, String> {
-    let path = config_path()?;
-    let raw = fs::read_to_string(&path)
-        .map_err(|_| "Setup has not been run yet".to_string())?;
-    serde_json::from_str(&raw)
-        .map_err(|e| format!("Invalid config file: {}", e))
-}
-
-/* ============================================================
-   Commands exposed to the frontend
-   ============================================================ */
-
-/// Save setup configuration after validating inputs
-#[tauri::command]
-pub fn save_config(
-    tools_dir: String,
-    secrets_path: String,
-    project_id: String,
-) -> Result<(), String> {
-    // Validate tools directory
-    if !Path::new(&tools_dir).is_dir() {
-        return Err(format!("Tools directory not found: {}", tools_dir));
-    }
-
-    // Validate secrets file exists
-    if !Path::new(&secrets_path).is_file() {
-        return Err(format!("Secrets JSON not found: {}", secrets_path));
-    }
-
-    // Read and validate secrets JSON
-    let raw = fs::read_to_string(&secrets_path)
-        .map_err(|e| format!("Failed to read secrets file: {}", e))?;
-
-    let json: Value = serde_json::from_str(&raw)
-        .map_err(|e| format!("Secrets file is not valid JSON: {}", e))?;
-
-    // Validate Firebase service account structure
-    let is_valid_service_account =
-        json.get("type") == Some(&Value::String("service_account".into()))
-            && json.get("project_id").is_some()
-            && json.get("client_email").is_some()
-            && json.get("private_key").is_some();
-
-    if !is_valid_service_account {
-        return Err(
-            "Invalid Firebase service account JSON. Expected a Google service_account key file."
-                .to_string(),
-        );
-    }
-
-    // Persist configuration
-    let cfg = AppConfig {
-        tools_dir,
-        secrets_path,
-        project_id,
-    };
-
-    let path = config_path()?;
-    let json = serde_json::to_string_pretty(&cfg)
-        .map_err(|e| format!("Failed to serialize config: {}", e))?;
-
-    fs::write(&path, json)
-        .map_err(|e| format!("Failed to write config file: {}", e))?;
-
-    Ok(())
-}
-
-/// Run `npm install` in the selected tools directory
-#[tauri::command]
-pub fn run_npm_install(path: String) -> Result<String, String> {
-    if !Path::new(&path).is_dir() {
-        return Err(format!("Invalid directory: {}", path));
-    }
-
-    let output = Command::new("npm")
-        .arg("install")
-        .current_dir(&path)
-        .output()
-        .map_err(|e| format!("Failed to spawn npm: {}", e))?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
-}
-
-/// Write JSON to a file inside the tools directory
-#[tauri::command]
-pub fn write_json(path: String, data: String) -> Result<(), String> {
-    let cfg = load_config()?;
-    let target = Path::new(&cfg.tools_dir).join(&path);
-
-    fs::write(&target, data)
-        .map_err(|e| format!("Failed to write JSON file: {}", e))?;
-    Ok(())
-}
-
-/* ============================================================
-   ✅ ARGUMENT STRUCT (ROBUST FIX)
-   Accepts *both* camelCase and snake_case
-   ============================================================ */
-#[derive(Deserialize)]
-pub struct RunNodeScriptArgs {
-    #[serde(alias = "scriptPath", alias = "script_path")]
+#[derive(Debug, Deserialize)]
+pub struct RunNodeScriptPayload {
+    #[serde(rename = "scriptPath")]
     pub script_path: String,
     pub args: Option<Vec<String>>,
+    pub secrets_path: Option<String>,
+    pub project_id: Option<String>,
 }
 
-/// Run a Node.js script located inside the tools directory
 #[tauri::command]
-pub fn run_node_script(payload: RunNodeScriptArgs) -> Result<String, String> {
-    let _guard = SCRIPT_GUARD
-        .lock()
-        .map_err(|_| "Script execution lock poisoned".to_string())?;
+pub fn get_announce_dir() -> Result<String, String> {
+    Ok(announce_dir().display().to_string())
+}
 
-    let cfg = load_config()?;
+#[tauri::command]
+pub fn check_node_toolchain() -> Result<String, String> {
+    let node_out = Command::new("node")
+        .arg("--version")
+        .output()
+        .map_err(|e| format!("Node.js not found on PATH: {}", e))?;
 
-    let script = Path::new(&cfg.tools_dir).join(&payload.script_path);
+    if !node_out.status.success() {
+        return Err(format!(
+            "Node.js check failed:\n{}",
+            String::from_utf8_lossy(&node_out.stderr)
+        ));
+    }
+
+    let npm_out = Command::new("npm")
+        .arg("--version")
+        .output()
+        .map_err(|e| format!("npm not found on PATH: {}", e))?;
+
+    if !npm_out.status.success() {
+        return Err(format!(
+            "npm check failed:\n{}",
+            String::from_utf8_lossy(&npm_out.stderr)
+        ));
+    }
+
+    Ok(format!(
+        "node: {}\nnpm: {}",
+        String::from_utf8_lossy(&node_out.stdout).trim(),
+        String::from_utf8_lossy(&npm_out.stdout).trim()
+    ))
+}
+
+#[tauri::command]
+pub fn run_npm_install() -> Result<String, String> {
+    let dir = announce_dir();
+
+    let out = Command::new("npm")
+        .arg("install")
+        .current_dir(&dir)
+        .output()
+        .map_err(|e| format!("npm install failed in {}: {}", dir.display(), e))?;
+
+    if !out.status.success() {
+        let code = out
+            .status
+            .code()
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| "terminated by signal".to_string());
+
+        return Err(format!(
+            "npm install failed in {}\nexit code: {}\n{}",
+            dir.display(),
+            code,
+            String::from_utf8_lossy(&out.stderr)
+        ));
+    }
+
+    Ok(format!(
+        "cwd: {}\n{}",
+        dir.display(),
+        String::from_utf8_lossy(&out.stdout)
+    ))
+}
+
+#[tauri::command]
+pub fn write_json(path: String, data: String) -> Result<(), String> {
+    let dir = announce_dir();
+    let full_path = dir.join(path);
+
+    fs::write(&full_path, data)
+        .map_err(|e| format!("Failed to write {}: {}", full_path.display(), e))
+}
+
+#[tauri::command]
+pub fn run_node_script(payload: RunNodeScriptPayload) -> Result<String, String> {
+    let _guard = SCRIPT_GUARD.lock().unwrap();
+
+    let dir = announce_dir();
+    let script = dir.join(&payload.script_path);
+
     if !script.exists() {
         return Err(format!("Script not found: {}", script.display()));
     }
@@ -159,33 +119,43 @@ pub fn run_node_script(payload: RunNodeScriptArgs) -> Result<String, String> {
     let mut cmd = Command::new("node");
     cmd.arg(&script);
 
-    if let Some(a) = payload.args {
-        cmd.args(a);
+    if let Some(args) = payload.args {
+        cmd.args(args);
     }
 
-    cmd.current_dir(&cfg.tools_dir)
-        .env(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            &cfg.secrets_path,
-        )
-        .env(
-            "GOOGLE_CLOUD_PROJECT",
-            &cfg.project_id,
-        );
+    if let Some(secrets) = payload.secrets_path {
+        cmd.env("GOOGLE_APPLICATION_CREDENTIALS", &secrets);
+    }
 
-    let output = cmd
+    if let Some(project) = payload.project_id {
+        cmd.env("GOOGLE_CLOUD_PROJECT", &project);
+    }
+
+    let out = cmd
+        .current_dir(&dir)
         .output()
-        .map_err(|e| format!("Failed to run node script: {}", e))?;
+        .map_err(|e| format!("Node execution failed in {}: {}", dir.display(), e))?;
 
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !out.status.success() {
+        let code = out
+            .status
+            .code()
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| "terminated by signal".to_string());
 
-    if output.status.success() {
-        Ok(stdout)
-    } else {
-        Err(format!(
-            "Node script failed:\n{}\n{}",
-            stdout, stderr
-        ))
+        return Err(format!(
+            "script: {}\ncwd: {}\nexit code: {}\n{}",
+            script.display(),
+            dir.display(),
+            code,
+            String::from_utf8_lossy(&out.stderr)
+        ));
     }
+
+    Ok(format!(
+        "script: {}\ncwd: {}\n{}",
+        script.display(),
+        dir.display(),
+        String::from_utf8_lossy(&out.stdout)
+    ))
 }
