@@ -37,7 +37,7 @@ Thumbs.db
 # ============================================================
 # Node / Vite
 # ============================================================
-
+/tools/announce/node_modules/
 node_modules/
 dist/
 dist-*
@@ -71,25 +71,6 @@ src-tauri/.cargo/
 *service-account*.json
 *firebase*.json
 *credentials*.json
-ialfm_config.json
-
-
-# ============================================================
-# Local tool outputs / runtime JSON
-# ============================================================
-
-announcements.json
-single_announcement.json
-announcement.json
-announcements_*.json
-
-
-# ============================================================
-# External tooling (do not vendor)
-# ============================================================
-
-tools/
-tools/**
 
 
 # ============================================================
@@ -105,3 +86,4 @@ tools/**
 
 .git/rebase-apply/
 .git/rebase-merge/
+

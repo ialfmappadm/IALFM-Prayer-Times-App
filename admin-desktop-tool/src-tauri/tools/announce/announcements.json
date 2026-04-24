@@ -1,0 +1,14 @@
+[
+  {
+    "id": "announcement-0",
+    "title": "Test1",
+    "body": "Test1",
+    "sort_by_id": 0
+  },
+  {
+    "id": "announcement-1",
+    "title": "Test2",
+    "body": "Test\n\nMulti Line\n\nBOD",
+    "sort_by_id": 1
+  }
+]
