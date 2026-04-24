@@ -1,9 +1,18 @@
 import React, { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import {
+  runAdminAction,
+  adminButtonClass,
+  adminButtonStyle,
+  adminInputStyle,
+  adminInlineActionStyle,
+} from "../utils/adminUi";
 
 type Props = {
   appendLog: (msg: string) => void;
   onBack: () => void;
+  busy: boolean;
+  setBusy: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 type Announcement = {
@@ -22,24 +31,32 @@ function getSecretsPath(): string | null {
   }
 }
 
-export default function NotificationTab({ appendLog, onBack }: Props) {
+export default function NotificationTab({
+  appendLog,
+  onBack,
+  busy,
+  setBusy,
+}: Props) {
   const [items, setItems] = useState<Announcement[]>([{ title: "", body: "" }]);
-  const [publishing, setPublishing] = useState(false);
 
   const update = (index: number, field: keyof Announcement, value: string) => {
+    if (busy) return;
+
     const next = [...items];
     next[index] = { ...next[index], [field]: value };
     setItems(next);
   };
 
   const addAnnouncement = () => {
+    if (busy) return;
     setItems([...items, { title: "", body: "" }]);
   };
 
   const removeAnnouncement = (index: number) => {
+    if (busy) return;
+
     const next = items.filter((_, i) => i !== index);
 
-    // Keep at least one row so the screen never becomes blank
     if (next.length === 0) {
       setItems([{ title: "", body: "" }]);
       return;
@@ -48,7 +65,11 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
     setItems(next);
   };
 
-  const runUtility = async (scriptPath: string, args: string[], successLabel: string) => {
+  const runUtility = async (
+    scriptPath: string,
+    args: string[],
+    successLabel: string
+  ) => {
     const secretsPath = getSecretsPath();
     if (!secretsPath) {
       appendLog("❌ Missing Secrets JSON. Please run Setup first.");
@@ -56,23 +77,33 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
       return;
     }
 
-    try {
-      appendLog(`>> Running ${scriptPath}…`);
+    await runAdminAction(setBusy, async () => {
+      try {
+        const announceDir = await invoke<string>("get_announce_dir");
 
-      const out = await invoke<string>("run_node_script", {
-        payload: {
-          scriptPath,
-          args,
-          secrets_path: secretsPath,
-          project_id: PROJECT_ID,
-        },
-      });
+        appendLog(">> Announcement tools directory:");
+        appendLog(announceDir);
 
-      if (out) appendLog(out);
-      appendLog(successLabel);
-    } catch (e: any) {
-      appendLog(`❌ Failed: ${String(e)}`);
-    }
+        appendLog(">> Running script from:");
+        appendLog(`${announceDir}/${scriptPath}`);
+
+        appendLog(`>> Running ${scriptPath}…`);
+
+        const out = await invoke<string>("run_node_script", {
+          payload: {
+            scriptPath,
+            args,
+            secrets_path: secretsPath,
+            project_id: PROJECT_ID,
+          },
+        });
+
+        if (out) appendLog(out);
+        appendLog(successLabel);
+      } catch (e: any) {
+        appendLog(`❌ Failed: ${String(e)}`);
+      }
+    });
   };
 
   const publish = async () => {
@@ -94,55 +125,63 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
       return;
     }
 
-    setPublishing(true);
+    await runAdminAction(setBusy, async () => {
+      try {
+        const payload = items.map((a, idx) => ({
+          id: `announcement-${idx}`,
+          title: a.title,
+          body: a.body,
+          sort_by_id: idx,
+        }));
 
-    try {
-      const payload = items.map((a, idx) => ({
-        id: `announcement-${idx}`,
-        title: a.title,
-        body: a.body,
-        sort_by_id: idx,
-      }));
+        const file =
+          payload.length === 1
+            ? "single_announcement.json"
+            : "announcements.json";
 
-      const file =
-        payload.length === 1 ? "single_announcement.json" : "announcements.json";
+        const announceDir = await invoke<string>("get_announce_dir");
 
-      appendLog(`>> Writing ${file}`);
-      appendLog(JSON.stringify(payload, null, 2));
+        appendLog(">> Announcement tools directory:");
+        appendLog(announceDir);
 
-      await invoke("write_json", {
-        path: file,
-        data: JSON.stringify(payload, null, 2),
-      });
+        appendLog(">> Writing file:");
+        appendLog(`${announceDir}/${file}`);
 
-      appendLog(">> Publishing announcements…");
+        appendLog(`>> Writing ${file}`);
+        appendLog(JSON.stringify(payload, null, 2));
 
-      const output = await invoke<string>("run_node_script", {
-        payload: {
-          scriptPath: "publish_and_notify.js",
-          args: [
-            "--file",
-            file,
-            "--project",
-            PROJECT_ID,
-            "--tz",
-            "America/Chicago",
-            "--topic",
-            "allUsers",
-          ],
-          secrets_path: secretsPath,
-          project_id: PROJECT_ID,
-        },
-      });
+        await invoke("write_json", {
+          path: file,
+          data: JSON.stringify(payload, null, 2),
+        });
 
-      if (output) appendLog(output);
-      appendLog("✅ Publish completed successfully.");
-    } catch (err: any) {
-      appendLog("❌ Publish failed:");
-      appendLog(String(err));
-    } finally {
-      setPublishing(false);
-    }
+        appendLog(">> Publishing announcements…");
+
+        const output = await invoke<string>("run_node_script", {
+          payload: {
+            scriptPath: "publish_and_notify.js",
+            args: [
+              "--file",
+              file,
+              "--project",
+              PROJECT_ID,
+              "--tz",
+              "America/Chicago",
+              "--topic",
+              "allUsers",
+            ],
+            secrets_path: secretsPath,
+            project_id: PROJECT_ID,
+          },
+        });
+
+        if (output) appendLog(output);
+        appendLog("✅ Publish completed successfully.");
+      } catch (err: any) {
+        appendLog("❌ Publish failed:");
+        appendLog(String(err));
+      }
+    });
   };
 
   return (
@@ -181,14 +220,8 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
                   <button
                     type="button"
                     onClick={() => removeAnnouncement(idx)}
-                    disabled={publishing}
-                    style={{
-                      all: "unset",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "#b91c1c",
-                    }}
+                    disabled={busy}
+                    style={adminInlineActionStyle(busy)}
                   >
                     Remove
                   </button>
@@ -202,11 +235,12 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
                   padding: "8px",
                   borderRadius: "4px",
                   border: "1px solid #ccc",
+                  ...adminInputStyle(busy),
                 }}
                 placeholder="Title"
                 value={item.title}
                 onChange={(e) => update(idx, "title", e.target.value)}
-                disabled={publishing}
+                disabled={busy}
               />
 
               <textarea
@@ -216,11 +250,12 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
                   padding: "8px",
                   borderRadius: "4px",
                   border: "1px solid #ccc",
+                  ...adminInputStyle(busy),
                 }}
                 placeholder="Message..."
                 value={item.body}
                 onChange={(e) => update(idx, "body", e.target.value)}
-                disabled={publishing}
+                disabled={busy}
               />
             </div>
           ))}
@@ -230,23 +265,25 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
       {/* RIGHT SIDE: action sidebar */}
       <div className="tab-actions">
         <button
-          className="btn btn--primary"
+          className={adminButtonClass(busy)}
           onClick={addAnnouncement}
-          disabled={publishing}
+          disabled={busy}
+          style={adminButtonStyle(busy)}
         >
           + Add New
         </button>
 
         <button
-          className="btn btn--primary"
+          className={adminButtonClass(busy)}
           onClick={publish}
-          disabled={publishing}
+          disabled={busy}
+          style={adminButtonStyle(busy)}
         >
           Publish All
         </button>
 
         <button
-          className="btn btn--primary"
+          className={adminButtonClass(busy)}
           onClick={() =>
             runUtility(
               "clear_announcements_force.js",
@@ -262,13 +299,14 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
               "✅ Clear completed."
             )
           }
-          disabled={publishing}
+          disabled={busy}
+          style={adminButtonStyle(busy)}
         >
           Clear Notifications
         </button>
 
         <button
-          className="btn btn--primary"
+          className={adminButtonClass(busy)}
           onClick={() =>
             runUtility(
               "rc_prune_and_lock.js",
@@ -285,19 +323,21 @@ export default function NotificationTab({ appendLog, onBack }: Props) {
               "✅ Prune completed."
             )
           }
-          disabled={publishing}
+          disabled={busy}
+          style={adminButtonStyle(busy)}
         >
           Prune Expired
         </button>
 
         <div style={{ marginTop: "auto" }}>
-        <button
-          className="btn btn--primary"
-          onClick={onBack}
-          disabled={publishing}
-        >
-          Back
-        </button>
+          <button
+            className={adminButtonClass(busy)}
+            onClick={onBack}
+            disabled={busy}
+            style={adminButtonStyle(busy)}
+          >
+            Back
+          </button>
         </div>
       </div>
     </div>

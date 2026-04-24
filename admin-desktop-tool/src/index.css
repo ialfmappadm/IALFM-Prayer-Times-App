@@ -1,7 +1,6 @@
 /* ============================================================
    GLOBAL
-   ============================================================ */
-
+============================================================ */
 html,
 body,
 #root {
@@ -16,36 +15,28 @@ body {
   margin: 0;
   background: #f6f7fa;
   color: #0f2432;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial,
-    sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
 }
 
 /* ============================================================
    DESIGN TOKENS
-   ============================================================ */
-
+============================================================ */
 :root {
   --bar-bg: #ffffff;
   --bar-fg: #0f2432;
-
   --accent: #1c74bc;
-
   --tab-ink: #334155;
   --tab-underline: #1c74bc;
-
   --console-bg: #eef1f6;
   --console-h: 220px;
-
   --btn-h: 44px;
   --btn-gap: 12px;
-
   --toolbar-w: 52px;
 }
 
 /* ============================================================
    APP SHELL (FIXED GRID — NEVER CHANGES)
-   ============================================================ */
-
+============================================================ */
 .app-shell {
   display: grid;
   grid-template-areas:
@@ -62,8 +53,7 @@ body {
 
 /* ============================================================
    TOOLBAR — DEFAULT TOP
-   ============================================================ */
-
+============================================================ */
 .toolbar {
   grid-area: toolbar;
   background: var(--bar-bg);
@@ -83,8 +73,7 @@ body {
 
 /* ============================================================
    TOOLBAR — VERTICAL MODES (ONLY TOOLBAR MOVES)
-   ============================================================ */
-
+============================================================ */
 .app-shell.toolbar-left .toolbar,
 .app-shell.toolbar-right .toolbar {
   position: fixed;
@@ -93,10 +82,10 @@ body {
   width: var(--toolbar-w);
   padding: 8px 6px;
   flex-direction: column;
-  justify-content: space-between; /* 🔑 top actions + bottom toggles */
+  justify-content: space-between;
   align-items: center;
   z-index: 50;
-  grid-area: unset; /* 🔑 remove from grid flow */
+  grid-area: unset;
 }
 
 .app-shell.toolbar-left .toolbar {
@@ -125,8 +114,7 @@ body {
 
 /* ============================================================
    ICON BUTTONS
-   ============================================================ */
-
+============================================================ */
 .icon-btn {
   all: unset;
   width: 34px;
@@ -140,22 +128,19 @@ body {
   transition: background-color 120ms ease, color 120ms ease;
 }
 
-/* Hover ONLY when not active */
 .icon-btn:hover:not(.is-active) {
   background: rgba(15, 36, 50, 0.06);
 }
 
 /* ============================================================
-   ACTIVE LAYOUT INDICATOR (NO GREY EVERYWHERE)
-   ============================================================ */
-
+   ACTIVE LAYOUT INDICATOR
+============================================================ */
 .layout-btn.is-active {
   color: var(--accent);
   background: rgba(28, 116, 188, 0.12);
   position: relative;
 }
 
-/* Dot indicator */
 .layout-btn.is-active::after {
   content: "";
   position: absolute;
@@ -168,8 +153,7 @@ body {
 
 /* ============================================================
    TITLE STRIP
-   ============================================================ */
-
+============================================================ */
 .title-strip {
   grid-area: title;
   display: flex;
@@ -181,8 +165,7 @@ body {
 
 /* ============================================================
    TABS
-   ============================================================ */
-
+============================================================ */
 .tabs {
   display: flex;
   align-items: flex-end;
@@ -216,14 +199,14 @@ body {
 }
 
 /* ============================================================
-   CONTENT AREA (NEVER MOVES)
-   ============================================================ */
-
+   CONTENT AREA
+============================================================ */
 .content-wrap {
   grid-area: content;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .content-inner {
@@ -231,12 +214,13 @@ body {
   display: flex;
   justify-content: center;
   padding: 12px 16px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ============================================================
-   OPT‑IN SCROLL (PUBLISH TAB ONLY)
-   ============================================================ */
-
+   OPT-IN SCROLL (GENERAL TAB SCROLL AREA)
+============================================================ */
 .tab-scroll {
   max-height: calc(100vh - var(--console-h) - 160px);
   overflow-y: auto;
@@ -245,8 +229,7 @@ body {
 
 /* ============================================================
    BUTTONS
-   ============================================================ */
-
+============================================================ */
 .vstack {
   display: flex;
   flex-direction: column;
@@ -277,26 +260,8 @@ body {
 }
 
 /* ============================================================
-PUBLISH NOTIFICATIONS LAYOUT
+   PUBLISH NOTIFICATIONS LAYOUT
 ============================================================ */
-
-.content-wrap {
-  grid-area: content;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.content-inner {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  padding: 12px 16px;
-  min-height: 0;
-  overflow: hidden;
-}
-
 .notif-root {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
@@ -326,7 +291,6 @@ PUBLISH NOTIFICATIONS LAYOUT
   padding-left: 4px;
 }
 
-/* FULLY override the global .btn rule inside the sidebar */
 .tab-actions .btn {
   width: 100%;
   min-width: 0;
@@ -338,9 +302,41 @@ PUBLISH NOTIFICATIONS LAYOUT
 }
 
 /* ============================================================
-   CONSOLE (FIXED — NEVER MOVES)
-   ============================================================ */
+   DISABLED / BUSY VISUALS
+   This is the key section that makes buttons look truly greyed out
+============================================================ */
+.btn:disabled,
+.btn.is-busy {
+  opacity: 1 !important;
+  filter: none !important;
+  background: #94a3b8 !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
 
+.btn:disabled:hover,
+.btn.is-busy:hover {
+  filter: none !important;
+}
+
+input:disabled,
+textarea:disabled {
+  background: #e2e8f0 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+button[disabled][type="button"] {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}
+
+/* ============================================================
+   CONSOLE (FIXED — NEVER MOVES)
+============================================================ */
 .console {
   grid-area: console;
   background: var(--console-bg);

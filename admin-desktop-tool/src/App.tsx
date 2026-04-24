@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Toolbar from "./ui/Toolbar";
 import TitleStrip from "./ui/TitleStrip";
 import Tabs, { TabKey } from "./ui/Tabs";
@@ -17,6 +17,13 @@ export default function App() {
     ">> Console attached.",
   ]);
 
+  /**
+   * Global busy flag:
+   * - shared by SetupTab + NotificationTab
+   * - keeps controls greyed out while async work is running
+   */
+  const [busy, setBusy] = useState(false);
+
   const appendLog = (msg: string) =>
     setConsoleLines((prev) => [...prev, msg]);
 
@@ -32,11 +39,21 @@ export default function App() {
     <div className={shellClass}>
       {/* Toolbar */}
       <Toolbar
-        onHome={() => setActiveTab("setup")}
-        onClearConsole={clearConsole}
-        onLayoutTop={() => setLayout("top")}
-        onLayoutLeft={() => setLayout("left")}
-        onLayoutRight={() => setLayout("right")}
+        onHome={() => {
+          if (!busy) setActiveTab("setup");
+        }}
+        onClearConsole={() => {
+          if (!busy) clearConsole();
+        }}
+        onLayoutTop={() => {
+          if (!busy) setLayout("top");
+        }}
+        onLayoutLeft={() => {
+          if (!busy) setLayout("left");
+        }}
+        onLayoutRight={() => {
+          if (!busy) setLayout("right");
+        }}
       />
 
       {/* Title */}
@@ -51,7 +68,9 @@ export default function App() {
             { key: "publish", label: "Notifications" },
             { key: "utilities", label: "Utilities" },
           ]}
-          onSelect={setActiveTab}
+          onSelect={(nextTab) => {
+            if (!busy) setActiveTab(nextTab);
+          }}
         />
 
         <section className="content-inner">
@@ -59,6 +78,8 @@ export default function App() {
             <SetupTab
               appendLog={appendLog}
               onBack={() => setActiveTab("publish")}
+              busy={busy}
+              setBusy={setBusy}
             />
           )}
 
@@ -66,6 +87,8 @@ export default function App() {
             <NotificationTab
               appendLog={appendLog}
               onBack={() => setActiveTab("setup")}
+              busy={busy}
+              setBusy={setBusy}
             />
           )}
 
