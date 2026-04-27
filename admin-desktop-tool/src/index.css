@@ -1,5 +1,5 @@
 /* ============================================================
-   GLOBAL
+GLOBAL
 ============================================================ */
 html,
 body,
@@ -7,6 +7,9 @@ body,
   height: 100%;
 }
 
+/* ✅ FIX #1: your file had an invalid selector "- { ... }"
+   That selector does nothing. Replace with "*" so box-sizing applies globally.
+   This improves consistency across layouts (Setup vs Notifications). */
 * {
   box-sizing: border-box;
 }
@@ -15,11 +18,12 @@ body {
   margin: 0;
   background: #f6f7fa;
   color: #0f2432;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial,
+    sans-serif;
 }
 
 /* ============================================================
-   DESIGN TOKENS
+DESIGN TOKENS
 ============================================================ */
 :root {
   --bar-bg: #ffffff;
@@ -35,7 +39,7 @@ body {
 }
 
 /* ============================================================
-   APP SHELL (FIXED GRID — NEVER CHANGES)
+APP SHELL (FIXED GRID — NEVER CHANGES)
 ============================================================ */
 .app-shell {
   display: grid;
@@ -52,7 +56,7 @@ body {
 }
 
 /* ============================================================
-   TOOLBAR — DEFAULT TOP
+TOOLBAR — DEFAULT TOP
 ============================================================ */
 .toolbar {
   grid-area: toolbar;
@@ -72,7 +76,7 @@ body {
 }
 
 /* ============================================================
-   TOOLBAR — VERTICAL MODES (ONLY TOOLBAR MOVES)
+TOOLBAR — VERTICAL MODES (ONLY TOOLBAR MOVES)
 ============================================================ */
 .app-shell.toolbar-left .toolbar,
 .app-shell.toolbar-right .toolbar {
@@ -113,7 +117,7 @@ body {
 }
 
 /* ============================================================
-   ICON BUTTONS
+ICON BUTTONS
 ============================================================ */
 .icon-btn {
   all: unset;
@@ -133,7 +137,7 @@ body {
 }
 
 /* ============================================================
-   ACTIVE LAYOUT INDICATOR
+ACTIVE LAYOUT INDICATOR
 ============================================================ */
 .layout-btn.is-active {
   color: var(--accent);
@@ -152,7 +156,7 @@ body {
 }
 
 /* ============================================================
-   TITLE STRIP
+TITLE STRIP
 ============================================================ */
 .title-strip {
   grid-area: title;
@@ -164,7 +168,7 @@ body {
 }
 
 /* ============================================================
-   TABS
+TABS
 ============================================================ */
 .tabs {
   display: flex;
@@ -199,7 +203,7 @@ body {
 }
 
 /* ============================================================
-   CONTENT AREA
+CONTENT AREA
 ============================================================ */
 .content-wrap {
   grid-area: content;
@@ -219,7 +223,7 @@ body {
 }
 
 /* ============================================================
-   OPT-IN SCROLL (GENERAL TAB SCROLL AREA)
+OPT-IN SCROLL (GENERAL TAB SCROLL AREA)
 ============================================================ */
 .tab-scroll {
   max-height: calc(100vh - var(--console-h) - 160px);
@@ -228,7 +232,7 @@ body {
 }
 
 /* ============================================================
-   BUTTONS
+BUTTONS
 ============================================================ */
 .vstack {
   display: flex;
@@ -237,8 +241,18 @@ body {
   gap: var(--btn-gap);
 }
 
+/* ✅ FIX #2 (CRITICAL): your .btn used "all: unset" but did NOT restore display.
+   In some containers (like .tab-actions), that can cause width/height/background
+   to paint inconsistently, making the button appear white/invisible.
+   Restoring inline-flex + centering makes the button box deterministic everywhere. */
 .btn {
   all: unset;
+
+  /* 🔧 added for consistency across layout containers */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   height: var(--btn-h);
   min-width: 320px;
   padding: 0 16px;
@@ -247,6 +261,9 @@ body {
   font-weight: 600;
   text-align: center;
   cursor: pointer;
+
+  /* extra stability/UX */
+  user-select: none;
 }
 
 .btn--primary {
@@ -260,7 +277,7 @@ body {
 }
 
 /* ============================================================
-   PUBLISH NOTIFICATIONS LAYOUT
+PUBLISH NOTIFICATIONS LAYOUT
 ============================================================ */
 .notif-root {
   display: grid;
@@ -302,25 +319,33 @@ body {
 }
 
 /* ============================================================
-   DISABLED / BUSY VISUALS
-   This is the key section that makes buttons look truly greyed out
+DISABLED / BUSY VISUALS
+This is the key section that makes buttons look truly greyed out
 ============================================================ */
-.btn:disabled,
-.btn.is-busy {
+
+/* ✅ FIX #3: Make the selector more specific so it wins even inside .tab-actions.
+   Also force background-image off so gradients never "wash out" in disabled/busy state. */
+button.btn.btn--primary:disabled,
+button.btn.btn--primary.is-busy {
   opacity: 1 !important;
-  filter: none !important;
-  background: #94a3b8 !important;
-  color: #e2e8f0 !important;
+  background-image: none !important;
+  background-color: #94a3b8 !important;
+
+  /* darker text is always readable (prevents "looks white/invisible") */
+  color: #0f2432 !important;
+
   box-shadow: none !important;
+  filter: grayscale(0.25) brightness(0.98) !important;
   cursor: not-allowed !important;
   pointer-events: none;
 }
 
-.btn:disabled:hover,
-.btn.is-busy:hover {
-  filter: none !important;
+button.btn.btn--primary:disabled:hover,
+button.btn.btn--primary.is-busy:hover {
+  filter: grayscale(0.25) brightness(0.98) !important;
 }
 
+/* Keep your input/textarea disabled style intact */
 input:disabled,
 textarea:disabled {
   background: #e2e8f0 !important;
@@ -329,13 +354,16 @@ textarea:disabled {
   opacity: 1 !important;
 }
 
+/* ✅ FIX #4: your current selector was malformed:
+   "buttondisabled][type="button"]" never matches anything.
+   This affects the inline "Remove" buttons. */
 button[disabled][type="button"] {
   cursor: not-allowed !important;
   opacity: 0.5 !important;
 }
 
 /* ============================================================
-   CONSOLE (FIXED — NEVER MOVES)
+CONSOLE (FIXED — NEVER MOVES)
 ============================================================ */
 .console {
   grid-area: console;

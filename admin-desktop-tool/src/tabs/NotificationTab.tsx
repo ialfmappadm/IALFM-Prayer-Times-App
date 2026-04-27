@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+
 import {
-  runAdminAction,
-  adminButtonClass,
-  adminButtonStyle,
-  adminInputStyle,
-  adminInlineActionStyle,
-} from "../utils/adminUi";
+  AdminButton,
+  AdminInput,
+  AdminTextarea,
+  AdminInlineActionButton,
+} from "../ui/AdminControls";
+
+import { runAdminAction } from "../utils/adminUi";
 
 type Props = {
   appendLog: (msg: string) => void;
@@ -31,6 +33,12 @@ function getSecretsPath(): string | null {
   }
 }
 
+/**
+ * NotificationTab
+ * - Multi announcement publish to Remote Config + FCM
+ * - Utility actions (clear/prune) colocated under publishing
+ * - Uses shared AdminControls so visuals & busy behavior stay identical across tabs
+ */
 export default function NotificationTab({
   appendLog,
   onBack,
@@ -39,11 +47,37 @@ export default function NotificationTab({
 }: Props) {
   const [items, setItems] = useState<Announcement[]>([{ title: "", body: "" }]);
 
+  /**
+   * UseMemo for shared input style objects so we don't recreate them on every render.
+   * This keeps the code long/explicit AND avoids needless churn.
+   */
+  const titleInputStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: "100%",
+      marginBottom: 8,
+      padding: "8px",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+    }),
+    []
+  );
+
+  const bodyTextareaStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: "100%",
+      minHeight: 80,
+      padding: "8px",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+    }),
+    []
+  );
+
   const update = (index: number, field: keyof Announcement, value: string) => {
     if (busy) return;
 
     const next = [...items];
-    next[index] = { ...next[index], [field]: value };
+    next[index] = { ...next[index], value };
     setItems(next);
   };
 
@@ -57,6 +91,7 @@ export default function NotificationTab({
 
     const next = items.filter((_, i) => i !== index);
 
+    // Keep at least one row to avoid an empty page.
     if (next.length === 0) {
       setItems([{ title: "", body: "" }]);
       return;
@@ -65,6 +100,10 @@ export default function NotificationTab({
     setItems(next);
   };
 
+  /**
+   * Shared runner for Clear / Prune scripts.
+   * runAdminAction ensures the busy visuals are visible even for fast scripts.
+   */
   const runUtility = async (
     scriptPath: string,
     args: string[],
@@ -106,6 +145,12 @@ export default function NotificationTab({
     });
   };
 
+  /**
+   * Publish announcements
+   * - Validates that every card is filled
+   * - Writes JSON to announce tooling directory
+   * - Executes publish_and_notify.js
+   */
   const publish = async () => {
     const invalid = items
       .map((a, i) => (!a.title.trim() || !a.body.trim() ? i + 1 : null))
@@ -217,45 +262,29 @@ export default function NotificationTab({
                 </label>
 
                 {items.length > 1 && (
-                  <button
-                    type="button"
+                  <AdminInlineActionButton
+                    busy={busy}
                     onClick={() => removeAnnouncement(idx)}
-                    disabled={busy}
-                    style={adminInlineActionStyle(busy)}
                   >
                     Remove
-                  </button>
+                  </AdminInlineActionButton>
                 )}
               </div>
 
-              <input
-                style={{
-                  width: "100%",
-                  marginBottom: 8,
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid #ccc",
-                  ...adminInputStyle(busy),
-                }}
+              <AdminInput
+                busy={busy}
+                style={titleInputStyle}
                 placeholder="Title"
                 value={item.title}
                 onChange={(e) => update(idx, "title", e.target.value)}
-                disabled={busy}
               />
 
-              <textarea
-                style={{
-                  width: "100%",
-                  minHeight: 80,
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid #ccc",
-                  ...adminInputStyle(busy),
-                }}
+              <AdminTextarea
+                busy={busy}
+                style={bodyTextareaStyle}
                 placeholder="Message..."
                 value={item.body}
                 onChange={(e) => update(idx, "body", e.target.value)}
-                disabled={busy}
               />
             </div>
           ))}
@@ -264,26 +293,16 @@ export default function NotificationTab({
 
       {/* RIGHT SIDE: action sidebar */}
       <div className="tab-actions">
-        <button
-          className={adminButtonClass(busy)}
-          onClick={addAnnouncement}
-          disabled={busy}
-          style={adminButtonStyle(busy)}
-        >
+        <AdminButton busy={busy} onClick={addAnnouncement}>
           + Add New
-        </button>
+        </AdminButton>
 
-        <button
-          className={adminButtonClass(busy)}
-          onClick={publish}
-          disabled={busy}
-          style={adminButtonStyle(busy)}
-        >
+        <AdminButton busy={busy} onClick={publish}>
           Publish All
-        </button>
+        </AdminButton>
 
-        <button
-          className={adminButtonClass(busy)}
+        <AdminButton
+          busy={busy}
           onClick={() =>
             runUtility(
               "clear_announcements_force.js",
@@ -299,14 +318,12 @@ export default function NotificationTab({
               "✅ Clear completed."
             )
           }
-          disabled={busy}
-          style={adminButtonStyle(busy)}
         >
           Clear Notifications
-        </button>
+        </AdminButton>
 
-        <button
-          className={adminButtonClass(busy)}
+        <AdminButton
+          busy={busy}
           onClick={() =>
             runUtility(
               "rc_prune_and_lock.js",
@@ -323,21 +340,14 @@ export default function NotificationTab({
               "✅ Prune completed."
             )
           }
-          disabled={busy}
-          style={adminButtonStyle(busy)}
         >
           Prune Expired
-        </button>
+        </AdminButton>
 
         <div style={{ marginTop: "auto" }}>
-          <button
-            className={adminButtonClass(busy)}
-            onClick={onBack}
-            disabled={busy}
-            style={adminButtonStyle(busy)}
-          >
+          <AdminButton busy={busy} onClick={onBack}>
             Back
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>

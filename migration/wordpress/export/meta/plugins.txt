@@ -1,0 +1,16 @@
+# Plugin Inventory (at export time)
+# Export date: 2026-04-24
+# Site: https://www.ialfm.org
+
+EWWW Image Optimizer — v8.5.0
+Jetpack — v15.7.1
+NativeChurch Core — v3.5 (Update Required)
+Pojo Sidebars — v1.0.3
+Redux Framework — v4.5.11
+Slider Revolution — v6.6.12 (Update Required)
+WP Super Cache — v3.1.0
+
+# Add these when convenient:
+# WordPress version: 6.9.4
+# Theme name/version: Church Theme
+# Any page builder used:

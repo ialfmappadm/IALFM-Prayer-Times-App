@@ -1,0 +1,107 @@
+post_id,publish_status,comment_status,slug,title,post_date,post_parent,menu_order,link
+2,closed,closed,sample-page,Sample Page,2020-03-25 04:08:56,0,0,https://www.ialfm.org/?page_id=2
+3,closed,closed,privacy-policy,Privacy Policy,2020-03-25 04:08:56,0,0,https://www.ialfm.org/?page_id=3
+11,closed,closed,my-account,My Account,2015-02-26 20:01:30,0,0,https://www.ialfm.org/?page_id=11
+15,open,open,features,Features,2014-02-28 06:55:03,0,0,https://www.ialfm.org/?page_id=15
+19,open,open,sermons,Sermons,2014-02-28 06:55:51,0,0,https://www.ialfm.org/?page_id=19
+21,open,open,gallery-2-columns-pagination,Gallery 2 Columns Pagination,2014-02-28 06:56:09,0,0,https://www.ialfm.org/?page_id=21
+25,open,open,contact-old,Contact,2014-02-28 06:56:41,0,0,https://www.ialfm.org/?page_id=25
+94,open,open,gallery-3-columns-pagination,Gallery 3 Columns Pagination,2014-03-01 10:45:18,0,0,https://www.ialfm.org/?page_id=94
+96,open,open,gallery-4-columns-pagination,Gallery 4 Columns Pagination,2014-03-01 10:52:44,0,0,https://www.ialfm.org/?page_id=96
+98,open,open,gallery-2-columns-filter,Gallery 2 Columns Filter,2014-03-01 11:08:11,0,0,https://www.ialfm.org/?page_id=98
+100,open,open,gallery-3-columns-filter,Gallery 3 Columns Filter,2014-03-01 11:30:23,0,0,https://www.ialfm.org/?page_id=100
+102,open,open,gallery-4-columns-filter,Gallery 4 Columns Filter,2014-03-01 11:36:43,0,0,https://www.ialfm.org/?page_id=102
+113,open,open,gallery-masonry,Gallery Masonry,2014-03-01 12:03:12,0,0,https://www.ialfm.org/?page_id=113
+129,open,open,staff,Our Staff,2014-03-04 04:30:04,957,0,https://www.ialfm.org/?page_id=129
+161,open,open,shortcodes,Shortcodes,2014-03-04 11:52:43,0,0,https://www.ialfm.org/?page_id=161
+163,open,open,typography,Typography,2014-03-04 11:53:07,0,0,https://www.ialfm.org/?page_id=163
+179,open,open,blog-masonry,Blog Masonry,2014-03-04 14:43:10,0,0,https://www.ialfm.org/?page_id=179
+365,closed,closed,blog-full-width,Blog Full Width,2014-05-07 19:34:36,0,0,https://www.ialfm.org/?page_id=365
+367,closed,closed,blog-timeline,Blog Timeline,2014-05-07 19:35:16,0,0,https://www.ialfm.org/?page_id=367
+369,closed,closed,events-timeline,Events Timeline,2014-05-07 19:35:47,0,0,https://www.ialfm.org/?page_id=369
+493,closed,closed,causes-grid,Causes Grid,2014-08-20 11:52:14,0,0,https://www.ialfm.org/?page_id=493
+495,closed,closed,causes-list,Causes List,2014-08-20 11:52:50,0,0,https://www.ialfm.org/?page_id=495
+507,open,open,donate,Donate,2014-02-28 06:54:20,0,0,https://www.ialfm.org/?page_id=507
+680,closed,closed,shop,Shop,2015-02-26 20:01:29,0,0,https://www.ialfm.org/?page_id=680
+681,closed,closed,cart,Cart,2015-02-26 20:01:29,0,0,https://www.ialfm.org/?page_id=681
+682,closed,closed,checkout,Checkout,2015-02-26 20:01:30,0,0,https://www.ialfm.org/?page_id=682
+734,closed,closed,prayer-wall,Prayer Wall,2016-07-04 19:13:19,0,0,https://www.ialfm.org/?page_id=734
+842,closed,closed,sermons-album,Sermons Album,2016-11-02 10:10:23,0,0,https://www.ialfm.org/?page_id=842
+900,closed,closed,home-version-1-alt,Home version 1 Alt,2017-05-05 10:46:31,0,0,https://www.ialfm.org/?page_id=900
+902,closed,closed,home-version-2,Home version 2,2017-05-05 11:21:58,0,0,https://www.ialfm.org/?page_id=902
+903,closed,closed,home-version-3,Home version 3,2017-05-05 11:30:08,0,0,https://www.ialfm.org/?page_id=903
+907,closed,closed,donation-failed,Donation Failed,2017-11-01 06:45:51,0,0,https://www.ialfm.org/?page_id=907
+957,open,open,about-us-old,About Us-old,2014-02-28 06:54:46,0,0,https://www.ialfm.org/?page_id=957
+958,closed,closed,donation-confirmation,Donation Confirmation,2017-03-10 11:13:37,0,0,https://www.ialfm.org/?page_id=958
+959,closed,closed,donation-history,Donation History,2017-03-10 11:13:37,0,0,https://www.ialfm.org/?page_id=959
+1097,closed,closed,picnic,"Annual Community Picnic | Sun Apr 28, 2019",2020-04-04 15:40:24,0,0,https://www.ialfm.org/?page_id=1097
+1162,closed,closed,ss-volunteer-registration,SS Staff Registration (backup),2020-04-05 15:21:07,0,0,https://www.ialfm.org/?page_id=1162
+1182,closed,closed,interfaith-summer-camp,Interfaith Summer Camp,2020-04-05 15:45:37,0,0,https://www.ialfm.org/?page_id=1182
+1219,closed,closed,eyd,Education & Youth Director,2020-04-05 20:39:37,0,0,https://www.ialfm.org/?page_id=1219
+1223,closed,closed,teams,Instructions for 'IALFM Live' Meeting,2020-04-05 20:45:17,0,0,https://www.ialfm.org/?page_id=1223
+1225,closed,closed,ssteams,Instructions for Sunday School Meeting,2020-04-05 20:46:28,0,0,https://www.ialfm.org/?page_id=1225
+1227,closed,closed,oldramadan,Ramadan 2018,2020-04-05 20:49:02,0,0,https://www.ialfm.org/?page_id=1227
+1229,closed,closed,ss-sr-backup,Sunday School Student Registration - [Backup Page],2020-04-05 20:52:41,0,0,https://www.ialfm.org/?page_id=1229
+1231,closed,closed,sstp,Sunday School Teachers Portal,2020-04-05 20:54:34,0,0,https://www.ialfm.org/?page_id=1231
+1580,closed,closed,abbb,Abbb (test page),2021-01-22 18:28:52,0,0,https://www.ialfm.org/?page_id=1580
+1832,closed,closed,zoom,Zoom Accounts for IALFM Committees,2022-01-11 00:08:33,0,0,https://www.ialfm.org/?page_id=1832
+2164,closed,closed,refund_returns,Refund and Returns Policy,2023-05-06 17:50:34,0,0,https://www.ialfm.org/?page_id=2164
+2167,closed,closed,scr,Summer Camp Registration,2023-05-06 20:36:30,0,0,https://www.ialfm.org/?page_id=2167
+2176,closed,closed,src2,SRC2,2023-05-07 14:29:41,0,0,https://www.ialfm.org/?page_id=2176
+17,open,open,events,Events,2014-02-28 06:55:22,0,0,https://www.ialfm.org/events/
+23,open,open,blog,Blog,2014-02-28 06:56:26,0,0,https://www.ialfm.org/blog/
+153,open,open,events-calendar,Events Calendar,2014-03-04 11:34:33,0,0,https://www.ialfm.org/events-calendar/
+155,open,open,events-grid,Events Grid,2014-03-04 11:34:54,0,0,https://www.ialfm.org/events-grid/
+503,closed,closed,home,Home,2014-02-28 05:31:04,0,0,https://www.ialfm.org/
+506,open,open,plan-your-visit,Plan your visit,2014-02-28 06:53:42,0,0,https://www.ialfm.org/plan-your-visit/
+1092,closed,closed,about-us,About Us,2020-04-04 15:31:43,0,0,https://www.ialfm.org/about-us/
+1102,closed,closed,bod,Board of Directors,2020-04-04 15:45:50,0,0,https://www.ialfm.org/bod/
+1104,closed,closed,bod-meetings,BoD Meetings,2020-04-04 15:47:40,0,0,https://www.ialfm.org/bod-meetings/
+1106,closed,closed,committees,Committees,2020-04-04 15:48:34,0,0,https://www.ialfm.org/committees/
+1108,closed,closed,constitution,Constitution,2020-04-04 15:49:11,0,0,https://www.ialfm.org/constitution/
+1113,closed,closed,construction-project,Construction Project,2022-12-04 15:52:00,0,0,https://www.ialfm.org/construction-project/
+1115,closed,closed,contact,Contact Us,2020-04-04 15:53:18,0,0,https://www.ialfm.org/contact/
+1124,closed,closed,our-imam,Our Imam,2020-04-05 14:07:05,0,0,https://www.ialfm.org/our-imam/
+1127,closed,closed,gbm,General Body Meetings,2020-04-05 14:12:40,0,0,https://www.ialfm.org/gbm/
+2205,closed,closed,our-dey,Our Director of Education & Youth,2023-06-26 22:27:35,0,0,https://www.ialfm.org/?page_id=2205
+2233,closed,closed,tvscreen-v1,tvscreen-v1,2023-07-22 16:56:18,0,0,https://www.ialfm.org/?page_id=2233
+2236,closed,closed,,,2023-07-22 17:13:33,0,0,https://www.ialfm.org/?page_id=2236
+2698,closed,closed,sunday-school-charges,Sunday School Charges,2024-08-09 20:58:25,0,0,https://www.ialfm.org/?page_id=2698
+2780,closed,closed,,Ramadan 2025-1446,2025-01-30 04:02:54,0,0,https://www.ialfm.org/?page_id=2780
+1129,closed,closed,feedback-to-bod,Feedback to BoD,2020-04-05 14:13:41,0,0,https://www.ialfm.org/feedback-to-bod/
+1134,closed,closed,education-committee,Education Committee,2020-04-05 14:50:25,0,0,https://www.ialfm.org/education-committee/
+1136,closed,closed,education-at-ialfm,Education at IALFM,2020-04-05 14:51:04,0,0,https://www.ialfm.org/education-at-ialfm/
+1138,closed,closed,sscommittee,Sunday School Committee,2020-04-05 14:51:46,0,0,https://www.ialfm.org/sscommittee/
+1140,closed,closed,quran-school,Quran School,2020-04-05 14:52:39,0,0,https://www.ialfm.org/quran-school/
+1142,closed,closed,quran-nazira-program,Quran Nazira Program,2020-04-05 14:56:11,0,0,https://www.ialfm.org/quran-nazira-program/
+1150,closed,closed,quran-hifz-program,Quran Hifz Program,2020-04-05 15:09:07,0,0,https://www.ialfm.org/quran-hifz-program/
+1152,closed,closed,ss-overview,Sunday School Overview,2020-04-05 15:10:06,0,0,https://www.ialfm.org/ss-overview/
+1154,closed,closed,faqs-for-parents,FAQs for Parents,2020-04-05 15:11:10,0,0,https://www.ialfm.org/faqs-for-parents/
+1156,closed,closed,ss-calendar,Sunday School Calendar,2020-04-05 15:12:26,0,0,https://www.ialfm.org/ss-calendar/
+1159,closed,closed,student-registration,Sunday School Student Registration,2020-04-05 15:17:49,0,0,https://www.ialfm.org/student-registration/
+1164,closed,closed,staff-registration,Sunday School Staff Registration,2020-04-05 15:25:25,0,0,https://www.ialfm.org/staff-registration/
+1180,closed,closed,youth,Youth,2020-04-05 15:43:50,0,0,https://www.ialfm.org/youth/
+1184,closed,closed,sisters,Sisters Committee,2020-04-05 15:47:12,0,0,https://www.ialfm.org/sisters/
+1186,closed,closed,event-request,Event Request,2020-04-05 15:48:21,0,0,https://www.ialfm.org/event-request/
+1195,closed,closed,volunteer,Volunteer Signup,2020-04-05 16:03:07,0,0,https://www.ialfm.org/volunteer/
+1197,closed,closed,erf,Emergency Relief Fund (ERF),2025-08-14 16:04:00,0,0,https://www.ialfm.org/erf/
+1199,closed,closed,ialfm-documents-forms,IALFM Documents & Forms,2022-12-05 16:05:00,0,0,https://www.ialfm.org/ialfm-documents-forms/
+1202,closed,closed,resources,Resources,2020-04-05 16:10:48,0,0,https://www.ialfm.org/resources/
+1221,closed,closed,hiring-ialfm-religious-director,Hiring IALFM Religious Director,2020-04-05 20:42:19,0,0,https://www.ialfm.org/hiring-ialfm-religious-director/
+1626,closed,closed,csu,Construction Site Updates,2022-12-03 22:38:00,0,0,https://www.ialfm.org/csu/
+1818,closed,closed,mphs-old,Old MPH Schedule,2022-01-05 19:17:10,0,0,https://www.ialfm.org/mphs-old/
+1921,closed,closed,fbevents,Events @ IALFM,2022-05-05 21:31:20,0,0,https://www.ialfm.org/fbevents/
+2082,closed,closed,ialfm-membership-renewal,IALFM Membership Renewal,2023-01-13 00:34:52,0,0,https://www.ialfm.org/ialfm-membership-renewal/
+2100,closed,closed,ways-to-donate,Ways to Donate,2023-02-03 01:29:53,0,0,https://www.ialfm.org/ways-to-donate/
+2204,closed,closed,funeral,Funeral Prayers,2023-06-26 22:33:01,0,0,https://www.ialfm.org/funeral/
+2224,closed,closed,pillars-academy,Pillars Academy,2023-07-13 23:21:30,0,4,https://www.ialfm.org/pillars-academy/
+2305,closed,closed,pillarsacademy-schedule,Pillars Academy | Schedule,2023-07-26 01:39:56,0,0,https://www.ialfm.org/pillarsacademy-schedule/
+2462,closed,closed,mphs,Multi-Purpose Hall Schedule,2023-12-14 18:21:36,0,0,https://www.ialfm.org/mphs/
+2810,closed,closed,calendar,IALFM Annual Calendar,2025-03-21 19:54:23,0,0,https://www.ialfm.org/calendar/
+2883,closed,closed,hiring-ialfm-youth-program-lead,Hiring IALFM Youth Program Lead,2025-07-17 16:51:50,0,0,https://www.ialfm.org/hiring-ialfm-youth-program-lead/
+2887,closed,closed,hiring-ialfm-sisters-program-lead,Hiring IALFM Sisters Program Lead,2025-07-17 16:54:39,0,0,https://www.ialfm.org/hiring-ialfm-sisters-program-lead/
+2890,closed,closed,hiring-facility-manager,Hiring Facility Manager,2025-07-17 17:26:07,0,0,https://www.ialfm.org/hiring-facility-manager/
+2958,closed,closed,newsletter,Newsletter,2025-10-08 17:59:55,0,0,https://www.ialfm.org/newsletter/
+3035,closed,closed,sisters-programs-gatherings,Sisters' Programs & Gatherings,2026-01-22 16:23:48,0,0,https://www.ialfm.org/sisters-programs-gatherings/
+3038,closed,closed,ialfm-mobile-app-privacy-policy,IALFM Mobile App - Privacy Policy,2026-02-02 04:43:24,0,0,https://www.ialfm.org/ialfm-mobile-app-privacy-policy/
+3083,closed,closed,ialfm-mobile-app-support,IALFM Mobile App Support,2026-03-04 22:34:11,0,0,https://www.ialfm.org/ialfm-mobile-app-support/

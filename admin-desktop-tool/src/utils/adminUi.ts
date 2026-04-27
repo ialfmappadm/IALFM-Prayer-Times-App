@@ -7,21 +7,44 @@ function sleep(ms: number) {
 }
 
 /**
- * Runs async work while keeping the UI busy for at least `minMs`.
- * This prevents the disabled state from flashing too quickly on fast commands.
+ * Wait until the browser has had a chance to render + paint the busy state.
+ * Two RAFs is a reliable way to ensure the visual disabled state is actually shown.
+ */
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
+/**
+ * Runs async work while keeping the UI visibly busy long enough to be perceived.
+ *
+ * Behavior:
+ * 1. set busy=true
+ * 2. wait for paint so buttons/inputs visually grey out
+ * 3. run async work
+ * 4. keep busy=true for at least minMs total after the painted state
+ *
+ * This prevents fast commands from flashing so quickly that the user sees no feedback.
  */
 export async function runAdminAction<T>(
   setBusy: SetBusy,
   work: () => Promise<T>,
-  minMs = 700
+  minMs = 1100
 ): Promise<T> {
-  const startedAt = Date.now();
   setBusy(true);
+
+  // Let React commit and the browser paint the disabled/busy visuals first.
+  await nextPaint();
+
+  const startedAt = performance.now();
 
   try {
     return await work();
   } finally {
-    const elapsed = Date.now() - startedAt;
+    const elapsed = performance.now() - startedAt;
     if (elapsed < minMs) {
       await sleep(minMs - elapsed);
     }
@@ -37,16 +60,22 @@ export function adminButtonClass(busy: boolean) {
 }
 
 /**
- * Optional inline backup styling if you want an extra visible disabled look.
- * Safe even if CSS already styles .is-busy / :disabled.
+ * Authoritative inline busy style for big action buttons.
+ * This guarantees the button goes grey even if CSS specificity changes later.
  */
-export function adminButtonStyle(busy: boolean): React.CSSProperties | undefined {
+export function adminButtonStyle(
+  busy: boolean
+): React.CSSProperties | undefined {
   if (!busy) return undefined;
 
   return {
     opacity: 1,
-    filter: "none",
+    background: "#94a3b8",
+    color: "#e2e8f0",
+    boxShadow: "none",
+    filter: "grayscale(0.45) brightness(0.92)",
     cursor: "not-allowed",
+    pointerEvents: "none",
   };
 }
 
@@ -81,5 +110,6 @@ export function adminInlineActionStyle(
     color,
     opacity: busy ? 0.5 : 1,
     filter: busy ? "grayscale(0.25)" : "none",
+    pointerEvents: busy ? "none" : "auto",
   };
 }

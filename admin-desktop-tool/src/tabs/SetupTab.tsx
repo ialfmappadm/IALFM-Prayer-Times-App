@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import {
-  runAdminAction,
-  adminButtonClass,
-  adminButtonStyle,
-} from "../utils/adminUi";
+
+import { AdminButton } from "../ui/AdminControls";
+import { runAdminAction } from "../utils/adminUi";
 
 type Props = {
   appendLog: (msg: string) => void;
@@ -16,40 +14,35 @@ type Props = {
 
 const SECRETS_KEY = "ialfm_secrets_path";
 
-export default function SetupTab({
-  appendLog,
-  onBack,
-  busy,
-  setBusy,
-}: Props) {
+/**
+ * SetupTab
+ * - Admin-visible setup for toolchain + secrets + announce tooling deps
+ * - Uses the shared AdminControls so all buttons look/behave consistently
+ */
+export default function SetupTab({ appendLog, onBack, busy, setBusy }: Props) {
   const [secretsPath, setSecretsPath] = useState<string | null>(null);
 
   /**
-   * Restore any previously selected secrets file from localStorage.
-   * This keeps the admin workflow smoother across app restarts.
+   * Restore secrets path for convenience. This is admin tooling: visibility matters.
    */
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SECRETS_KEY);
-      if (saved) {
-        setSecretsPath(saved);
-      }
+      if (saved) setSecretsPath(saved);
     } catch {
-      // ignore localStorage failures
+      // ignore localStorage issues
     }
   }, []);
 
   /**
-   * Reusable visual fallback for busy/disabled buttons.
-   * CSS should already be doing most of the work, but this makes the
-   * disabled state more obvious even if CSS is still being tuned.
+   * A derived "UI busy" state for the Run Setup button:
+   * - If secretsPath is missing, treat the button as disabled/greyed.
+   * - This keeps visuals consistent with the rest of the app.
    */
-  const disabledButtonStyle = useMemo<React.CSSProperties | undefined>(() => {
-    return adminButtonStyle(busy);
-  }, [busy]);
+  const setupBlocked = useMemo(() => !secretsPath, [secretsPath]);
 
   /**
-   * Step 1: Choose the Firebase Admin / service-account JSON file.
+   * Step 2: Select secrets JSON (stored locally for later actions).
    */
   const selectSecrets = async () => {
     if (busy) return;
@@ -71,7 +64,7 @@ export default function SetupTab({
     try {
       localStorage.setItem(SECRETS_KEY, result);
     } catch {
-      // ignore storage failure
+      // ignore write failures
     }
 
     appendLog("✅ Secrets JSON selected:");
@@ -79,8 +72,8 @@ export default function SetupTab({
   };
 
   /**
-   * Step 2: Check whether node and npm are available on this machine.
-   * Also prints the announce tools directory for visibility.
+   * Step 1: Check Node/npm presence and versions.
+   * Uses runAdminAction to ensure busy visuals are perceivable.
    */
   const checkNodeToolchain = async () => {
     await runAdminAction(setBusy, async () => {
@@ -107,8 +100,8 @@ export default function SetupTab({
   };
 
   /**
-   * Step 3: Run npm install in the announce tools folder.
-   * Requires a selected secrets file first.
+   * Step 3: Run npm install in announce tooling folder.
+   * Requires secrets to be selected first.
    */
   const runSetup = async () => {
     if (!secretsPath) {
@@ -119,8 +112,6 @@ export default function SetupTab({
     await runAdminAction(setBusy, async () => {
       try {
         const announceDir = await invoke<string>("get_announce_dir");
-
-        //await new Promise((resolve) => setTimeout(resolve, 2000)); delay to make button look disabled
 
         appendLog(">> Running npm install in:");
         appendLog(announceDir);
@@ -141,8 +132,7 @@ export default function SetupTab({
   };
 
   /**
-   * Optional convenience action:
-   * forget the saved secrets path from this device.
+   * Optional convenience step: clear locally saved secrets path.
    */
   const clearSecrets = () => {
     if (busy) return;
@@ -160,50 +150,25 @@ export default function SetupTab({
 
   return (
     <div className="vstack">
-      <button
-        className={adminButtonClass(busy)}
-        onClick={checkNodeToolchain}
-        disabled={busy}
-        style={disabledButtonStyle}
-      >
+      <AdminButton busy={busy} onClick={checkNodeToolchain}>
         1. Check Node.js / npm
-      </button>
+      </AdminButton>
 
-      <button
-        className={adminButtonClass(busy)}
-        onClick={selectSecrets}
-        disabled={busy}
-        style={disabledButtonStyle}
-      >
+      <AdminButton busy={busy} onClick={selectSecrets}>
         2. Select Secrets JSON
-      </button>
+      </AdminButton>
 
-      <button
-        className={adminButtonClass(busy || !secretsPath)}
-        onClick={runSetup}
-        disabled={!secretsPath || busy}
-        style={busy || !secretsPath ? disabledButtonStyle : undefined}
-      >
+    <AdminButton busy={busy || setupBlocked} onClick={runSetup}>
         3. Run Setup
-      </button>
+      </AdminButton>
 
-      <button
-        className={adminButtonClass(busy)}
-        onClick={clearSecrets}
-        disabled={busy}
-        style={disabledButtonStyle}
-      >
+      <AdminButton busy={busy} onClick={clearSecrets}>
         4. Clear Secrets (optional)
-      </button>
+      </AdminButton>
 
-      <button
-        className={adminButtonClass(busy)}
-        onClick={onBack}
-        disabled={busy}
-        style={disabledButtonStyle}
-      >
+      <AdminButton busy={busy} onClick={onBack}>
         Back
-      </button>
+      </AdminButton>
     </div>
   );
 }

@@ -1,0 +1,7 @@
+Pages found: 106
+Empty slugs: 2
+Published empty slugs: 0
+Empty slug pages (post_id → publish_status → title → link):
+  2236 → closed →  → https://www.ialfm.org/?page_id=2236
+  2780 → closed → Ramadan 2025-1446 → https://www.ialfm.org/?page_id=2780
+Duplicate slugs: 0
